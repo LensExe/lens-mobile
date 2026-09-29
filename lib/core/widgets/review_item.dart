@@ -104,7 +104,7 @@ class ReviewItemWidget extends StatelessWidget {
                   Text(
                     review.comment,
                     style: TextStyle(
-                      color: AppColors.obsidian.withOpacity(0.8),
+                      color: AppColors.obsidian.withValues(alpha: 0.8),
                       fontSize: 14,
                       height: 1.5,
                     ),

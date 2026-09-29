@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme/app_colors.dart'; // import for AppColors if needed, though they hardcoded colors
+// import for AppColors if needed, though they hardcoded colors
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

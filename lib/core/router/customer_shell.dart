@@ -20,8 +20,8 @@ class CustomerShell extends StatelessWidget {
         unselectedItemColor: AppColors.steel,
         backgroundColor: AppColors.snow,
         items: const [
-          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: 'Tổng quan'),
           BottomNavigationBarItem(icon: Icon(LucideIcons.search), label: 'Khám phá'),
+          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: 'Tổng quan'),
           BottomNavigationBarItem(icon: Icon(LucideIcons.calendar), label: 'Lịch đặt'),
           BottomNavigationBarItem(icon: Icon(LucideIcons.messageSquare), label: 'Tin nhắn'),
           BottomNavigationBarItem(icon: Icon(LucideIcons.menu), label: 'Khác'),
@@ -32,20 +32,21 @@ class CustomerShell extends StatelessWidget {
 
   static int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/customer_home/search')) return 1;
+    if (location.startsWith('/customer_home/discovery')) return 0;
+    if (location.startsWith('/customer_home/overview')) return 1;
     if (location.startsWith('/customer_home/bookings')) return 2;
     if (location.startsWith('/customer_home/messages')) return 3;
     if (location.startsWith('/customer_home/more')) return 4;
-    return 0; // Default to Home
+    return 0; // Default to Discovery
   }
 
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
-        context.go('/customer_home');
+        context.go('/customer_home/discovery');
         break;
       case 1:
-        context.go('/customer_home/search');
+        context.go('/customer_home/overview');
         break;
       case 2:
         context.go('/customer_home/bookings');

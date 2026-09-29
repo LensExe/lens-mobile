@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       text: 'Log In',
                       onPressed: () {
                         ref.read(authUserProvider.notifier).setUser(MockDatabase.customerUser);
-                        context.go('/customer_home/search');
+                        context.go('/customer_home/discovery');
                       },
                     ),
                   ],

@@ -5,7 +5,7 @@ import 'package:lens_app/features/splash/splash_screen.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
 import 'package:lens_app/features/auth/login_screen.dart';
 import 'package:lens_app/features/customer/customer_home_screen.dart';
-import 'package:lens_app/features/customer/search_screen.dart';
+import 'package:lens_app/features/customer/discovery/screens/photographers_discovery_screen.dart';
 import 'package:lens_app/features/customer/photographer_detail_screen.dart';
 import 'package:lens_app/features/customer/booking_screen.dart';
 import 'package:lens_app/features/shared/bookings_list_screen.dart';
@@ -54,12 +54,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => CustomerShell(child: child),
         routes: [
           GoRoute(
-            path: '/customer_home',
+            path: '/customer_home/overview',
             builder: (context, state) => const CustomerHomeScreen(),
           ),
           GoRoute(
-            path: '/customer_home/search',
-            builder: (context, state) => const SearchScreen(),
+            path: '/customer_home/discovery',
+            builder: (context, state) => const PhotographersDiscoveryScreen(),
           ),
           GoRoute(
             path: '/customer_home/photographer/:id',

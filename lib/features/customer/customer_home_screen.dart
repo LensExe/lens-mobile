@@ -177,7 +177,7 @@ class CustomerHomeScreen extends ConsumerWidget {
                             const SizedBox(height: 8),
                             const Text('Khám phá và đặt lịch ngay hôm nay', style: TextStyle(color: AppColors.steel, fontSize: 14)),
                             const SizedBox(height: 24),
-                            PrimaryButton(text: 'Khám phá ngay', onPressed: () => context.go('/customer_home/search')),
+                            PrimaryButton(text: 'Khám phá ngay', onPressed: () => context.go('/customer_home/discovery')),
                           ],
                         ),
                       ),
@@ -249,7 +249,7 @@ class CustomerHomeScreen extends ConsumerWidget {
           boxShadow: [
             if (gradient.colors.first != AppColors.snow)
               BoxShadow(
-                color: gradient.colors.first.withOpacity(0.3),
+                color: gradient.colors.first.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -262,7 +262,7 @@ class CustomerHomeScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: textColor.withOpacity(0.1),
+                color: textColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 20),
@@ -277,7 +277,7 @@ class CustomerHomeScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   title,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor.withValues(alpha: 0.8)),
                 ),
               ],
             ),

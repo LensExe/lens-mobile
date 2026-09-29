@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
-import '../../core/widgets/outlined_button.dart';
 import '../../providers/data_providers.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../domain/models/models.dart';
@@ -372,7 +371,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(backgroundImage: NetworkImage(p.avatar), onBackgroundImageError: (_, __) => {}),
+                  CircleAvatar(backgroundImage: NetworkImage(p.avatar), onBackgroundImageError: (_, _) => {}),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

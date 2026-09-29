@@ -2,285 +2,315 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/surface_card.dart';
-import '../../core/widgets/primary_button.dart';
-import '../../providers/data_providers.dart';
-import '../../domain/models/models.dart';
-import '../../data/mock_database.dart';
 
-class BookingsListScreen extends ConsumerStatefulWidget {
+import '../../core/theme/app_colors.dart';
+import '../customer/bookings/controllers/customer_bookings_controller.dart';
+import '../customer/bookings/models/booking_model.dart';
+import '../customer/bookings/widgets/booking_card.dart';
+import '../customer/bookings/widgets/booking_status_filter_tabs.dart';
+import '../customer/bookings/widgets/escrow_summary_card.dart';
+
+class BookingsListScreen extends ConsumerWidget {
   const BookingsListScreen({super.key});
 
   @override
-  ConsumerState<BookingsListScreen> createState() => _BookingsListScreenState();
-}
-
-class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
-  String _selectedFilter = 'Tất cả';
-  final List<String> _filters = [
-    'Tất cả',
-    'Chờ duyệt',
-    'Đã xác nhận',
-    'Đang thực hiện',
-    'Hoàn thành',
-    'Đã hủy'
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final bookings = ref.watch(myBookingsProvider);
-    final filteredBookings = _getFilteredBookings(bookings, _selectedFilter);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(customerBookingsControllerProvider);
+    final controller = ref.read(customerBookingsControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.mist,
+      backgroundColor: const Color(0xFFF9F9FA),
       appBar: AppBar(
-        backgroundColor: AppColors.mist,
+        backgroundColor: const Color(0xFFF9F9FA),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Lịch đặt của tôi',
               style: TextStyle(
-                color: AppColors.obsidian,
-                fontWeight: FontWeight.w700,
-                fontSize: 24,
+                color: Color(0xFF1A1C1D),
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
                 letterSpacing: -0.5,
               ),
             ),
             Text(
-              '${filteredBookings.length} buổi chụp',
-              style: const TextStyle(color: AppColors.steel, fontSize: 14),
+              '${state.allBookings.length} tổng bản ghi',
+              style: const TextStyle(
+                color: Color(0xFF5F5E60),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),
-        centerTitle: false,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildFilterChips(),
-          Expanded(
-            child: filteredBookings.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredBookings.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final b = filteredBookings[index];
-                      return _buildBookingCard(b);
-                    },
-                  ),
+        actions: [
+          IconButton(
+            icon: Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF3F3F4),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.refreshCw,
+                size: 16,
+                color: Color(0xFF1A1C1D),
+              ),
+            ),
+            onPressed: () => controller.loadBookings(),
+            tooltip: 'Tải lại',
           ),
+          const SizedBox(width: 8),
         ],
       ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return SizedBox(
-      height: 60,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        itemCount: _filters.length,
-        itemBuilder: (context, index) {
-          final filter = _filters[index];
-          final isSelected = filter == _selectedFilter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.obsidian : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: isSelected ? AppColors.obsidian : AppColors.pebble,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    filter,
-                    style: TextStyle(
-                      color: isSelected ? AppColors.snow : AppColors.obsidian,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+      body: RefreshIndicator(
+        color: const Color(0xFFFF5A00),
+        onRefresh: () => controller.loadBookings(),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            // 1. Client Workspace & Active Count Tag Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8E8E9),
+                            borderRadius: BorderRadius.circular(9999),
+                          ),
+                          child: const Text(
+                            'CLIENT WORKSPACE',
+                            style: TextStyle(
+                              color: Color(0xFF5B4137),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFDBCF),
+                            borderRadius: BorderRadius.circular(9999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFF5A00),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                '${state.activeCount} Đang hoạt động',
+                                style: const TextStyle(
+                                  color: Color(0xFF380D00),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    Text(
+                      '${state.filteredBookings.length} hiển thị',
+                      style: const TextStyle(
+                        color: Color(0xFF5F5E60),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
+
+            // 2. Status Filter Tabs (Horizontal list)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                child: BookingStatusFilterTabs(
+                  selectedTab: state.selectedTab,
+                  onTabSelected: (tab) => controller.selectTab(tab),
+                  countProvider: (tab) => state.getCountForTab(tab),
+                ),
+              ),
+            ),
+
+            // 3. Escrow Protection Summary Card
+            SliverToBoxAdapter(
+              child: EscrowSummaryCard(
+                totalAmount: state.totalEscrowHeld,
+                activeShootsCount: state.inProgressBookings.length,
+                onTap: () {
+                  controller.selectTab('Đang thực hiện');
+                },
+              ),
+            ),
+
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 4),
+            ),
+
+            // 4. Bookings List or Empty State
+            if (state.isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFFF5A00),
+                  ),
+                ),
+              )
+            else if (state.filteredBookings.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildEmptyState(context, state.selectedTab),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final booking = state.filteredBookings[index];
+                    return BookingCard(
+                      booking: booking,
+                      onTap: () => _handleCardTap(context, booking),
+                      onPrimaryAction: () => _handlePrimaryAction(context, booking),
+                      onMessage: () => _handleMessage(context, booking),
+                    );
+                  },
+                  childCount: state.filteredBookings.length,
+                ),
+              ),
+
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 32),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    if (_selectedFilter == 'Tất cả') {
-      return Center(
+  void _handleCardTap(BuildContext context, Booking booking) {
+    context.push('/customer_home/bookings/${booking.id}');
+  }
+
+  void _handlePrimaryAction(BuildContext context, Booking booking) {
+    switch (booking.status) {
+      case BookingStatus.held:
+        context.push('/customer_home/bookings/${booking.id}/gallery');
+        break;
+      case BookingStatus.awaiting_deposit:
+      case BookingStatus.pending:
+      case BookingStatus.confirmed:
+      case BookingStatus.released:
+      case BookingStatus.cancelled:
+        context.push('/customer_home/bookings/${booking.id}');
+        break;
+    }
+  }
+
+  void _handleMessage(BuildContext context, Booking booking) {
+    context.push('/customer_home/messages/${booking.photographerId}');
+  }
+
+  Widget _buildEmptyState(BuildContext context, String selectedTab) {
+    String title = 'Không có lịch đặt nào';
+    String subtitle = 'Bạn chưa có buổi chụp nào trong mục "$selectedTab".';
+
+    if (selectedTab == 'Tất cả') {
+      title = 'Bạn chưa có lịch đặt nào';
+      subtitle = 'Hãy khám phá các nhiếp ảnh gia hàng đầu và đặt lịch chụp ảnh ngay!';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(LucideIcons.calendarX2, size: 64, color: AppColors.ash),
-            const SizedBox(height: 24),
-            const Text(
-              'Bạn chưa có lịch đặt nào',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.obsidian),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF3F3F4),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.calendarX2,
+                size: 38,
+                color: AppColors.steel,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1C1D),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF5F5E60),
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: 200,
-              child: PrimaryButton(
-                text: 'Tìm nhiếp ảnh gia',
-                onPressed: () => context.go('/customer_home'),
+            GestureDetector(
+              onTap: () => context.go('/customer_home/discovery'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF5A00),
+                  borderRadius: BorderRadius.circular(9999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF5A00).withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  'Khám phá nhiếp ảnh gia',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
               ),
             ),
           ],
         ),
-      ).animate().fade();
-    } else {
-      return Center(
-        child: Text(
-          'Không có lịch đặt ở trạng thái này',
-          style: const TextStyle(color: AppColors.steel, fontSize: 16),
-        ).animate().fade(),
-      );
-    }
-  }
-
-  Widget _buildBookingCard(Booking b) {
-    // Note: To display avatar properly, we look up photographer in MockDatabase (as a workaround for now)
-    final photographer = MockDatabase.photographers.firstWhere(
-      (p) => p.id == b.photographerId,
-      orElse: () => MockDatabase.photographers.first,
-    );
-
-    return InkWell(
-      onTap: () => context.push('/customer_home/bookings/${b.id}'),
-      borderRadius: BorderRadius.circular(16),
-      child: SurfaceCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage(photographer.avatar),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    b.photographerName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: AppColors.obsidian,
-                    ),
-                  ),
-                ),
-                _buildBadge(b.status),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Gói chụp ${b.style}',
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${b.date} • ${b.location}',
-              style: const TextStyle(color: AppColors.steel, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            const Divider(color: AppColors.pebble),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Tổng tiền', style: TextStyle(color: AppColors.steel, fontSize: 14)),
-                Text(
-                  '${_formatCurrency(b.price)} đ',
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.obsidian),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
-    ).animate().fade().slideY(begin: 0.1, end: 0);
-  }
-
-  Widget _buildBadge(BookingStatus status) {
-    Color bgColor;
-    Color textColor;
-    String text;
-
-    switch (status) {
-      case BookingStatus.pending:
-      case BookingStatus.confirmed:
-        bgColor = AppColors.warning.withAlpha(30);
-        textColor = AppColors.warning;
-        text = status == BookingStatus.pending ? 'Chờ duyệt' : 'Đã xác nhận';
-        break;
-      case BookingStatus.held:
-      case BookingStatus.released:
-        bgColor = AppColors.success.withAlpha(30);
-        textColor = AppColors.success;
-        text = status == BookingStatus.held ? 'Đang thực hiện' : 'Hoàn thành';
-        break;
-      case BookingStatus.cancelled:
-        bgColor = AppColors.destructive.withAlpha(30);
-        textColor = AppColors.destructive;
-        text = 'Đã hủy';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  List<Booking> _getFilteredBookings(List<Booking> all, String filter) {
-    if (filter == 'Tất cả') return all;
-    return all.where((b) {
-      switch (filter) {
-        case 'Chờ duyệt': return b.status == BookingStatus.pending;
-        case 'Đã xác nhận': return b.status == BookingStatus.confirmed;
-        case 'Đang thực hiện': return b.status == BookingStatus.held;
-        case 'Hoàn thành': return b.status == BookingStatus.released;
-        case 'Đã hủy': return b.status == BookingStatus.cancelled;
-        default: return true;
-      }
-    }).toList();
-  }
-
-  String _formatCurrency(int amount) {
-    return amount.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
     );
   }
 }

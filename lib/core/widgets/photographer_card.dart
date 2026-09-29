@@ -165,7 +165,7 @@ class PhotographerCard extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 16,
                             backgroundImage: NetworkImage(photographer.avatar),
-                            onBackgroundImageError: (_, __) => {},
+                            onBackgroundImageError: (_, _) => {},
                           ),
                         ),
                         const SizedBox(width: 10),
