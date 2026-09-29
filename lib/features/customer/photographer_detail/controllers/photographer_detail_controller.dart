@@ -1,16 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/photographer_detail_model.dart';
 import '../repositories/photographer_detail_repository.dart';
 import '../repositories/mock_photographer_detail_repository.dart';
 
-final photographerDetailRepositoryProvider = Provider<PhotographerDetailRepository>((ref) {
-  return MockPhotographerDetailRepository();
-});
+final photographerDetailRepositoryProvider =
+    Provider<PhotographerDetailRepository>((ref) {
+      return MockPhotographerDetailRepository();
+    });
 
 class PhotographerDetailState {
   final bool isLoading;
   final PhotographerProfile? profile;
-  final int selectedTabIndex; // 0: Portfolio, 1: Packages, 2: Reviews, 3: Gear
+  final int selectedTabIndex; // 0: Portfolio, 1: About, 2: Reviews
   final String selectedPortfolioStyle;
   final ProfilePackage? selectedPackage;
   final bool isBookmarked;
@@ -36,7 +38,8 @@ class PhotographerDetailState {
       isLoading: isLoading ?? this.isLoading,
       profile: profile ?? this.profile,
       selectedTabIndex: selectedTabIndex ?? this.selectedTabIndex,
-      selectedPortfolioStyle: selectedPortfolioStyle ?? this.selectedPortfolioStyle,
+      selectedPortfolioStyle:
+          selectedPortfolioStyle ?? this.selectedPortfolioStyle,
       selectedPackage: selectedPackage ?? this.selectedPackage,
       isBookmarked: isBookmarked ?? this.isBookmarked,
     );
@@ -45,7 +48,9 @@ class PhotographerDetailState {
   List<PortfolioItem> get filteredPortfolio {
     if (profile == null) return const [];
     if (selectedPortfolioStyle == 'Tất cả') return profile!.portfolio;
-    return profile!.portfolio.where((item) => item.style == selectedPortfolioStyle).toList();
+    return profile!.portfolio
+        .where((item) => item.style == selectedPortfolioStyle)
+        .toList();
   }
 }
 
@@ -55,14 +60,18 @@ class PhotographerDetailController extends Notifier<PhotographerDetailState> {
     return const PhotographerDetailState();
   }
 
-  PhotographerDetailRepository get _repo => ref.read(photographerDetailRepositoryProvider);
+  PhotographerDetailRepository get _repo =>
+      ref.read(photographerDetailRepositoryProvider);
 
   Future<void> loadProfile(String id) async {
     state = state.copyWith(isLoading: true);
     try {
       final profile = await _repo.getPhotographerProfile(id);
       final defaultPkg = profile.packages.isNotEmpty
-          ? profile.packages.firstWhere((p) => p.isMostSelected, orElse: () => profile.packages.first)
+          ? profile.packages.firstWhere(
+              (p) => p.isMostSelected,
+              orElse: () => profile.packages.first,
+            )
           : null;
       state = state.copyWith(
         isLoading: false,
@@ -95,5 +104,5 @@ class PhotographerDetailController extends Notifier<PhotographerDetailState> {
 
 final photographerDetailControllerProvider =
     NotifierProvider<PhotographerDetailController, PhotographerDetailState>(() {
-  return PhotographerDetailController();
-});
+      return PhotographerDetailController();
+    });

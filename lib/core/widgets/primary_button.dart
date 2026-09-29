@@ -1,43 +1,36 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_colors.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
+  final bool isLoading;
+  final bool expand;
 
   const PrimaryButton({
     super.key,
     required this.text,
     required this.onPressed,
+    this.isLoading = false,
+    this.expand = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.ember,
-        borderRadius: BorderRadius.circular(999),
-        // No box shadow
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
+    final button = ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
+      child: isLoading
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
                 color: AppColors.snow,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
               ),
-            ),
-          ),
-        ),
-      ),
+            )
+          : Text(text),
     );
+    return expand ? SizedBox(width: double.infinity, child: button) : button;
   }
 }

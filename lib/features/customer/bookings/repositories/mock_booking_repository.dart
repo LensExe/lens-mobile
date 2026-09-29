@@ -1,8 +1,13 @@
 import '../models/booking_model.dart';
 import 'booking_repository.dart';
 
+String _dateFromNow(int days) {
+  final date = DateTime.now().add(Duration(days: days));
+  return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
+
 class MockBookingRepository implements BookingRepository {
-  final List<Booking> _bookings = [
+  static final List<Booking> _bookings = [
     Booking(
       id: 'bk-84920',
       clientId: 'u-khachhang',
@@ -11,8 +16,8 @@ class MockBookingRepository implements BookingRepository {
       photographerName: 'Elena Rostova',
       photographerAvatar: 'https://i.pravatar.cc/150?u=elena',
       style: 'Thời trang Lookbook',
-      date: '2024-10-24',
-      timeSlot: '14:00 - 17:00',
+      date: _dateFromNow(6),
+      timeSlot: '14:00',
       location: 'Studio 4B, 15 Lê Lợi, Quận 1, TP.HCM',
       price: 4500000,
       status: BookingStatus.held,
@@ -40,8 +45,8 @@ class MockBookingRepository implements BookingRepository {
       photographerName: 'Minh Hà Studio',
       photographerAvatar: 'https://i.pravatar.cc/150?u=minhha',
       style: 'Ảnh cưới hoàng hôn',
-      date: '2024-10-26',
-      timeSlot: '16:00 - 19:00',
+      date: _dateFromNow(14),
+      timeSlot: '16:00',
       location: 'Cầu Thủ Thiêm & Bờ kè Sông Sài Gòn, TP.HCM',
       price: 6800000,
       status: BookingStatus.confirmed,
@@ -69,8 +74,8 @@ class MockBookingRepository implements BookingRepository {
       photographerName: 'Khải Nguyễn',
       photographerAvatar: 'https://i.pravatar.cc/150?u=khai',
       style: 'Kiến trúc & Không gian',
-      date: '2024-10-28',
-      timeSlot: '09:00 - 11:00',
+      date: _dateFromNow(21),
+      timeSlot: '09:00',
       location: 'Tòa nhà Landmark 81, Bình Thạnh, TP.HCM',
       price: 3200000,
       status: BookingStatus.awaiting_deposit,
@@ -96,8 +101,8 @@ class MockBookingRepository implements BookingRepository {
       photographerName: 'Tuấn Đạt',
       photographerAvatar: 'https://i.pravatar.cc/150?u=tuandat',
       style: 'Ẩm thực & Nhà hàng',
-      date: '2024-10-15',
-      timeSlot: '10:00 - 12:00',
+      date: _dateFromNow(-18),
+      timeSlot: '10:00',
       location: 'Nhà hàng Fusion, Quận 3, TP.HCM',
       price: 2500000,
       status: BookingStatus.released,
@@ -124,8 +129,8 @@ class MockBookingRepository implements BookingRepository {
       photographerName: 'Hoàng Vũ',
       photographerAvatar: 'https://i.pravatar.cc/150?u=hoangvu',
       style: 'Đường phố & Sự kiện',
-      date: '2024-10-10',
-      timeSlot: '15:00 - 16:30',
+      date: _dateFromNow(-35),
+      timeSlot: '15:00',
       location: 'Phố đi bộ Nguyễn Huệ, Quận 1, TP.HCM',
       price: 1200000,
       status: BookingStatus.cancelled,
@@ -162,11 +167,23 @@ class MockBookingRepository implements BookingRepository {
   }
 
   @override
-  Future<void> updateBookingStatus(String bookingId, BookingStatus newStatus) async {
+  Future<void> updateBookingStatus(
+    String bookingId,
+    BookingStatus newStatus,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 250));
     final index = _bookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
-      _bookings[index] = _bookings[index].copyWith(status: newStatus, date: _bookings[index].date);
+      _bookings[index] = _bookings[index].copyWith(
+        status: newStatus,
+        date: _bookings[index].date,
+      );
     }
+  }
+
+  @override
+  Future<void> createBooking(Booking booking) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _bookings.insert(0, booking);
   }
 }

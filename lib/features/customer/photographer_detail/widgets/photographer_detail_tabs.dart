@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/photographer_detail_model.dart';
 
 class PhotographerDetailTabs extends StatelessWidget {
@@ -16,10 +17,9 @@ class PhotographerDetailTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      'Bộ sưu tập (${profile.portfolio.length})',
-      'Gói chụp (${profile.packages.length})',
+      'Tác phẩm (${profile.portfolio.length})',
+      'Giới thiệu',
       'Đánh giá (${profile.reviewCount})',
-      'Thiết bị & Studio',
     ];
 
     return SizedBox(
@@ -40,7 +40,9 @@ class PhotographerDetailTabs extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF1A1C1D) : const Color(0xFFEEEEEF),
+                color: isSelected
+                    ? const Color(0xFF1A1C1D)
+                    : const Color(0xFFEEEEEF),
                 borderRadius: BorderRadius.circular(9999),
                 boxShadow: isSelected
                     ? [

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/lens_page.dart';
 import '../../providers/data_providers.dart';
 
 class MoreTabScreen extends ConsumerWidget {
@@ -11,168 +14,243 @@ class MoreTabScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authUserProvider);
-    
-    return Scaffold(
-      backgroundColor: AppColors.mist,
-      appBar: AppBar(
-        backgroundColor: AppColors.snow,
-        elevation: 0,
-        title: const Text('Tùy chọn khác', style: TextStyle(color: AppColors.obsidian, fontSize: 18, fontWeight: FontWeight.bold)),
-      ),
+    return LensPage(
+      appBar: AppBar(title: const Text('Tùy chọn khác')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          AppTokens.pageHorizontal,
+          12,
+          AppTokens.pageHorizontal,
+          32,
+        ),
         children: [
-          // User Info Card
-          if (user != null)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.snow,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.pebble),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.mist,
-                    backgroundImage: user.role == 'photographer'
-                        ? const NetworkImage('https://i.pravatar.cc/150?img=11') // Mock photographer avatar
-                        : null,
-                    child: user.role == 'client' ? const Icon(LucideIcons.user, color: AppColors.steel, size: 30) : null,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(user.id == 'u1' ? 'Nguyễn Văn Khách' : (user.role == 'photographer' ? 'Nhiếp ảnh gia' : 'Người dùng'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
-                        const SizedBox(height: 4),
-                        Text(user.role == 'client' ? 'Khách hàng' : 'Đối tác Lens', style: const TextStyle(color: AppColors.steel, fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          
-          const SizedBox(height: 32),
-          
-          if (user?.role == 'photographer') ...[
-            _buildMenuSection('Nghiệp vụ', [
-              _buildMenuItem(LucideIcons.wallet, 'Ví của tôi', () => context.go('/photographer_home/wallet')),
-              _buildMenuItem(LucideIcons.messageSquare, 'Tin nhắn', () => context.go('/photographer_home/messages')),
-              _buildMenuItem(LucideIcons.award, 'Thành tích', () => context.go('/photographer_home/achievements')),
-            ]),
-            const SizedBox(height: 24),
-          ],
-
-          // Menu Items
-          _buildMenuSection('Cài đặt tài khoản', [
-            _buildMenuItem(LucideIcons.user, 'Thông tin cá nhân', () {}),
-            _buildMenuItem(LucideIcons.lock, 'Đổi mật khẩu', () {}),
-            _buildMenuItem(LucideIcons.bell, 'Cài đặt thông báo', () {}),
-          ]),
-          
-          const SizedBox(height: 24),
-          
-          _buildMenuSection('Hỗ trợ', [
-            _buildMenuItem(LucideIcons.helpCircle, 'Trung tâm trợ giúp', () {}),
-            _buildMenuItem(LucideIcons.shield, 'Chính sách bảo mật', () {}),
-            _buildMenuItem(LucideIcons.star, 'Đánh giá ứng dụng', () {}),
-          ]),
-          
-          const SizedBox(height: 32),
-          
-          // Logout Button
-          ElevatedButton(
-            onPressed: () {
-              _showLogoutConfirm(context, ref);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.snow,
-              foregroundColor: Colors.red,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Colors.red),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+          LensSectionCard(
+            child: Row(
               children: [
-                Icon(LucideIcons.logOut, size: 20),
-                SizedBox(width: 8),
-                Text('Đăng xuất', style: TextStyle(fontWeight: FontWeight.bold)),
+                CircleAvatar(
+                  radius: 27,
+                  backgroundColor: AppColors.fog,
+                  child: const Icon(
+                    LucideIcons.userRound,
+                    color: AppColors.steel,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.name ?? 'Khách hàng',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        user?.email ?? 'Đăng nhập để đồng bộ lịch chụp',
+                        style: const TextStyle(
+                          color: AppColors.steel,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 18,
+                  color: AppColors.steel,
+                ),
               ],
             ),
           ),
-          
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
+          _MenuSection(
+            title: 'Không gian của tôi',
+            items: [
+              _MenuItem(
+                icon: LucideIcons.walletCards,
+                title: 'Ví của tôi',
+                subtitle: 'Quản lý Lens Xu',
+                onTap: () => context.push('/customer_home/wallet'),
+              ),
+              _MenuItem(
+                icon: LucideIcons.star,
+                title: 'Đánh giá của tôi',
+                subtitle: 'Chia sẻ trải nghiệm sau buổi chụp',
+                onTap: () => context.push('/customer_home/reviews'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _MenuSection(
+            title: 'Cài đặt tài khoản',
+            items: [
+              _MenuItem(
+                icon: LucideIcons.userRound,
+                title: 'Hồ sơ cá nhân',
+                subtitle: 'Thông tin dùng cho đặt lịch',
+                onTap: () => context.push('/customer_home/settings/profile'),
+              ),
+              _MenuItem(
+                icon: LucideIcons.shieldCheck,
+                title: 'Tài khoản & bảo mật',
+                subtitle: 'Mật khẩu và thiết bị đăng nhập',
+                onTap: () => context.push('/customer_home/settings/account'),
+              ),
+              _MenuItem(
+                icon: LucideIcons.bell,
+                title: 'Thông báo',
+                subtitle: 'Tuỳ chỉnh thông báo lịch đặt',
+                onTap: () =>
+                    context.push('/customer_home/settings/notifications'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _MenuSection(
+            title: 'Hỗ trợ',
+            items: [
+              _MenuItem(
+                icon: LucideIcons.circleHelp,
+                title: 'Trung tâm trợ giúp',
+                subtitle: 'Lens Care sẽ hỗ trợ bạn sớm nhất',
+                onTap: () =>
+                    _showMessage(context, 'Lens Care sẽ hỗ trợ bạn sớm nhất.'),
+              ),
+              _MenuItem(
+                icon: LucideIcons.shield,
+                title: 'Chính sách bảo mật',
+                subtitle: 'Tìm hiểu cách Lens bảo vệ dữ liệu',
+                onTap: () => _showMessage(
+                  context,
+                  'Chính sách bảo mật sẽ sớm khả dụng.',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          OutlinedButton.icon(
+            onPressed: () => _confirmLogout(context, ref),
+            icon: const Icon(LucideIcons.logOut, size: 17),
+            label: const Text('Đăng xuất'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.destructive,
+              side: const BorderSide(color: AppColors.destructive),
+            ),
+          ),
+          const SizedBox(height: 28),
           const Center(
-            child: Text('Phiên bản 1.0.0', style: TextStyle(color: AppColors.steel, fontSize: 12)),
+            child: Text(
+              'Lens · phiên bản 1.0.0',
+              style: TextStyle(color: AppColors.steel, fontSize: 11),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuSection(String title, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.steel)),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.snow,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.pebble),
-          ),
-          child: Column(
-            children: items,
-          ),
-        ),
-      ],
-    );
-  }
+  void _showMessage(BuildContext context, String message) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
 
-  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.obsidian, size: 22),
-      title: Text(title, style: const TextStyle(color: AppColors.obsidian, fontSize: 15, fontWeight: FontWeight.w500)),
-      trailing: const Icon(LucideIcons.chevronRight, color: AppColors.steel, size: 20),
-      onTap: onTap,
-    );
-  }
-
-  void _showLogoutConfirm(BuildContext context, WidgetRef ref) {
-    showDialog(
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?'),
-        backgroundColor: AppColors.snow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Đăng xuất?'),
+        content: const Text('Bạn có chắc muốn đăng xuất khỏi ứng dụng?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy', style: TextStyle(color: AppColors.steel)),
+            onPressed: () => ctx.pop(false),
+            child: const Text('Quay lại'),
           ),
-          TextButton(
-            onPressed: () {
-              // Perform logout first
-              ref.read(authUserProvider.notifier).setUser(null);
-              
-              // Pop dialog and navigate using GoRouter
-              Navigator.of(ctx).pop();
-              GoRouter.of(context).go('/');
-            },
-            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ElevatedButton(
+            onPressed: () => ctx.pop(true),
+            child: const Text('Đăng xuất'),
           ),
         ],
       ),
     );
+    if (shouldLogout == true && context.mounted) {
+      ref.read(authUserProvider.notifier).setUser(null);
+      context.go('/login');
+    }
   }
+}
+
+class _MenuSection extends StatelessWidget {
+  final String title;
+  final List<_MenuItem> items;
+  const _MenuSection({required this.title, required this.items});
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(
+          color: AppColors.steel,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 8),
+      LensSectionCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              items[i],
+              if (i < items.length - 1)
+                const Divider(height: 1, indent: 54, endIndent: 16),
+            ],
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _MenuItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) => ListTile(
+    onTap: onTap,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+    leading: Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: AppColors.mist,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, size: 17, color: AppColors.obsidian),
+    ),
+    title: Text(
+      title,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+    ),
+    subtitle: Text(
+      subtitle,
+      style: const TextStyle(color: AppColors.steel, fontSize: 11),
+    ),
+    trailing: const Icon(
+      LucideIcons.chevronRight,
+      size: 17,
+      color: AppColors.steel,
+    ),
+  );
 }

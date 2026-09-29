@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../domain/models/models.dart';
 import '../data/mock_database.dart';
 import '../data/mock_api_service.dart';
@@ -8,7 +9,7 @@ class AuthUserNotifier extends Notifier<User?> {
   User? build() {
     return MockDatabase.currentUser;
   }
-  
+
   void setUser(User? user) {
     state = user;
     // When user changes, refresh bookings
@@ -16,7 +17,9 @@ class AuthUserNotifier extends Notifier<User?> {
   }
 }
 
-final authUserProvider = NotifierProvider<AuthUserNotifier, User?>(() => AuthUserNotifier());
+final authUserProvider = NotifierProvider<AuthUserNotifier, User?>(
+  () => AuthUserNotifier(),
+);
 
 final photographersProvider = Provider<List<Photographer>>((ref) {
   return MockDatabase.photographers;
@@ -28,17 +31,17 @@ class AsyncBookingsNotifier extends AsyncNotifier<List<Booking>> {
   Future<List<Booking>> build() async {
     final user = ref.watch(authUserProvider);
     if (user == null) return [];
-    
+
     return await mockApiService.getMyBookings(user.id, user.role);
   }
 
   Future<void> createBooking(Booking booking) async {
     // Keep old state
     final previousState = state.value ?? [];
-    
+
     // Set loading
     state = const AsyncLoading();
-    
+
     try {
       final newBooking = await mockApiService.createBooking(booking);
       state = AsyncData([...previousState, newBooking]);
@@ -47,12 +50,15 @@ class AsyncBookingsNotifier extends AsyncNotifier<List<Booking>> {
     }
   }
 
-  Future<void> updateBookingStatus(String bookingId, BookingStatus newStatus) async {
+  Future<void> updateBookingStatus(
+    String bookingId,
+    BookingStatus newStatus,
+  ) async {
     final previousState = state.value ?? [];
-    
+
     try {
       await mockApiService.updateBookingStatus(bookingId, newStatus);
-      
+
       // Update local state without re-fetching everything
       final updatedList = previousState.map((b) {
         if (b.id == bookingId) {
@@ -71,7 +77,7 @@ class AsyncBookingsNotifier extends AsyncNotifier<List<Booking>> {
         }
         return b;
       }).toList();
-      
+
       state = AsyncData(updatedList);
     } catch (e, stack) {
       state = AsyncError(e, stack);
@@ -79,7 +85,10 @@ class AsyncBookingsNotifier extends AsyncNotifier<List<Booking>> {
   }
 }
 
-final asyncBookingsProvider = AsyncNotifierProvider<AsyncBookingsNotifier, List<Booking>>(() => AsyncBookingsNotifier());
+final asyncBookingsProvider =
+    AsyncNotifierProvider<AsyncBookingsNotifier, List<Booking>>(
+      () => AsyncBookingsNotifier(),
+    );
 
 // We can still provide a synchronous snapshot for simple screens,
 // but they won't show loading states properly unless they use asyncBookingsProvider directly.
@@ -92,11 +101,34 @@ class ConversationsNotifier extends Notifier<List<Conversation>> {
   List<Conversation> build() {
     return MockDatabase.conversations;
   }
+
+  void markRead(String conversationId) {
+    state = [
+      for (final conversation in state)
+        conversation.id == conversationId
+            ? conversation.copyWith(unreadCount: 0)
+            : conversation,
+    ];
+  }
+
+  void updatePreview({
+    required String conversationId,
+    required String message,
+    required DateTime updatedAt,
+  }) {
+    state = [
+      for (final conversation in state)
+        conversation.id == conversationId
+            ? conversation.copyWith(lastMessage: message, updatedAt: updatedAt)
+            : conversation,
+    ];
+  }
 }
 
-final conversationsProvider = NotifierProvider<ConversationsNotifier, List<Conversation>>(() {
-  return ConversationsNotifier();
-});
+final conversationsProvider =
+    NotifierProvider<ConversationsNotifier, List<Conversation>>(() {
+      return ConversationsNotifier();
+    });
 
 class MessagesNotifier extends Notifier<List<Message>> {
   @override

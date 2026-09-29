@@ -4,17 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lens_app/features/splash/splash_screen.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
 import 'package:lens_app/features/auth/login_screen.dart';
+import 'package:lens_app/features/auth/signup_screen.dart';
 import 'package:lens_app/features/customer/customer_home_screen.dart';
 import 'package:lens_app/features/customer/discovery/screens/photographers_discovery_screen.dart';
-import 'package:lens_app/features/customer/photographer_detail_screen.dart';
+import 'package:lens_app/features/customer/photographer_detail/screens/photographer_detail_screen.dart';
 import 'package:lens_app/features/customer/booking_screen.dart';
 import 'package:lens_app/features/shared/bookings_list_screen.dart';
 import 'package:lens_app/features/customer/bookings/booking_detail_screen.dart';
 import 'package:lens_app/features/customer/bookings/delivery_gallery_screen.dart';
 import 'package:lens_app/features/customer/messages/customer_conversations_screen.dart';
 import 'package:lens_app/features/customer/messages/customer_chat_detail_screen.dart';
+import 'package:lens_app/features/customer/payments/deposit_screen.dart';
+import 'package:lens_app/features/customer/reviews/reviews_screen.dart';
+import 'package:lens_app/features/customer/settings/settings_screen.dart';
+import 'package:lens_app/features/customer/wallet/wallet_screen.dart';
 
 import 'customer_shell.dart';
+
 import 'package:lens_app/features/shared/more_tab_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -33,21 +39,68 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/gallery',
         builder: (context, state) => const UiGalleryScreen(),
       ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        path: '/signup',
+        builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/customer_home',
+        redirect: (context, state) => '/customer_home/overview',
       ),
       GoRoute(
         path: '/customer_home/messages/:id',
-        builder: (context, state) => CustomerChatDetailScreen(conversationId: state.pathParameters['id']!),
+        builder: (context, state) => CustomerChatDetailScreen(
+          conversationId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/customer_home/bookings/:id',
-        builder: (context, state) => BookingDetailScreen(bookingId: state.pathParameters['id']!),
+        builder: (context, state) =>
+            BookingDetailScreen(bookingId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/customer_home/bookings/:id/gallery',
-        builder: (context, state) => DeliveryGalleryScreen(bookingId: state.pathParameters['id']!),
+        builder: (context, state) =>
+            DeliveryGalleryScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/customer_home/bookings/:id/deposit',
+        builder: (context, state) =>
+            DepositScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/customer_home/bookings/:id/pay',
+        builder: (context, state) =>
+            PaymentScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/customer_home/reviews',
+        builder: (context, state) => const ReviewsScreen(),
+      ),
+      GoRoute(
+        path: '/customer_home/wallet',
+        builder: (context, state) => const WalletScreen(),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/profile',
+        builder: (context, state) =>
+            const SettingsScreen(section: SettingsSection.profile),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/account',
+        builder: (context, state) =>
+            const SettingsScreen(section: SettingsSection.account),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/notifications',
+        builder: (context, state) =>
+            const SettingsScreen(section: SettingsSection.notifications),
+      ),
+      GoRoute(
+        path: '/customer_home/photographer/:id/book',
+        builder: (context, state) =>
+            BookingScreen(id: state.pathParameters['id']!),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -63,11 +116,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/customer_home/photographer/:id',
-            builder: (context, state) => PhotographerDetailScreen(id: state.pathParameters['id']!),
-          ),
-          GoRoute(
-            path: '/customer_home/photographer/:id/book',
-            builder: (context, state) => BookingScreen(id: state.pathParameters['id']!),
+            builder: (context, state) =>
+                PhotographerDetailScreen(id: state.pathParameters['id']!),
           ),
           GoRoute(
             path: '/customer_home/bookings',

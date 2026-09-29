@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/booking_model.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/mock_booking_repository.dart';
@@ -34,8 +35,13 @@ class CustomerBookingsState {
   List<Booking> get inProgressBookings =>
       allBookings.where((b) => b.status == BookingStatus.held).toList();
 
-  List<Booking> get awaitingBookings =>
-      allBookings.where((b) => b.status == BookingStatus.awaiting_deposit || b.status == BookingStatus.pending).toList();
+  List<Booking> get awaitingBookings => allBookings
+      .where(
+        (b) =>
+            b.status == BookingStatus.awaiting_deposit ||
+            b.status == BookingStatus.pending,
+      )
+      .toList();
 
   List<Booking> get confirmedBookings =>
       allBookings.where((b) => b.status == BookingStatus.confirmed).toList();
@@ -47,13 +53,26 @@ class CustomerBookingsState {
       allBookings.where((b) => b.status == BookingStatus.cancelled).toList();
 
   // Active bookings in client workspace (not completed, not cancelled)
-  int get activeCount => allBookings.where((b) =>
-      b.status != BookingStatus.released && b.status != BookingStatus.cancelled).length;
+  int get activeCount => allBookings
+      .where(
+        (b) =>
+            b.status != BookingStatus.released &&
+            b.status != BookingStatus.cancelled,
+      )
+      .length;
 
   // Total escrow funds currently held in protection
   int get totalEscrowHeld => allBookings
-      .where((b) => b.status == BookingStatus.held || b.status == BookingStatus.confirmed)
-      .fold(0, (sum, b) => sum + (b.status == BookingStatus.held ? b.price : b.depositAmount));
+      .where(
+        (b) =>
+            b.status == BookingStatus.held ||
+            b.status == BookingStatus.confirmed,
+      )
+      .fold(
+        0,
+        (sum, b) =>
+            sum + (b.status == BookingStatus.held ? b.price : b.depositAmount),
+      );
 
   // Filtered bookings based on selected tab
   List<Booking> get filteredBookings {
@@ -107,10 +126,7 @@ class CustomerBookingsController extends Notifier<CustomerBookingsState> {
     state = state.copyWith(isLoading: true);
     try {
       final list = await _repo.getBookings();
-      state = state.copyWith(
-        isLoading: false,
-        allBookings: list,
-      );
+      state = state.copyWith(isLoading: false, allBookings: list);
     } catch (_) {
       state = state.copyWith(isLoading: false);
     }
@@ -124,9 +140,14 @@ class CustomerBookingsController extends Notifier<CustomerBookingsState> {
     await _repo.updateBookingStatus(bookingId, newStatus);
     await loadBookings();
   }
+
+  Future<void> createBooking(Booking booking) async {
+    await _repo.createBooking(booking);
+    await loadBookings();
+  }
 }
 
 final customerBookingsControllerProvider =
     NotifierProvider<CustomerBookingsController, CustomerBookingsState>(() {
-  return CustomerBookingsController();
-});
+      return CustomerBookingsController();
+    });

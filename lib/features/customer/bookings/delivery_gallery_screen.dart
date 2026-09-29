@@ -2,159 +2,195 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
-import '../../../providers/data_providers.dart';
-import '../../../domain/models/models.dart';
+import 'controllers/customer_bookings_controller.dart';
+import 'models/booking_model.dart';
 
 class DeliveryGalleryScreen extends ConsumerStatefulWidget {
   final String bookingId;
-
   const DeliveryGalleryScreen({super.key, required this.bookingId});
-
   @override
-  ConsumerState<DeliveryGalleryScreen> createState() => _DeliveryGalleryScreenState();
+  ConsumerState<DeliveryGalleryScreen> createState() =>
+      _DeliveryGalleryScreenState();
 }
 
 class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
-  bool _isLoading = false;
-
-  // Mock delivered photos
-  final List<String> _deliveredPhotos = [
-    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc',
-    'https://images.unsplash.com/photo-1519741497674-611481863552',
-    'https://images.unsplash.com/photo-1542038784456-1ea8e935640e',
-    'https://images.unsplash.com/photo-1532712938736-59c79ae04527',
-    'https://images.unsplash.com/photo-1606800052052-a08af7148866',
+  static const _deliveredPhotos = [
+    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1532712938736-59c79ae04527?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=80',
   ];
-
-  Future<void> _confirmReceipt(Booking booking) async {
-    setState(() => _isLoading = true);
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-
-    ref.read(asyncBookingsProvider.notifier).updateBookingStatus(booking.id, BookingStatus.released);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(LucideIcons.checkCircle2, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Đã xác nhận · Nhận +${(booking.price * 0.05).toInt()} Lens Xu hoàn lại',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.success,
-      ),
-    );
-
-    context.pop();
-  }
+  bool _isConfirming = false;
 
   @override
   Widget build(BuildContext context) {
-    final bookings = ref.watch(myBookingsProvider);
-    final booking = bookings.firstWhere(
-      (b) => b.id == widget.bookingId,
-      orElse: () => bookings.first,
-    );
-
-    return Scaffold(
-      backgroundColor: AppColors.mist,
+    final state = ref.watch(customerBookingsControllerProvider);
+    final matches = state.allBookings
+        .where((item) => item.id == widget.bookingId)
+        .toList();
+    final booking = matches.isEmpty ? null : matches.first;
+    if (booking == null) {
+      return LensPage(
+        appBar: AppBar(title: const Text('Bộ ảnh')),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.ember),
+        ),
+      );
+    }
+    final required =
+        booking.packageSnapshot?.photoCount ?? _deliveredPhotos.length;
+    final deliveredCount = booking.uploadedProofsCount > 0
+        ? booking.uploadedProofsCount
+        : _deliveredPhotos.length;
+    final complete = deliveredCount >= required;
+    return LensPage(
       appBar: AppBar(
-        backgroundColor: AppColors.snow,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.obsidian),
           onPressed: () => context.pop(),
+          icon: const Icon(LucideIcons.arrowLeft),
         ),
-        title: Text(
-          'Ảnh buổi chụp ${booking.style}',
-          style: const TextStyle(color: AppColors.obsidian, fontWeight: FontWeight.w600, fontSize: 16),
-        ),
+        title: Text('Ảnh buổi chụp · ${booking.style}'),
       ),
-      body: Column(
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppTokens.pageHorizontal,
+          10,
+          AppTokens.pageHorizontal,
+          32,
+        ),
         children: [
           if (booking.status == BookingStatus.held)
-            _buildConfirmReceiptBox(booking),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: _deliveredPhotos.length,
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    _deliveredPhotos[index],
-                    fit: BoxFit.cover,
+            LensSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(LucideIcons.info, size: 18, color: AppColors.steel),
+                      SizedBox(width: 8),
+                      Text(
+                        'Xác nhận nhận ảnh',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
-                );
-              },
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sàn chỉ giải ngân sau khi bạn kiểm tra và xác nhận đã nhận đủ ảnh theo gói.',
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.steel),
+                  ),
+                  const SizedBox(height: 12),
+                  PrimaryButton(
+                    text: 'Xác nhận đã nhận ảnh',
+                    onPressed: complete ? () => _confirm(booking) : () {},
+                    isLoading: _isConfirming,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConfirmReceiptBox(Booking booking) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.fog,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.pebble),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(LucideIcons.info, color: AppColors.steel, size: 20),
-              SizedBox(width: 8),
               Text(
-                'Xác nhận nhận ảnh',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.obsidian),
+                '$deliveredCount ảnh đã giao',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                'Gói yêu cầu $required ảnh',
+                style: const TextStyle(color: AppColors.steel, fontSize: 12),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Sau khi xác nhận, sàn sẽ giải ngân ${_formatCurrency(booking.price)} đ cho nhiếp ảnh gia và hoàn Lens Xu cho bạn.',
-            style: const TextStyle(color: AppColors.steel, fontSize: 14),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: AppColors.obsidian))
-                : PrimaryButton(
-                    text: 'Xác nhận đã nhận ảnh',
-                    onPressed: () => _confirmReceipt(booking),
-                  ),
+          if (!complete && booking.status == BookingStatus.held) ...[
+            const SizedBox(height: 7),
+            Text(
+              'Bạn có thể xác nhận khi nhiếp ảnh gia giao đủ ảnh theo gói.',
+              style: const TextStyle(color: AppColors.warning, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _deliveredPhotos.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: .82,
+            ),
+            itemBuilder: (context, index) =>
+                _PhotoTile(url: _deliveredPhotos[index], index: index),
           ),
         ],
       ),
     );
   }
 
-  String _formatCurrency(int amount) {
-    return amount.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
+  Future<void> _confirm(Booking booking) async {
+    setState(() => _isConfirming = true);
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    if (!mounted) return;
+    await ref
+        .read(customerBookingsControllerProvider.notifier)
+        .updateStatus(booking.id, BookingStatus.released);
+    if (!mounted) return;
+    setState(() => _isConfirming = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đã xác nhận nhận ảnh. Tiền đã được giải ngân.'),
+      ),
     );
+    context.pop();
   }
+}
+
+class _PhotoTile extends StatelessWidget {
+  final String url;
+  final int index;
+  const _PhotoTile({required this.url, required this.index});
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: () => showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black,
+        child: InteractiveViewer(
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const SizedBox(
+              height: 220,
+              child: Center(
+                child: Text(
+                  'Không thể tải ảnh',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: AppColors.fog,
+          child: const Icon(LucideIcons.imageOff, color: AppColors.steel),
+        ),
+      ),
+    ),
+  );
 }

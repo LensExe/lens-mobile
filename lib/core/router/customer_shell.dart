@@ -1,30 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
-import '../theme/app_colors.dart';
 
-class CustomerShell extends StatelessWidget {
+import '../../providers/data_providers.dart';
+
+class CustomerShell extends ConsumerWidget {
   final Widget child;
 
   const CustomerShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref
+        .watch(conversationsProvider)
+        .fold<int>(0, (sum, conversation) => sum + conversation.unreadCount);
     return Scaffold(
       body: child,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _calculateSelectedIndex(context),
         onTap: (int index) => _onItemTapped(index, context),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.obsidian,
-        unselectedItemColor: AppColors.steel,
-        backgroundColor: AppColors.snow,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(LucideIcons.search), label: 'Khám phá'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: 'Tổng quan'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.calendar), label: 'Lịch đặt'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.messageSquare), label: 'Tin nhắn'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.menu), label: 'Khác'),
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.search),
+            label: 'Khám phá',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.home),
+            label: 'Tổng quan',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.calendar),
+            label: 'Lịch đặt',
+          ),
+          BottomNavigationBarItem(
+            icon: _UnreadIcon(count: unread),
+            label: 'Tin nhắn',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(LucideIcons.menu),
+            label: 'Khác',
+          ),
         ],
       ),
     );
@@ -58,5 +75,42 @@ class CustomerShell extends StatelessWidget {
         context.go('/customer_home/more');
         break;
     }
+  }
+}
+
+class _UnreadIcon extends StatelessWidget {
+  final int count;
+  const _UnreadIcon({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        const Icon(LucideIcons.messageSquare),
+        if (count > 0)
+          Positioned(
+            top: -5,
+            right: -8,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF5A00),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '$count',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

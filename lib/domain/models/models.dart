@@ -110,6 +110,23 @@ class Conversation {
     required this.unreadCount,
     required this.updatedAt,
   });
+
+  Conversation copyWith({
+    String? lastMessage,
+    int? unreadCount,
+    DateTime? updatedAt,
+  }) {
+    return Conversation(
+      id: id,
+      bookingId: bookingId,
+      otherPartyId: otherPartyId,
+      otherPartyName: otherPartyName,
+      otherPartyAvatar: otherPartyAvatar,
+      lastMessage: lastMessage ?? this.lastMessage,
+      unreadCount: unreadCount ?? this.unreadCount,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
 
 class Message {
