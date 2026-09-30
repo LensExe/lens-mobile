@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 
 class BookingStepperHeader extends StatelessWidget {
   final int currentStep; // 0, 1, 2
@@ -29,55 +31,71 @@ class BookingStepperHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      color: AppColors.snow,
+      padding: const EdgeInsets.fromLTRB(
+        AppTokens.pageHorizontal,
+        10,
+        AppTokens.pageHorizontal,
+        14,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(
-                  LucideIcons.arrowLeft,
-                  size: 20,
-                  color: AppColors.obsidian,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                splashRadius: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Bước ${currentStep + 1} / 3',
-                style: const TextStyle(
-                  color: AppColors.ember,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+              InkWell(
+                onTap: onBack,
+                borderRadius: BorderRadius.circular(9999),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.snow,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.pebble),
+                    boxShadow: const [AppTokens.surfaceShadow],
+                  ),
+                  child: const Icon(
+                    LucideIcons.arrowLeft,
+                    size: 18,
+                    color: AppColors.obsidian,
+                  ),
                 ),
               ),
-              const Spacer(),
-              Text(
-                _stepTitle,
-                style: const TextStyle(
-                  color: Color(0xFF5F5E60),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'BƯỚC ${currentStep + 1} / 3',
+                    style: AppTypography.numeric(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ember,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _stepTitle,
+                    style: AppTypography.titleMd(
+                      fontSize: 15,
+                      color: AppColors.obsidian,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Row(
             children: List.generate(3, (index) {
               final isActive = index <= currentStep;
               return Expanded(
                 child: Container(
-                  height: 6,
+                  height: 4,
                   margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
                   decoration: BoxDecoration(
-                    color: isActive ? AppColors.ember : const Color(0xFFE8E8E9),
+                    color: isActive ? AppColors.ember : AppColors.fog,
                     borderRadius: BorderRadius.circular(9999),
                   ),
                 ),

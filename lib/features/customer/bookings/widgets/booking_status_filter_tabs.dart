@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
+
 class BookingStatusFilterTabs extends StatelessWidget {
   final String selectedTab;
   final Function(String) onTabSelected;
@@ -24,11 +28,11 @@ class BookingStatusFilterTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: AppTokens.filterChipHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
         itemCount: tabs.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -36,34 +40,28 @@ class BookingStatusFilterTabs extends StatelessWidget {
           final isSelected = (tab == selectedTab);
           final count = countProvider(tab);
 
-          return GestureDetector(
+          return InkWell(
             onTap: () => onTabSelected(tab),
+            borderRadius: BorderRadius.circular(9999),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF2F3132) : const Color(0xFFF3F3F4),
+                color: isSelected ? AppColors.obsidian : AppColors.fog,
                 borderRadius: BorderRadius.circular(9999),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
+                border: isSelected
+                    ? null
+                    : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     tab,
-                    style: TextStyle(
-                      color: isSelected ? const Color(0xFFF0F1F2) : const Color(0xFF5F5E60),
-                      fontSize: 12.5,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      letterSpacing: -0.1,
+                    style: AppTypography.labelMd(
+                      color: isSelected ? AppColors.snow : AppColors.steel,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -71,16 +69,16 @@ class BookingStatusFilterTabs extends StatelessWidget {
                     constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFF5A00) : const Color(0xFFE8E8E9),
+                      color: isSelected ? AppColors.ember : AppColors.mist,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '$count',
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : const Color(0xFF5F5E60),
+                      style: AppTypography.numeric(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
+                        color: isSelected ? Colors.white : AppColors.steel,
                       ),
                     ),
                   ),

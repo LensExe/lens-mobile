@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/primary_button.dart';
 import '../controllers/booking_wizard_controller.dart';
 import '../widgets/booking_stepper_header.dart';
 import '../widgets/step1_package_schedule_view.dart';
@@ -144,7 +146,7 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FA),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -185,49 +187,26 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
 
             // Bottom CTA Bar
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                MediaQuery.of(context).padding.bottom + 12,
+              ),
               decoration: const BoxDecoration(
                 color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: AppColors.pebble, width: 1.0),
+                ),
                 boxShadow: [
-                  BoxShadow(
-                    color: Color(0x0C000000),
-                    blurRadius: 8,
-                    offset: Offset(0, -2),
-                  ),
+                  AppTokens.surfaceShadow,
                 ],
               ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: isCtaEnabled ? _onNext : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.ember,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFE8E8E9),
-                    disabledForegroundColor: const Color(0xFF8E8E93),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: state.isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          ctaText,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                ),
+              child: PrimaryButton(
+                text: ctaText,
+                isLoading: state.isSubmitting,
+                onPressed: isCtaEnabled ? _onNext : null,
+                height: AppTokens.primaryButtonHeight, // 52px
               ),
             ),
           ],

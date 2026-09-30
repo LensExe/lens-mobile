@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_tokens.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../models/photographer_detail_model.dart';
 
 class StudioGearTabView extends StatelessWidget {
@@ -13,154 +16,145 @@ class StudioGearTabView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Thiết bị & Studio chính hãng',
-            style: TextStyle(
-              color: Color(0xFF1A1C1D),
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Thiết bị & Studio tác nghiệp',
+          style: AppTypography.headlineSm(
+            fontSize: 18,
+            color: AppColors.obsidian,
           ),
-          const SizedBox(height: 14),
+        ),
+        const SizedBox(height: 14),
 
-          // Main Card containing Gear Info
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Camera Bodies
-                _buildGearRow(
-                  icon: LucideIcons.camera,
-                  title: 'Thân máy (Camera Bodies)',
-                  items: gearInfo.cameraBodies,
-                ),
-                const Divider(height: 24, color: Color(0xFFEEEEEF)),
+        // Main Card containing Gear Info
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.snow,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.pebble),
+            boxShadow: const [AppTokens.surfaceShadow],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Camera Bodies
+              _buildGearRow(
+                icon: LucideIcons.camera,
+                title: 'Thân máy chuyên nghiệp (Bodies)',
+                items: gearInfo.cameraBodies,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: AppColors.pebble),
+              ),
 
-                // 2. Lighting & Modifiers
-                _buildGearRow(
-                  icon: LucideIcons.zap,
-                  title: 'Hệ thống đèn & Ánh sáng (Lighting)',
-                  items: gearInfo.lightingModifiers,
-                ),
-                const Divider(height: 24, color: Color(0xFFEEEEEF)),
+              // 2. Lighting & Modifiers
+              _buildGearRow(
+                icon: LucideIcons.zap,
+                title: 'Hệ thống ánh sáng & Đèn Flash',
+                items: gearInfo.lightingModifiers,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: AppColors.pebble),
+              ),
 
-                // 3. Studio Location
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEEEEEF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          LucideIcons.mapPin,
-                          size: 18,
-                          color: Color(0xFF1A1C1D),
-                        ),
+              // 3. Studio Location
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.fog,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.mapPin,
+                        size: 17,
+                        color: AppColors.obsidian,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Địa chỉ Studio tác nghiệp',
-                            style: TextStyle(
-                              color: Color(0xFF1A1C1D),
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w700,
-                            ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Địa chỉ Studio tác nghiệp',
+                          style: AppTypography.titleMd(
+                            fontSize: 14.5,
+                            color: AppColors.obsidian,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            gearInfo.studioAddress,
-                            style: const TextStyle(
-                              color: Color(0xFF5F5E60),
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w400,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          gearInfo.studioAddress,
+                          style: AppTypography.bodySm(
+                            fontSize: 12.5,
+                            color: AppColors.steel,
+                          ).copyWith(height: 1.35),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // LENS Care Insurance Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.fog,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                LucideIcons.shieldCheck,
+                size: 20,
+                color: AppColors.emerald,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bảo chứng An toàn LENS Care',
+                      style: AppTypography.titleMd(
+                        fontSize: 13.5,
+                        color: AppColors.obsidian,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      gearInfo.insuranceNotice,
+                      style: AppTypography.bodySm(
+                        fontSize: 12,
+                        color: AppColors.steel,
+                      ).copyWith(height: 1.35),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-
-          // LENS Care Insurance Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFDBCF).withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFFFDBCF), width: 1.5),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  LucideIcons.shieldCheck,
-                  size: 20,
-                  color: Color(0xFFA83900),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Bảo chứng An toàn LENS Care',
-                        style: TextStyle(
-                          color: Color(0xFF380D00),
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        gearInfo.insuranceNotice,
-                        style: const TextStyle(
-                          color: Color(0xFF5B4137),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -175,15 +169,16 @@ class StudioGearTabView extends StatelessWidget {
         Container(
           width: 38,
           height: 38,
-          decoration: const BoxDecoration(
-            color: Color(0xFFEEEEEF),
+          decoration: BoxDecoration(
+            color: AppColors.fog,
             shape: BoxShape.circle,
+            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
           ),
           child: Center(
             child: Icon(
               icon,
-              size: 18,
-              color: const Color(0xFF1A1C1D),
+              size: 17,
+              color: AppColors.obsidian,
             ),
           ),
         ),
@@ -194,21 +189,18 @@ class StudioGearTabView extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Color(0xFF1A1C1D),
+                style: AppTypography.titleMd(
                   fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
+                  color: AppColors.obsidian,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 items.join(' • '),
-                style: const TextStyle(
-                  color: Color(0xFF5F5E60),
+                style: AppTypography.bodySm(
                   fontSize: 12.5,
-                  fontWeight: FontWeight.w400,
-                  height: 1.35,
-                ),
+                  color: AppColors.steel,
+                ).copyWith(height: 1.35),
               ),
             ],
           ),

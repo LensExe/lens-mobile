@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 
 class EscrowSummaryCard extends StatelessWidget {
   final int totalAmount;
@@ -16,36 +19,29 @@ class EscrowSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.snow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: const [AppTokens.surfaceShadow],
       ),
       child: Row(
         children: [
           // Icon Container
           Container(
-            width: 42,
-            height: 42,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFDBCF),
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.ember.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Center(
               child: Icon(
                 LucideIcons.shieldCheck,
-                color: Color(0xFFA83900),
+                color: AppColors.ember,
                 size: 22,
               ),
             ),
@@ -58,13 +54,11 @@ class EscrowSummaryCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'ESCROW BẢO VỆ',
-                      style: TextStyle(
-                        color: Color(0xFF5F5E60),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+                      style: AppTypography.labelSm(
+                        fontSize: 10.5,
+                        color: AppColors.steel,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -72,7 +66,7 @@ class EscrowSummaryCard extends StatelessWidget {
                       width: 6,
                       height: 6,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFA83900),
+                        color: AppColors.emerald,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -80,12 +74,10 @@ class EscrowSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  currencyFormat.format(totalAmount),
-                  style: const TextStyle(
-                    color: Color(0xFF1A1C1D),
+                  AppTypography.formatCurrency(totalAmount),
+                  style: AppTypography.priceDisplay(
                     fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -93,32 +85,34 @@ class EscrowSummaryCard extends StatelessWidget {
                   activeShootsCount > 0
                       ? '$activeShootsCount buổi chụp đang xử lý & chọn ảnh'
                       : 'Không có buổi chụp nào đang giữ tiền',
-                  style: const TextStyle(
-                    color: Color(0xFF5F5E60),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
+                  style: AppTypography.bodySm(
+                    fontSize: 12,
+                    color: AppColors.steel,
                   ),
                 ),
               ],
             ),
           ),
           // Trailing action
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEEEEF),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                LucideIcons.chevronRight,
-                size: 16,
-                color: Color(0xFF5F5E60),
+          if (onTap != null)
+            InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.fog,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: AppColors.steel,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/photographer_detail_model.dart';
 
 class PhotographerDetailTabs extends StatelessWidget {
@@ -18,51 +21,41 @@ class PhotographerDetailTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final tabs = [
       'Tác phẩm (${profile.portfolio.length})',
-      'Giới thiệu',
+      'Giới thiệu & Gói',
       'Đánh giá (${profile.reviewCount})',
     ];
 
     return SizedBox(
-      height: 44,
+      height: AppTokens.filterChipHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
         itemCount: tabs.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final isSelected = index == selectedIndex;
           final title = tabs[index];
 
-          return GestureDetector(
+          return InkWell(
             onTap: () => onTabSelected(index),
+            borderRadius: BorderRadius.circular(9999),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF1A1C1D)
-                    : const Color(0xFFEEEEEF),
+                color: isSelected ? AppColors.obsidian : AppColors.fog,
                 borderRadius: BorderRadius.circular(9999),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
+                border: isSelected
+                    ? null
+                    : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
               ),
-              child: Center(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF5F5E60),
-                    fontSize: 12.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                    letterSpacing: -0.1,
-                  ),
+              child: Text(
+                title,
+                style: AppTypography.labelMd(
+                  color: isSelected ? AppColors.snow : AppColors.steel,
                 ),
               ),
             ),

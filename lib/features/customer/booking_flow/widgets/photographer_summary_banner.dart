@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../photographer_detail/models/photographer_detail_model.dart';
 
 class PhotographerSummaryBanner extends StatelessWidget {
@@ -25,15 +27,10 @@ class PhotographerSummaryBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0C000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        color: AppColors.snow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: const [AppTokens.surfaceShadow],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -43,21 +40,15 @@ class PhotographerSummaryBanner extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 54,
-                height: 54,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
                   image: DecorationImage(
                     image: NetworkImage(avatar),
                     fit: BoxFit.cover,
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0C000000),
-                      blurRadius: 2,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
                 ),
               ),
               Positioned(
@@ -66,9 +57,10 @@ class PhotographerSummaryBanner extends StatelessWidget {
                 child: Container(
                   width: 18,
                   height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.ember,
+                  decoration: BoxDecoration(
+                    color: AppColors.emerald,
                     shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.snow, width: 2),
                   ),
                   child: const Icon(
                     LucideIcons.check,
@@ -91,11 +83,9 @@ class PhotographerSummaryBanner extends StatelessWidget {
                     Flexible(
                       child: Text(
                         name,
-                        style: const TextStyle(
-                          color: Color(0xFF1A1C1D),
+                        style: AppTypography.titleMd(
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
+                          color: AppColors.obsidian,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -104,20 +94,19 @@ class PhotographerSummaryBanner extends StatelessWidget {
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
+                        horizontal: 7,
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFDBCF),
-                        borderRadius: BorderRadius.circular(999),
+                        color: AppColors.ember.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(9999),
                       ),
                       child: Text(
                         rank,
-                        style: const TextStyle(
-                          color: Color(0xFF380D00),
-                          fontSize: 10,
+                        style: AppTypography.numeric(
+                          fontSize: 9.5,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
+                          color: AppColors.ember,
                         ),
                       ),
                     ),
@@ -125,11 +114,10 @@ class PhotographerSummaryBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'High-Fashion & Lookbook • $city',
-                  style: const TextStyle(
-                    color: Color(0xFF5F5E60),
+                  'Nhiếp ảnh gia chuyên nghiệp • $city',
+                  style: AppTypography.bodySm(
                     fontSize: 12,
-                    fontWeight: FontWeight.w400,
+                    color: AppColors.steel,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -140,40 +128,23 @@ class PhotographerSummaryBanner extends StatelessWidget {
                     const Icon(
                       LucideIcons.star,
                       size: 12,
-                      color: Color(0xFFFF9500),
+                      color: AppColors.ember,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       rating,
-                      style: const TextStyle(
-                        color: Color(0xFF1A1C1D),
-                        fontSize: 11,
+                      style: AppTypography.numeric(
+                        fontSize: 11.5,
                         fontWeight: FontWeight.w700,
+                        color: AppColors.obsidian,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '($reviewCount đánh giá)',
-                      style: const TextStyle(
-                        color: Color(0xFF5F5E60),
+                      style: AppTypography.bodySm(
                         fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      '•',
-                      style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11),
-                    ),
-                    const SizedBox(width: 6),
-                    const Expanded(
-                      child: Text(
-                        "Sony Artisan '24",
-                        style: TextStyle(
-                          color: Color(0xFF5F5E60),
-                          fontSize: 11,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        color: AppColors.steel,
                       ),
                     ),
                   ],

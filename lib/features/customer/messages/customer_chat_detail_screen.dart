@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../domain/models/models.dart';
 import '../../../providers/data_providers.dart';
 
@@ -53,8 +55,6 @@ class _CustomerChatDetailScreenState
       timestamp: DateTime.now(),
     );
 
-    // In a real app, we would call a repository to save this.
-    // Here we just modify the provider state directly for the mock UI.
     ref.read(messagesProvider.notifier).addMessage(newMessage);
     ref
         .read(conversationsProvider.notifier)
@@ -72,19 +72,24 @@ class _CustomerChatDetailScreenState
     final conversations = ref.watch(conversationsProvider);
     if (conversations.isEmpty) {
       return Scaffold(
+        backgroundColor: AppColors.canvas,
         appBar: AppBar(
+          backgroundColor: AppColors.canvas,
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowLeft),
+            icon: const Icon(LucideIcons.arrowLeft, color: AppColors.obsidian),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Tin nhắn'),
+          title: Text(
+            'Tin nhắn',
+            style: AppTypography.titleMd(color: AppColors.obsidian),
+          ),
         ),
         body: const Center(child: Text('Chưa có cuộc trò chuyện nào.')),
       );
     }
     final conversation = conversations.firstWhere(
       (c) => c.id == widget.conversationId,
-      orElse: () => conversations.first, // fallback
+      orElse: () => conversations.first,
     );
 
     final allMessages = ref.watch(messagesProvider);
@@ -94,42 +99,88 @@ class _CustomerChatDetailScreenState
             .toList()
           ..sort(
             (a, b) => b.timestamp.compareTo(a.timestamp),
-          ); // reversed for ListView
+          );
 
     return Scaffold(
-      backgroundColor: AppColors.mist,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: AppColors.mist,
+        backgroundColor: AppColors.canvas,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.obsidian),
-          onPressed: () => context.pop(),
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 18,
+                  color: AppColors.obsidian,
+                ),
+              ),
+            ),
+          ),
         ),
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: NetworkImage(conversation.otherPartyAvatar),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              conversation.otherPartyName,
-              style: const TextStyle(
-                color: AppColors.obsidian,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.pebble),
+                image: DecorationImage(
+                  image: NetworkImage(conversation.otherPartyAvatar),
+                  fit: BoxFit.cover,
+                ),
               ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  conversation.otherPartyName,
+                  style: AppTypography.titleMd(
+                    fontSize: 15,
+                    color: AppColors.obsidian,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppColors.emerald,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Đang hoạt động',
+                      style: AppTypography.numeric(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.steel,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.info, color: AppColors.obsidian),
-            onPressed: () {
-              // Show booking info or photographer profile
-            },
-          ),
-        ],
       ),
       body: SafeArea(
         child: Column(
@@ -137,6 +188,7 @@ class _CustomerChatDetailScreenState
             Expanded(
               child: ListView.builder(
                 reverse: true,
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 itemCount: chatMessages.length,
                 itemBuilder: (context, index) {
@@ -157,7 +209,7 @@ class _CustomerChatDetailScreenState
     final isAI = message.senderRole == 'ai';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         mainAxisAlignment: isCustomer
             ? MainAxisAlignment.end
@@ -165,9 +217,18 @@ class _CustomerChatDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isCustomer) ...[
-            CircleAvatar(
-              radius: 14,
-              backgroundImage: NetworkImage(conversation.otherPartyAvatar),
+            Container(
+              width: 28,
+              height: 28,
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.pebble),
+                image: DecorationImage(
+                  image: NetworkImage(conversation.otherPartyAvatar),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -185,39 +246,41 @@ class _CustomerChatDetailScreenState
                   bottomRight: Radius.circular(isCustomer ? 4 : 20),
                 ),
                 border: (!isCustomer && !isAI)
-                    ? Border.all(color: AppColors.pebble, width: 1.0)
+                    ? Border.all(color: AppColors.pebble)
                     : null,
+                boxShadow: const [AppTokens.surfaceShadow],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (isAI)
+                  if (isAI) ...[
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
                           LucideIcons.sparkles,
-                          size: 14,
+                          size: 13,
                           color: AppColors.ember,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
                         Text(
-                          'Trợ lý AI',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          'Trợ lý AI Lens',
+                          style: AppTypography.labelSm(
+                            fontSize: 11,
                             color: AppColors.ember,
                           ),
                         ),
                       ],
                     ),
-                  if (isAI) const SizedBox(height: 4),
+                    const SizedBox(height: 4),
+                  ],
                   Text(
                     message.text,
                     style: TextStyle(
                       color: isCustomer ? AppColors.snow : AppColors.obsidian,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w400,
+                      height: 1.35,
                     ),
                   ),
                 ],
@@ -232,7 +295,7 @@ class _CustomerChatDetailScreenState
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: AppColors.snow,
         border: Border(top: BorderSide(color: AppColors.pebble)),
@@ -240,37 +303,46 @@ class _CustomerChatDetailScreenState
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: 'Nhập tin nhắn...',
-                hintStyle: const TextStyle(color: AppColors.ash),
-                filled: true,
-                fillColor: AppColors.mist,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(999),
-                  borderSide: BorderSide.none,
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.fog,
+                borderRadius: BorderRadius.circular(9999),
+                border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+              ),
+              child: TextField(
+                controller: _messageController,
+                decoration: InputDecoration(
+                  hintText: 'Nhập tin nhắn trao đổi...',
+                  hintStyle: AppTypography.bodySm(color: AppColors.steel),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                onSubmitted: (_) => _sendMessage(),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            decoration: const BoxDecoration(
-              color: AppColors.ember,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(
-                LucideIcons.send,
-                color: AppColors.snow,
-                size: 20,
+          const SizedBox(width: 10),
+          InkWell(
+            onTap: _sendMessage,
+            borderRadius: BorderRadius.circular(9999),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: AppColors.ember,
+                shape: BoxShape.circle,
               ),
-              onPressed: _sendMessage,
+              child: const Center(
+                child: Icon(
+                  LucideIcons.send,
+                  color: AppColors.snow,
+                  size: 18,
+                ),
+              ),
             ),
           ),
         ],

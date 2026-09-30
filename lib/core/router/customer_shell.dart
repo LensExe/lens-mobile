@@ -4,6 +4,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../providers/data_providers.dart';
+import '../theme/app_colors.dart';
+import '../widgets/glass_container.dart';
 
 class CustomerShell extends ConsumerWidget {
   final Widget child;
@@ -16,33 +18,49 @@ class CustomerShell extends ConsumerWidget {
         .watch(conversationsProvider)
         .fold<int>(0, (sum, conversation) => sum + conversation.unreadCount);
     return Scaffold(
+      extendBody: true,
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _calculateSelectedIndex(context),
-        onTap: (int index) => _onItemTapped(index, context),
-        type: BottomNavigationBarType.fixed,
-        items: [
-          const BottomNavigationBarItem(
-            icon: Icon(LucideIcons.search),
-            label: 'Khám phá',
+      bottomNavigationBar: GlassContainer.translucentBar(
+        isTop: true,
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          currentIndex: _calculateSelectedIndex(context),
+          onTap: (int index) => _onItemTapped(index, context),
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppColors.obsidian,
+          unselectedItemColor: AppColors.steel,
+          selectedLabelStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(LucideIcons.home),
-            label: 'Tổng quan',
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(LucideIcons.calendar),
-            label: 'Lịch đặt',
-          ),
-          BottomNavigationBarItem(
-            icon: _UnreadIcon(count: unread),
-            label: 'Tin nhắn',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(LucideIcons.menu),
-            label: 'Khác',
-          ),
-        ],
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(LucideIcons.search),
+              label: 'Khám phá',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(LucideIcons.home),
+              label: 'Tổng quan',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(LucideIcons.calendar),
+              label: 'Lịch đặt',
+            ),
+            BottomNavigationBarItem(
+              icon: _UnreadIcon(count: unread),
+              label: 'Tin nhắn',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(LucideIcons.menu),
+              label: 'Khác',
+            ),
+          ],
+        ),
       ),
     );
   }

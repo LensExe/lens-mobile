@@ -9,6 +9,7 @@ class LensPage extends StatelessWidget {
   final Widget? bottomNavigationBar;
   final Widget? floatingActionButton;
   final bool safeArea;
+  final Color? backgroundColor;
 
   const LensPage({
     super.key,
@@ -17,13 +18,14 @@ class LensPage extends StatelessWidget {
     this.bottomNavigationBar,
     this.floatingActionButton,
     this.safeArea = true,
+    this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final content = safeArea ? SafeArea(child: body) : body;
     return Scaffold(
-      backgroundColor: AppColors.mist,
+      backgroundColor: backgroundColor ?? AppColors.canvas,
       appBar: appBar,
       body: content,
       bottomNavigationBar: bottomNavigationBar,

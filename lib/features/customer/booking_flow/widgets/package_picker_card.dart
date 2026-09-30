@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../photographer_detail/models/photographer_detail_model.dart';
 
 class PackagePickerCard extends StatelessWidget {
@@ -17,14 +18,6 @@ class PackagePickerCard extends StatelessWidget {
     required this.onTap,
   });
 
-  String _formatPrice(int price) {
-    return NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: '₫',
-      decimalDigits: 0,
-    ).format(price);
-  }
-
   @override
   Widget build(BuildContext context) {
     final isPopular =
@@ -33,35 +26,36 @@ class PackagePickerCard extends StatelessWidget {
         package.highlightBadge.contains('nhiều nhất') ||
         package.name.contains('Editorial');
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
         width: double.infinity,
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.snow,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.ember : const Color(0xFFE8E8E9),
+            color: isSelected ? AppColors.ember : AppColors.pebble,
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? const Color(0x1AEE5A00)
-                  : const Color(0x0C000000),
-              blurRadius: isSelected ? 8 : 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.ember.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : const [AppTokens.surfaceShadow],
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,20 +68,21 @@ class PackagePickerCard extends StatelessWidget {
                         height: 22,
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.ember
-                              : const Color(0xFFE8E8E9),
+                          color: isSelected ? AppColors.ember : AppColors.fog,
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? Colors.transparent : AppColors.pebble,
+                          ),
                         ),
                         child: isSelected
                             ? const Icon(
                                 LucideIcons.check,
-                                size: 14,
+                                size: 13,
                                 color: Colors.white,
                               )
                             : null,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,13 +93,9 @@ class PackagePickerCard extends StatelessWidget {
                               ),
                               child: Text(
                                 package.name,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? const Color(0xFF1A1C1D)
-                                      : const Color(0xFF2C2D2E),
+                                style: AppTypography.titleMd(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.2,
+                                  color: AppColors.obsidian,
                                 ),
                               ),
                             ),
@@ -112,10 +103,9 @@ class PackagePickerCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 package.subtitle,
-                                style: const TextStyle(
-                                  color: Color(0xFF5F5E60),
+                                style: AppTypography.bodySm(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.steel,
                                 ),
                               ),
                             ],
@@ -128,18 +118,16 @@ class PackagePickerCard extends StatelessWidget {
 
                   // Price & Duration
                   Padding(
-                    padding: const EdgeInsets.only(left: 32),
+                    padding: const EdgeInsets.only(left: 34),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          _formatPrice(package.price),
-                          style: const TextStyle(
+                          AppTypography.formatCurrency(package.price),
+                          style: AppTypography.priceDisplay(
+                            fontSize: 19,
                             color: AppColors.ember,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.4,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -149,15 +137,16 @@ class PackagePickerCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F1F2),
-                            borderRadius: BorderRadius.circular(999),
+                            color: AppColors.fog,
+                            borderRadius: BorderRadius.circular(9999),
+                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
                           ),
                           child: Text(
                             package.duration,
-                            style: const TextStyle(
-                              color: Color(0xFF5F5E60),
+                            style: AppTypography.numeric(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
+                              color: AppColors.steel,
                             ),
                           ),
                         ),
@@ -169,27 +158,26 @@ class PackagePickerCard extends StatelessWidget {
                   if (package.deliverables.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Padding(
-                      padding: const EdgeInsets.only(left: 32),
+                      padding: const EdgeInsets.only(left: 34),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: package.deliverables.take(4).map((item) {
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.only(bottom: 5),
                             child: Row(
                               children: [
                                 const Icon(
                                   LucideIcons.check,
-                                  size: 14,
-                                  color: Color(0xFF5B4137),
+                                  size: 13,
+                                  color: AppColors.emerald,
                                 ),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     item,
-                                    style: const TextStyle(
-                                      color: Color(0xFF5B4137),
+                                    style: AppTypography.bodySm(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.graphite,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -222,14 +210,12 @@ class PackagePickerCard extends StatelessWidget {
                       bottomLeft: Radius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'PHỔ BIẾN',
-                    style: TextStyle(
-                      color: Colors.white,
+                    style: AppTypography.labelSm(
                       fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
+                      color: Colors.white,
+                    ).copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),

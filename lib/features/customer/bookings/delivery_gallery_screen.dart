@@ -5,6 +5,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
 import 'controllers/customer_bookings_controller.dart';
@@ -13,6 +15,7 @@ import 'models/booking_model.dart';
 class DeliveryGalleryScreen extends ConsumerStatefulWidget {
   final String bookingId;
   const DeliveryGalleryScreen({super.key, required this.bookingId});
+
   @override
   ConsumerState<DeliveryGalleryScreen> createState() =>
       _DeliveryGalleryScreenState();
@@ -50,74 +53,149 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
         ? booking.uploadedProofsCount
         : _deliveredPhotos.length;
     final complete = deliveredCount >= required;
+
     return LensPage(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(LucideIcons.arrowLeft),
+        backgroundColor: AppColors.canvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 18,
+                  color: AppColors.obsidian,
+                ),
+              ),
+            ),
+          ),
         ),
-        title: Text('Ảnh buổi chụp · ${booking.style}'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bộ ảnh nghiệm thu',
+              style: AppTypography.titleMd(color: AppColors.obsidian),
+            ),
+            Text(
+              booking.style,
+              style: AppTypography.bodySm(fontSize: 11, color: AppColors.steel),
+            ),
+          ],
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: AppTokens.pageHorizontal),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.fog,
+              borderRadius: BorderRadius.circular(9999),
+              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+            ),
+            child: Text(
+              '$deliveredCount / $required ảnh',
+              style: AppTypography.numeric(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.obsidian,
+              ),
+            ),
+          ),
+        ],
       ),
       body: ListView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         padding: const EdgeInsets.fromLTRB(
           AppTokens.pageHorizontal,
-          10,
+          12,
           AppTokens.pageHorizontal,
-          32,
+          48,
         ),
         children: [
           if (booking.status == BookingStatus.held)
-            LensSectionCard(
+            Container(
+              padding: const EdgeInsets.all(18),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: AppColors.snow,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.pebble),
+                boxShadow: const [AppTokens.surfaceShadow],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(LucideIcons.info, size: 18, color: AppColors.steel),
-                      SizedBox(width: 8),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.emerald.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          LucideIcons.shieldCheck,
+                          size: 18,
+                          color: AppColors.emerald,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Text(
-                        'Xác nhận nhận ảnh',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                        'Nghiệm thu & Giải ngân Escrow',
+                        style: AppTypography.titleMd(color: AppColors.obsidian),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
-                    'Sàn chỉ giải ngân sau khi bạn kiểm tra và xác nhận đã nhận đủ ảnh theo gói.',
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.steel),
+                    'Số tiền sẽ chỉ được giải ngân cho nhiếp ảnh gia sau khi bạn kiểm tra và xác nhận hài lòng với toàn bộ ảnh chụp.',
+                    style: AppTypography.bodySm(color: AppColors.steel),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   PrimaryButton(
-                    text: 'Xác nhận đã nhận ảnh',
+                    text: 'Xác nhận đã nhận đủ ảnh',
+                    height: 50,
                     onPressed: complete ? () => _confirm(booking) : () {},
                     isLoading: _isConfirming,
                   ),
                 ],
               ),
             ),
-          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$deliveredCount ảnh đã giao',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                'Ảnh đã được bàn giao',
+                style: AppTypography.headlineSm(fontSize: 16, color: AppColors.obsidian),
               ),
               Text(
-                'Gói yêu cầu $required ảnh',
-                style: const TextStyle(color: AppColors.steel, fontSize: 12),
+                'Nhấn vào ảnh để xem nét',
+                style: AppTypography.bodySm(fontSize: 12, color: AppColors.steel),
               ),
             ],
           ),
           if (!complete && booking.status == BookingStatus.held) ...[
-            const SizedBox(height: 7),
+            const SizedBox(height: 6),
             Text(
-              'Bạn có thể xác nhận khi nhiếp ảnh gia giao đủ ảnh theo gói.',
-              style: const TextStyle(color: AppColors.warning, fontSize: 12),
+              'Nhiếp ảnh gia đang tải thêm ảnh cho buổi chụp của bạn.',
+              style: AppTypography.bodySm(fontSize: 12, color: AppColors.warning),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -126,7 +204,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: .82,
+              childAspectRatio: 0.85,
             ),
             itemBuilder: (context, index) =>
                 _PhotoTile(url: _deliveredPhotos[index], index: index),
@@ -147,7 +225,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
     setState(() => _isConfirming = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Đã xác nhận nhận ảnh. Tiền đã được giải ngân.'),
+        content: Text('Đã xác nhận nhận ảnh. Tiền đã được giải ngân an toàn.'),
       ),
     );
     context.pop();
@@ -158,38 +236,85 @@ class _PhotoTile extends StatelessWidget {
   final String url;
   final int index;
   const _PhotoTile({required this.url, required this.index});
+
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: () => showDialog<void>(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.black,
-        child: InteractiveViewer(
-          child: Image.network(
-            url,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const SizedBox(
-              height: 220,
-              child: Center(
-                child: Text(
-                  'Không thể tải ảnh',
-                  style: TextStyle(color: Colors.white),
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 3.5,
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const SizedBox(
+                    height: 220,
+                    child: Center(
+                      child: Text(
+                        'Không thể tải ảnh chất lượng cao',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 48,
+              right: 20,
+              child: InkWell(
+                onTap: () => Navigator.of(context).pop(),
+                borderRadius: BorderRadius.circular(9999),
+                child: GlassContainer.floatingControl(
+                  child: const Icon(LucideIcons.x, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.pebble),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Container(
+                color: AppColors.fog,
+                child: const Icon(LucideIcons.imageOff, color: AppColors.steel),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 8,
+            left: 8,
+            child: GlassContainer.mediaBadge(
+              child: Text(
+                '#${index + 1}',
+                style: AppTypography.numeric(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
             ),
           ),
-        ),
-      ),
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        url,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: AppColors.fog,
-          child: const Icon(LucideIcons.imageOff, color: AppColors.steel),
-        ),
+        ],
       ),
     ),
   );

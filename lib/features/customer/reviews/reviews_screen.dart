@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../bookings/controllers/customer_bookings_controller.dart';
 import '../bookings/models/booking_model.dart';
@@ -26,13 +27,40 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
     final reviewable = state.allBookings
         .where((booking) => booking.status == BookingStatus.released)
         .toList();
+
     return LensPage(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(LucideIcons.arrowLeft),
+        backgroundColor: AppColors.canvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 18,
+                  color: AppColors.obsidian,
+                ),
+              ),
+            ),
+          ),
         ),
-        title: const Text('Đánh giá của tôi'),
+        title: Text(
+          'Đánh giá của tôi',
+          style: AppTypography.titleMd(color: AppColors.obsidian),
+        ),
       ),
       body: RefreshIndicator(
         color: AppColors.ember,
@@ -40,17 +68,17 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
             .read(customerBookingsControllerProvider.notifier)
             .loadBookings(),
         child: ListView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
             AppTokens.pageHorizontal,
             8,
             AppTokens.pageHorizontal,
-            32,
+            40,
           ),
           children: [
             Text(
-              'Chia sẻ trải nghiệm sau những buổi chụp đã hoàn thành.',
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: AppColors.steel),
+              'Chia sẻ trải nghiệm khách quan sau mỗi buổi chụp đã hoàn thành để giúp cộng đồng.',
+              style: AppTypography.bodySm(color: AppColors.steel),
             ),
             const SizedBox(height: 16),
             _Tabs(
@@ -58,64 +86,83 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
               pendingCount: reviewable.length,
               onChanged: (value) => setState(() => _tab = value),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
-                borderRadius: BorderRadius.circular(AppTokens.cardRadius),
-                border: Border.all(
-                  color: AppColors.ember.withValues(alpha: .15),
-                ),
+                color: AppColors.snow,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.pebble),
+                boxShadow: const [AppTokens.surfaceShadow],
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(LucideIcons.gift, size: 18, color: AppColors.ember),
-                  SizedBox(width: 9),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.ember.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.gift, size: 18, color: AppColors.ember),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Nhận quà tri ân sau mỗi lượt đánh giá. Gửi nhận xét khách quan để giúp cộng đồng chọn được nhiếp ảnh gia phù hợp.',
-                      style: TextStyle(
-                        color: AppColors.statusOrange,
-                        fontSize: 12,
-                        height: 1.45,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nhận Lens Xu tri ân',
+                          style: AppTypography.titleMd(
+                            fontSize: 13.5,
+                            color: AppColors.obsidian,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Mỗi đánh giá hợp lệ sẽ được tặng ngay Xu vào ví Lens của bạn.',
+                          style: AppTypography.bodySm(
+                            fontSize: 12,
+                            color: AppColors.steel,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             if (state.isLoading && state.allBookings.isEmpty)
               ...List.generate(
                 3,
                 (index) => const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
+                  padding: EdgeInsets.only(bottom: 10),
                   child: _ReviewSkeleton(),
                 ),
               )
             else if (_tab == _ReviewTab.completed)
               const _ReviewEmpty(
-                title: 'Bạn chưa có đánh giá đã gửi',
-                message: 'Những đánh giá bạn gửi sẽ được lưu lại tại đây.',
+                title: 'Chưa có đánh giá nào đã gửi',
+                message: 'Những đánh giá bạn đã viết sẽ được lưu trữ và hiển thị tại đây.',
               )
             else if (reviewable.isEmpty)
               const _ReviewEmpty(
                 title: 'Chưa có buổi chụp nào để đánh giá',
-                message: 'Sau khi hoàn thành một buổi chụp, bạn có thể viết đánh giá cho nhiếp ảnh gia.',
+                message: 'Sau khi hoàn thành và nghiệm thu buổi chụp, bạn có thể viết đánh giá cho nhiếp ảnh gia.',
               )
             else
               ...reviewable.map(
                 (booking) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 10),
                   child: _ReviewRow(
                     booking: booking,
                     onReview: () => _showComingSoon(booking),
                   ),
                 ),
               ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             const _ReviewTips(),
           ],
         ),
@@ -123,12 +170,10 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
     );
   }
 
-  void _showComingSoon(
-    Booking booking,
-  ) => ScaffoldMessenger.of(context).showSnackBar(
+  void _showComingSoon(Booking booking) => ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        'Tính năng viết đánh giá cho ${booking.photographerName} sẽ sớm khả dụng.',
+        'Đang mở cổng đánh giá cho ${booking.photographerName}.',
       ),
     ),
   );
@@ -143,69 +188,90 @@ class _Tabs extends StatelessWidget {
     required this.pendingCount,
     required this.onChanged,
   });
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: AppColors.fog,
-      borderRadius: BorderRadius.circular(999),
-    ),
-    child: Row(
-      children: [
-        _Tab(
-          value: _ReviewTab.pending,
-          selected: selected,
-          label: 'Chờ đánh giá',
-          count: pendingCount,
-          onTap: onChanged,
-        ),
-        _Tab(
-          value: _ReviewTab.completed,
-          selected: selected,
-          label: 'Đã đánh giá',
-          count: 0,
-          onTap: onChanged,
-        ),
-      ],
-    ),
-  );
-}
 
-class _Tab extends StatelessWidget {
-  final _ReviewTab value;
-  final _ReviewTab selected;
-  final String label;
-  final int count;
-  final ValueChanged<_ReviewTab> onTap;
-  const _Tab({
-    required this.value,
-    required this.selected,
-    required this.label,
-    required this.count,
-    required this.onTap,
-  });
   @override
   Widget build(BuildContext context) {
-    final active = selected == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => onTap(value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: active ? AppColors.snow : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: active ? const [AppTokens.surfaceShadow] : null,
-          ),
-          child: Text(
-            '$label ($count)',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              color: active ? AppColors.ink : AppColors.steel,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+    return Row(
+      children: [
+        _TabPill(
+          label: 'Chờ đánh giá',
+          count: pendingCount,
+          selected: selected == _ReviewTab.pending,
+          onTap: () => onChanged(_ReviewTab.pending),
+        ),
+        const SizedBox(width: 8),
+        _TabPill(
+          label: 'Đã đánh giá',
+          count: 0,
+          selected: selected == _ReviewTab.completed,
+          onTap: () => onChanged(_ReviewTab.completed),
+        ),
+      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabPill({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(9999),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        height: AppTokens.filterChipHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.obsidian : AppColors.fog,
+          borderRadius: BorderRadius.circular(9999),
+          border: selected
+              ? null
+              : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: AppTypography.labelMd(
+                color: selected ? AppColors.snow : AppColors.steel,
+              ),
             ),
-          ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.ember : AppColors.mist,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$count',
+                  style: AppTypography.numeric(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : AppColors.steel,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -216,22 +282,47 @@ class _ReviewRow extends StatelessWidget {
   final Booking booking;
   final VoidCallback onReview;
   const _ReviewRow({required this.booking, required this.onReview});
+
   @override
-  Widget build(BuildContext context) => LensSectionCard(
-    padding: const EdgeInsets.all(13),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.snow,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppColors.pebble),
+      boxShadow: const [AppTokens.surfaceShadow],
+    ),
     child: Row(
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: AppColors.fog,
-          backgroundImage: booking.photographerAvatar == null
-              ? null
-              : NetworkImage(booking.photographerAvatar!),
-          child: booking.photographerAvatar == null
-              ? Text(_initials(booking.photographerName))
-              : null,
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.pebble),
+            color: AppColors.fog,
+          ),
+          child: ClipOval(
+            child: booking.photographerAvatar != null && booking.photographerAvatar!.isNotEmpty
+                ? Image.network(
+                    booking.photographerAvatar!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Center(
+                      child: Text(
+                        _initials(booking.photographerName),
+                        style: AppTypography.titleMd(),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      _initials(booking.photographerName),
+                      style: AppTypography.titleMd(),
+                    ),
+                  ),
+          ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,30 +331,43 @@ class _ReviewRow extends StatelessWidget {
                 booking.photographerName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                style: AppTypography.titleMd(
+                  fontSize: 14.5,
+                  color: AppColors.obsidian,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
                 '${booking.style} · ${_dateLabel(booking.date)}',
-                style: const TextStyle(color: AppColors.steel, fontSize: 11),
+                style: AppTypography.bodySm(color: AppColors.steel, fontSize: 11.5),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 booking.location,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.steel, fontSize: 11),
+                style: AppTypography.bodySm(color: AppColors.steel, fontSize: 11.5),
               ),
             ],
           ),
         ),
         const SizedBox(width: 8),
-        OutlinedButton(
-          onPressed: onReview,
-          child: const Text('Viết đánh giá', style: TextStyle(fontSize: 11)),
+        InkWell(
+          onTap: onReview,
+          borderRadius: BorderRadius.circular(9999),
+          child: Container(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppColors.ember,
+              borderRadius: BorderRadius.circular(9999),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'Đánh giá',
+              style: AppTypography.labelMd(fontSize: 12, color: AppColors.snow),
+            ),
+          ),
         ),
       ],
     ),
@@ -272,25 +376,33 @@ class _ReviewRow extends StatelessWidget {
 
 class _ReviewTips extends StatelessWidget {
   const _ReviewTips();
+
   @override
-  Widget build(BuildContext context) => LensSectionCard(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppColors.snow,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: AppColors.pebble),
+      boxShadow: const [AppTokens.surfaceShadow],
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(LucideIcons.star, size: 17, color: AppColors.ember),
-            SizedBox(width: 8),
+            const Icon(LucideIcons.star, size: 16, color: AppColors.ember),
+            const SizedBox(width: 8),
             Text(
               'Tiêu chí đánh giá chất lượng tại Lens',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              style: AppTypography.titleMd(fontSize: 14, color: AppColors.obsidian),
             ),
           ],
         ),
-        const SizedBox(height: 5),
-        const Text(
-          'Đánh giá khách quan giúp Lens có những cộng tác viên đáng tin cậy.',
-          style: TextStyle(color: AppColors.steel, fontSize: 11),
+        const SizedBox(height: 4),
+        Text(
+          'Đánh giá công tâm giúp cộng đồng chọn được nhiếp ảnh gia ưng ý nhất.',
+          style: AppTypography.bodySm(color: AppColors.steel, fontSize: 12),
         ),
         const SizedBox(height: 14),
         Row(
@@ -299,7 +411,7 @@ class _ReviewTips extends StatelessWidget {
               child: _Tip(
                 icon: LucideIcons.clock3,
                 title: 'Đúng giờ',
-                color: AppColors.statusOrange,
+                color: AppColors.ember,
               ),
             ),
             const SizedBox(width: 8),
@@ -307,7 +419,7 @@ class _ReviewTips extends StatelessWidget {
               child: _Tip(
                 icon: LucideIcons.handshake,
                 title: 'Tận tâm',
-                color: AppColors.statusAmber,
+                color: AppColors.lagoon,
               ),
             ),
             const SizedBox(width: 8),
@@ -315,7 +427,7 @@ class _ReviewTips extends StatelessWidget {
               child: _Tip(
                 icon: LucideIcons.image,
                 title: 'Chất lượng',
-                color: AppColors.lagoon,
+                color: AppColors.emerald,
               ),
             ),
           ],
@@ -329,22 +441,25 @@ class _Tip extends StatelessWidget {
   final IconData icon;
   final String title;
   final Color color;
+
   const _Tip({required this.icon, required this.title, required this.color});
+
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(10),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.mist,
-      borderRadius: BorderRadius.circular(12),
+      color: AppColors.fog,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 16, color: color),
-        const SizedBox(height: 7),
+        const SizedBox(height: 6),
         Text(
           title,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          style: AppTypography.labelMd(fontSize: 12, color: AppColors.obsidian),
         ),
       ],
     ),
@@ -354,23 +469,40 @@ class _Tip extends StatelessWidget {
 class _ReviewEmpty extends StatelessWidget {
   final String title;
   final String message;
+
   const _ReviewEmpty({required this.title, required this.message});
+
   @override
-  Widget build(BuildContext context) => LensSectionCard(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(28),
+    decoration: BoxDecoration(
+      color: AppColors.snow,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: AppColors.pebble),
+      boxShadow: const [AppTokens.surfaceShadow],
+    ),
     child: Column(
       children: [
-        const Icon(LucideIcons.star, size: 26, color: AppColors.steel),
-        const SizedBox(height: 10),
+        Container(
+          width: 54,
+          height: 54,
+          decoration: const BoxDecoration(
+            color: AppColors.fog,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(LucideIcons.star, size: 24, color: AppColors.steel),
+        ),
+        const SizedBox(height: 14),
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: AppTypography.titleMd(color: AppColors.obsidian),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.steel, fontSize: 12),
+          style: AppTypography.bodySm(color: AppColors.steel),
         ),
       ],
     ),
@@ -379,6 +511,7 @@ class _ReviewEmpty extends StatelessWidget {
 
 class _ReviewSkeleton extends StatelessWidget {
   const _ReviewSkeleton();
+
   @override
   Widget build(BuildContext context) => Container(
     height: 76,

@@ -6,11 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../controllers/discovery_controller.dart';
 import '../models/filter_criteria.dart';
 import '../models/photo_style_options.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/photographer_feed_card.dart';
+import '../widgets/sort_bottom_sheet.dart';
 
 class PhotographersDiscoveryScreen extends ConsumerStatefulWidget {
   const PhotographersDiscoveryScreen({super.key});
@@ -23,6 +26,8 @@ class PhotographersDiscoveryScreen extends ConsumerStatefulWidget {
 class _PhotographersDiscoveryScreenState
     extends ConsumerState<PhotographersDiscoveryScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _isSearchFocused = false;
   Timer? _debounce;
 
   // Danh sách phong cách chụp ảnh chuẩn hệ thống LENS kèm lựa chọn 'Tất cả'
@@ -31,6 +36,13 @@ class _PhotographersDiscoveryScreenState
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(() {
+      if (mounted) {
+        setState(() {
+          _isSearchFocused = _searchFocusNode.hasFocus;
+        });
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final criteria = ref.read(discoveryControllerProvider).criteria;
       if (criteria.searchQuery != null && criteria.searchQuery!.isNotEmpty) {
@@ -42,6 +54,7 @@ class _PhotographersDiscoveryScreenState
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -65,6 +78,21 @@ class _PhotographersDiscoveryScreenState
           ref
               .read(discoveryControllerProvider.notifier)
               .updateFilters(newCriteria);
+        },
+      ),
+    );
+  }
+
+  void _openSortBottomSheet() {
+    final currentSort = ref.read(discoveryControllerProvider).sortOption;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SortBottomSheet(
+        initialSort: currentSort,
+        onApply: (newSort) {
+          ref.read(discoveryControllerProvider.notifier).updateSort(newSort);
         },
       ),
     );
@@ -115,81 +143,105 @@ class _PhotographersDiscoveryScreenState
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Row(
                   children: [
-                    // Search Bar Pill
+                    // Search Bar Pill (Height 48px, transitions to White + Pebble on focus)
                     Expanded(
-                      child: Container(
-                        height: 50,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        height: AppTokens.searchBarHeight,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(100),
+                          color: _isSearchFocused
+                              ? AppColors.snow
+                              : AppColors.fog,
+                          borderRadius: BorderRadius.circular(
+                            AppTokens.pillRadius,
+                          ),
+                          border: Border.all(
+                            color: _isSearchFocused
+                                ? AppColors.pebble
+                                : Colors.transparent,
+                            width: 1.0,
+                          ),
                         ),
                         child: TextField(
                           controller: _searchController,
+                          focusNode: _searchFocusNode,
                           onChanged: _onSearchChanged,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF111827),
+                          style: AppTypography.bodyMd(
+                            color: AppColors.obsidian,
                           ),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Tìm kiếm theo tên thợ, phong cách...',
-                            hintStyle: TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                            hintStyle: AppTypography.bodyMd(
+                              color: AppColors.ash,
                             ),
-                            prefixIcon: Icon(
+                            prefixIcon: const Icon(
                               LucideIcons.search,
-                              color: Color(0xFF4B5563),
-                              size: 20,
+                              color: AppColors.steel,
+                              size: 19,
                             ),
-                            suffixIcon: Icon(
-                              LucideIcons.audioWaveform,
-                              color: Color(0xFF6B7280),
-                              size: 20,
-                            ),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? GestureDetector(
+                                    onTap: () {
+                                      _searchController.clear();
+                                      ref
+                                          .read(
+                                            discoveryControllerProvider
+                                                .notifier,
+                                          )
+                                          .search('');
+                                    },
+                                    child: const Icon(
+                                      LucideIcons.x,
+                                      color: AppColors.steel,
+                                      size: 18,
+                                    ),
+                                  )
+                                : const Icon(
+                                    LucideIcons.audioWaveform,
+                                    color: AppColors.steel,
+                                    size: 19,
+                                  ),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 14),
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 13,
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Circular Filter Button with Orange Dot
+                    // Circular Filter Button (Height 48px, hairline Pebble border)
                     GestureDetector(
                       onTap: _openFilterBottomSheet,
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
                           Container(
-                            height: 50,
-                            width: 50,
+                            height: AppTokens.searchBarHeight,
+                            width: AppTokens.searchBarHeight,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.snow,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFE5E7EB),
+                                color: AppColors.pebble,
+                                width: 1.0,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                              boxShadow: const [AppTokens.surfaceShadow],
                             ),
                             child: const Center(
                               child: Icon(
                                 LucideIcons.slidersHorizontal,
-                                color: Color(0xFF1F2937),
-                                size: 20,
+                                color: AppColors.obsidian,
+                                size: 19,
                               ),
                             ),
                           ),
                           if (state.activeFilterCount > 0)
                             Positioned(
-                              top: 1,
-                              right: 1,
+                              top: -2,
+                              right: -2,
                               child: Container(
                                 constraints: const BoxConstraints(
                                   minWidth: 18,
@@ -199,7 +251,7 @@ class _PhotographersDiscoveryScreenState
                                   horizontal: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF5A00),
+                                  color: AppColors.ember,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Colors.white,
@@ -310,56 +362,96 @@ class _PhotographersDiscoveryScreenState
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Text(
-                      '${state.photographers.length} nhiếp ảnh gia',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF374151),
-                      ),
-                    ),
-                    const Spacer(),
-                    PopupMenuButton<SortOption>(
-                      initialValue: state.sortOption,
-                      onSelected: controller.updateSort,
-                      position: PopupMenuPosition.under,
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(
-                          value: SortOption.featured,
-                          child: Text('Nổi bật'),
-                        ),
-                        PopupMenuItem(
-                          value: SortOption.rating,
-                          child: Text('Đánh giá cao'),
-                        ),
-                        PopupMenuItem(
-                          value: SortOption.priceAsc,
-                          child: Text('Giá thấp đến cao'),
-                        ),
-                        PopupMenuItem(
-                          value: SortOption.priceDesc,
-                          child: Text('Giá cao đến thấp'),
-                        ),
-                      ],
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    RichText(
+                      text: TextSpan(
                         children: [
-                          const Icon(
-                            LucideIcons.arrowDownUp,
-                            size: 16,
-                            color: Color(0xFF374151),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _sortLabel(state.sortOption),
-                            style: const TextStyle(
-                              fontSize: 13,
+                          TextSpan(
+                            text: '${state.photographers.length}',
+                            style: AppTypography.numeric(
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF374151),
+                              color: AppColors.obsidian,
                             ),
+                          ),
+                          TextSpan(
+                            text: ' nhiếp ảnh gia',
+                            style: AppTypography.bodySm(
+                              color: AppColors.steel,
+                            ).copyWith(fontSize: 13),
                           ),
                         ],
                       ),
+                    ),
+                    const Spacer(),
+                    Builder(
+                      builder: (context) {
+                        final isCustomSort =
+                            state.sortOption != SortOption.featured;
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _openSortBottomSheet,
+                            borderRadius:
+                                BorderRadius.circular(AppTokens.pillRadius),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              height: AppTokens.filterChipHeight,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isCustomSort
+                                    ? AppColors.ember.withValues(alpha: 0.08)
+                                    : AppColors.snow,
+                                borderRadius: BorderRadius.circular(
+                                  AppTokens.pillRadius,
+                                ),
+                                border: Border.all(
+                                  color: isCustomSort
+                                      ? AppColors.ember
+                                      : AppColors.pebble,
+                                  width: 1.0,
+                                ),
+                                boxShadow: const [AppTokens.surfaceShadow],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    LucideIcons.arrowDownUp,
+                                    size: 14,
+                                    color: isCustomSort
+                                        ? AppColors.ember
+                                        : AppColors.obsidian,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _sortLabel(state.sortOption),
+                                    style: AppTypography.labelMd(
+                                      color: isCustomSort
+                                          ? AppColors.ember
+                                          : AppColors.obsidian,
+                                      fontSize: 12,
+                                    ).copyWith(
+                                      fontWeight: isCustomSort
+                                          ? FontWeight.w700
+                                          : FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    LucideIcons.chevronDown,
+                                    size: 13,
+                                    color: isCustomSort
+                                        ? AppColors.ember
+                                        : AppColors.steel,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -513,9 +605,9 @@ class _PhotographersDiscoveryScreenState
       case SortOption.rating:
         return 'Đánh giá cao';
       case SortOption.priceAsc:
-        return 'Giá thấp';
+        return 'Giá thấp đến cao';
       case SortOption.priceDesc:
-        return 'Giá cao';
+        return 'Giá cao đến thấp';
     }
   }
 }

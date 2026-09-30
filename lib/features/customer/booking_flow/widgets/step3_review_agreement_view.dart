@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/booking_wizard_state.dart';
 
 class Step3ReviewAgreementView extends StatelessWidget {
@@ -16,14 +18,6 @@ class Step3ReviewAgreementView extends StatelessWidget {
     required this.onJumpToStep,
     required this.onToggleAgreement,
   });
-
-  String _formatPrice(int amount) {
-    return NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: '₫',
-      decimalDigits: 0,
-    ).format(amount);
-  }
 
   String _calculateEndTime(String startTime, double hours) {
     final parts = startTime.split(':');
@@ -47,35 +41,34 @@ class Step3ReviewAgreementView extends StatelessWidget {
         : state.city;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AppTokens.pageHorizontal,
+        10,
+        AppTokens.pageHorizontal,
+        32,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Review Table Card
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0C000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Kiểm tra lại thông tin',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
+                  style: AppTypography.titleMd(
+                    fontSize: 17,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -85,10 +78,13 @@ class Step3ReviewAgreementView extends StatelessWidget {
                   icon: LucideIcons.package,
                   label: 'Gói chụp',
                   value:
-                      '${pkg?.name ?? "Gói cơ bản"} · 35 ảnh · ${state.durationHours} giờ chụp · Giao trong 3 ngày\nGiá: ${_formatPrice(state.price)}',
+                      '${pkg?.name ?? "Gói cơ bản"} · ${state.durationHours} giờ chụp\nTổng tiền: ${AppTypography.formatCurrency(state.price)}',
                   onEdit: () => onJumpToStep(0),
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F1F2)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
 
                 // Row 2: Ngày & giờ -> Sửa step 0
                 _ReviewRow(
@@ -97,7 +93,10 @@ class Step3ReviewAgreementView extends StatelessWidget {
                   value: timeStr,
                   onEdit: () => onJumpToStep(0),
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F1F2)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
 
                 // Row 3: Địa điểm -> Sửa step 1
                 _ReviewRow(
@@ -106,7 +105,10 @@ class Step3ReviewAgreementView extends StatelessWidget {
                   value: locationStr,
                   onEdit: () => onJumpToStep(1),
                 ),
-                const Divider(height: 20, color: Color(0xFFF1F1F2)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
 
                 // Row 4: Liên hệ -> Sửa step 1
                 _ReviewRow(
@@ -117,7 +119,10 @@ class Step3ReviewAgreementView extends StatelessWidget {
                 ),
 
                 if (state.note.isNotEmpty) ...[
-                  const Divider(height: 20, color: Color(0xFFF1F1F2)),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(height: 1, color: AppColors.pebble),
+                  ),
                   _ReviewRow(
                     icon: LucideIcons.messageSquare,
                     label: 'Ghi chú cho thợ',
@@ -135,9 +140,9 @@ class Step3ReviewAgreementView extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F8),
+              color: AppColors.fog,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE8E8E9)),
+              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,8 +151,8 @@ class Step3ReviewAgreementView extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFF0EA),
+                      decoration: BoxDecoration(
+                        color: AppColors.ember.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -157,13 +162,12 @@ class Step3ReviewAgreementView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Chính sách đặt cọc & hoàn tiền',
-                        style: TextStyle(
-                          color: Color(0xFF1A1C1D),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                        'Chính sách đặt cọc & hoàn tiền Escrow',
+                        style: AppTypography.titleMd(
+                          fontSize: 14.5,
+                          color: AppColors.obsidian,
                         ),
                       ),
                     ),
@@ -172,14 +176,15 @@ class Step3ReviewAgreementView extends StatelessWidget {
                 const SizedBox(height: 12),
                 _PolicyBullet(
                   text:
-                      'Đặt cọc 30% (${_formatPrice(state.depositAmount)}) ngay sau bước này để giữ lịch và gửi yêu cầu tới NAG.',
-                ),
-                _PolicyBullet(
-                  text: 'Huỷ trước khi NAG duyệt, hoặc trước ngày chụp từ 7 ngày trở lên: Hoàn 100%. Huỷ muộn hơn: Mất tiền cọc. NAG từ chối: Luôn hoàn 100%.',
+                      'Đặt cọc 30% (${AppTypography.formatCurrency(state.depositAmount)}) ngay sau bước này để bảo đảm lịch và gửi yêu cầu cho nhiếp ảnh gia.',
                 ),
                 _PolicyBullet(
                   text:
-                      'Phần còn lại 70% (${_formatPrice(state.remainingAmount)}) thanh toán sau khi NAG xác nhận.',
+                      'Huỷ trước khi nhiếp ảnh gia duyệt, hoặc trước buổi chụp từ 7 ngày: hoàn tiền 100%. Nếu nhiếp ảnh gia từ chối: hoàn 100% tự động.',
+                ),
+                _PolicyBullet(
+                  text:
+                      'Phần còn lại 70% (${AppTypography.formatCurrency(state.remainingAmount)}) thanh toán sau khi lịch chụp được xác nhận.',
                 ),
               ],
             ),
@@ -189,7 +194,7 @@ class Step3ReviewAgreementView extends StatelessWidget {
           // Mandatory Agreement Checkbox
           InkWell(
             onTap: () => onToggleAgreement(!state.agreedToTerms),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               child: Row(
@@ -208,14 +213,13 @@ class Step3ReviewAgreementView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Tôi đồng ý với điều khoản đặt lịch và chính sách đặt cọc của Lens.',
-                      style: TextStyle(
-                        color: Color(0xFF1A1C1D),
+                      'Tôi đồng ý với điều khoản đặt lịch và chính sách bảo vệ Escrow của Lens.',
+                      style: AppTypography.bodySm(
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
+                        color: AppColors.obsidian,
+                      ).copyWith(fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -247,7 +251,7 @@ class _ReviewRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF71717A)),
+        Icon(icon, size: 16, color: AppColors.steel),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -255,21 +259,18 @@ class _ReviewRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Color(0xFF71717A),
+                style: AppTypography.labelSm(
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  color: AppColors.steel,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Color(0xFF1A1C1D),
+                style: AppTypography.bodySm(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.35,
-                ),
+                  color: AppColors.obsidian,
+                ).copyWith(fontWeight: FontWeight.w600, height: 1.35),
               ),
             ],
           ),
@@ -281,12 +282,11 @@ class _ReviewRow extends StatelessWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(
+          child: Text(
             'Sửa',
-            style: TextStyle(
-              color: AppColors.ember,
+            style: AppTypography.labelMd(
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              color: AppColors.ember,
             ),
           ),
         ),
@@ -308,11 +308,11 @@ class _PolicyBullet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 5),
+            margin: const EdgeInsets.only(top: 6),
             width: 5,
             height: 5,
             decoration: const BoxDecoration(
-              color: Color(0xFF71717A),
+              color: AppColors.steel,
               shape: BoxShape.circle,
             ),
           ),
@@ -320,11 +320,10 @@ class _PolicyBullet extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFF5F5E60),
+              style: AppTypography.bodySm(
                 fontSize: 12,
-                height: 1.4,
-              ),
+                color: AppColors.steel,
+              ).copyWith(height: 1.4),
             ),
           ),
         ],

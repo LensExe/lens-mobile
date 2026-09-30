@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../bookings/controllers/customer_bookings_controller.dart';
@@ -38,42 +38,72 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
         ),
       );
     }
-    final format = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: '₫',
-      decimalDigits: 0,
-    );
+
     return LensPage(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(LucideIcons.arrowLeft),
+        backgroundColor: AppColors.canvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 18,
+                  color: AppColors.obsidian,
+                ),
+              ),
+            ),
+          ),
         ),
-        title: const Text('Đặt cọc giữ lịch'),
+        title: Text(
+          'Đặt cọc giữ lịch',
+          style: AppTypography.titleMd(color: AppColors.obsidian),
+        ),
       ),
       body: ListView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
           AppTokens.pageHorizontal,
           10,
           AppTokens.pageHorizontal,
-          32,
+          40,
         ),
         children: [
-          _CheckoutHeader(
+          const _CheckoutHeader(
             step: 3,
-            title: 'Đặt cọc',
-            subtitle: 'Thanh toán an toàn để gửi yêu cầu tới nhiếp ảnh gia.',
+            title: 'Thanh toán tiền cọc 30%',
+            subtitle: 'Khoản cọc được bảo vệ bởi Lens Escrow và giữ lịch trong 30 phút.',
           ),
           const SizedBox(height: 16),
-          LensSectionCard(
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Tóm tắt lịch chụp',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _SummaryRow(
                   label: 'Nhiếp ảnh gia',
                   value: booking.photographerName,
@@ -86,29 +116,40 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
                   label: 'Gói chụp',
                   value: booking.packageSnapshot?.name ?? booking.style,
                 ),
-                const Divider(height: 22),
-                _SummaryRow(
-                  label: 'Giá gói',
-                  value: format.format(booking.price),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
                 ),
                 _SummaryRow(
-                  label: 'Đặt cọc (30%)',
-                  value: format.format(booking.depositAmount),
+                  label: 'Tổng giá gói',
+                  value: AppTypography.formatCurrency(booking.price),
+                ),
+                _SummaryRow(
+                  label: 'Tiền cọc cần nạp (30%)',
+                  value: AppTypography.formatCurrency(booking.depositAmount),
                   strong: true,
+                  color: AppColors.ember,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          LensSectionCard(
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Phương thức thanh toán',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 ...PaymentMethod.values.map(
                   (method) => _PaymentOption(
                     method: method,
@@ -119,38 +160,39 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFE6F4F2),
-              borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+              color: AppColors.fog,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
             ),
-            child: const Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
+                const Icon(
                   LucideIcons.shieldCheck,
-                  size: 18,
-                  color: AppColors.lagoon,
+                  size: 20,
+                  color: AppColors.emerald,
                 ),
-                SizedBox(width: 9),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Khoản cọc được hoàn lại nếu nhiếp ảnh gia từ chối yêu cầu. Sau khi thanh toán, Lens giữ chỗ trong 30 phút.',
-                    style: TextStyle(
-                      color: AppColors.lagoon,
-                      fontSize: 12,
-                      height: 1.45,
+                    'Khoản cọc được hoàn 100% tự động nếu nhiếp ảnh gia từ chối hoặc bận lịch. Hệ thống giữ chỗ ngay sau khi nạp.',
+                    style: AppTypography.bodySm(
+                      fontSize: 12.5,
+                      color: AppColors.steel,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           PrimaryButton(
-            text: 'Thanh toán cọc ${format.format(booking.depositAmount)}',
+            text: 'Thanh toán cọc ${AppTypography.formatCurrency(booking.depositAmount)}',
+            height: 52,
             onPressed: () => _pay(booking),
             isLoading: _isPaying,
           ),
@@ -212,11 +254,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ),
       );
     }
-    final format = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: '₫',
-      decimalDigits: 0,
-    );
     final maxCoins = _coinBalance < booking.remainingAmount
         ? _coinBalance
         : booking.remainingAmount;
@@ -224,63 +261,112 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ? (int.tryParse(_coinsController.text) ?? 0).clamp(0, maxCoins)
         : 0;
     final cashDue = booking.remainingAmount - coins;
+
     return LensPage(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(LucideIcons.arrowLeft),
+        backgroundColor: AppColors.canvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 18,
+                  color: AppColors.obsidian,
+                ),
+              ),
+            ),
+          ),
         ),
-        title: const Text('Thanh toán phần còn lại'),
+        title: Text(
+          'Thanh toán phần còn lại',
+          style: AppTypography.titleMd(color: AppColors.obsidian),
+        ),
       ),
       body: ListView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
           AppTokens.pageHorizontal,
           10,
           AppTokens.pageHorizontal,
-          32,
+          40,
         ),
         children: [
-          _CheckoutHeader(
+          const _CheckoutHeader(
             step: 4,
-            title: 'Thanh toán',
-            subtitle: 'Hoàn tất thanh toán để Lens giữ tiền an toàn tới khi giao ảnh.',
+            title: 'Thanh toán hoàn tất',
+            subtitle: 'Hoàn tất thanh toán để Lens giữ tiền an toàn tới khi nghiệm thu ảnh.',
           ),
           const SizedBox(height: 16),
-          LensSectionCard(
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Số tiền cần thanh toán',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 7),
                 Text(
-                  format.format(booking.remainingAmount),
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  'Số tiền cần thanh toán',
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  AppTypography.formatCurrency(booking.remainingAmount),
+                  style: AppTypography.priceDisplay(
+                    fontSize: 26,
+                    color: AppColors.obsidian,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Gói ${booking.packageSnapshot?.name ?? booking.style}',
-                  style: const TextStyle(color: AppColors.steel, fontSize: 12),
+                  style: AppTypography.bodySm(color: AppColors.steel),
                 ),
-                const Divider(height: 24),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
                 _SummaryRow(
                   label: 'Thanh toán bằng tiền mặt',
-                  value: format.format(cashDue),
+                  value: AppTypography.formatCurrency(cashDue),
                   strong: true,
+                  color: AppColors.ember,
                 ),
                 if (coins > 0)
                   _SummaryRow(
                     label: 'Lens Xu sử dụng',
-                    value: '-${format.format(coins)}',
-                    color: AppColors.lagoon,
+                    value: '-${AppTypography.formatCurrency(coins)}',
+                    color: AppColors.emerald,
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          LensSectionCard(
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -288,53 +374,66 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   children: [
                     const Icon(
                       LucideIcons.gift,
-                      size: 17,
-                      color: AppColors.lagoon,
+                      size: 18,
+                      color: AppColors.ember,
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Dùng Lens Xu',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                        'Dùng Lens Xu tích luỹ',
+                        style: AppTypography.titleMd(color: AppColors.obsidian),
                       ),
                     ),
                     Switch(
                       value: _useCoins,
-                      activeThumbColor: AppColors.lagoon,
+                      activeTrackColor: AppColors.ember,
                       onChanged: (value) => setState(() => _useCoins = value),
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
-                  'Bạn có ${format.format(_coinBalance)} Lens Xu. 1 Xu = 1 ₫.',
-                  style: const TextStyle(color: AppColors.steel, fontSize: 12),
+                  'Bạn có ${AppTypography.formatCurrency(_coinBalance)} Lens Xu. 1 Xu = 1 ₫.',
+                  style: AppTypography.bodySm(color: AppColors.steel),
                 ),
                 if (_useCoins) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   TextField(
                     controller: _coinsController,
                     keyboardType: TextInputType.number,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       labelText:
-                          'Số Xu muốn dùng (tối đa ${format.format(maxCoins)})',
+                          'Số Xu muốn dùng (tối đa ${AppTypography.formatCurrency(maxCoins)})',
+                      filled: true,
+                      fillColor: AppColors.fog,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.pebble),
+                      ),
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          LensSectionCard(
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Phương thức thanh toán',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 ...PaymentMethod.values.map(
                   (method) => _PaymentOption(
                     method: method,
@@ -345,9 +444,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           PrimaryButton(
-            text: 'Thanh toán ${format.format(cashDue)}',
+            text: 'Thanh toán ${AppTypography.formatCurrency(cashDue)}',
+            height: 52,
             onPressed: () => _pay(booking),
             isLoading: _isPaying,
           ),
@@ -383,15 +483,16 @@ class _CheckoutHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
   });
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: Theme.of(context).textTheme.headlineSmall),
-      const SizedBox(height: 5),
+      Text(title, style: AppTypography.headlineSm(fontSize: 22, color: AppColors.obsidian)),
+      const SizedBox(height: 4),
       Text(
         subtitle,
-        style: const TextStyle(color: AppColors.steel, fontSize: 13),
+        style: AppTypography.bodySm(color: AppColors.steel),
       ),
       const SizedBox(height: 14),
       Row(
@@ -400,10 +501,10 @@ class _CheckoutHeader extends StatelessWidget {
           (index) => Expanded(
             child: Container(
               height: 4,
-              margin: EdgeInsets.only(right: index == 3 ? 0 : 5),
+              margin: EdgeInsets.only(right: index == 3 ? 0 : 6),
               decoration: BoxDecoration(
-                color: index < step ? AppColors.ember : AppColors.pebble,
-                borderRadius: BorderRadius.circular(999),
+                color: index < step ? AppColors.ember : AppColors.fog,
+                borderRadius: BorderRadius.circular(9999),
               ),
             ),
           ),
@@ -417,51 +518,62 @@ class _PaymentOption extends StatelessWidget {
   final PaymentMethod method;
   final bool selected;
   final VoidCallback onTap;
+
   const _PaymentOption({
     required this.method,
     required this.selected,
     required this.onTap,
   });
+
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(14),
+    borderRadius: BorderRadius.circular(16),
     child: Container(
-      margin: const EdgeInsets.only(bottom: 7),
-      padding: const EdgeInsets.all(11),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: selected ? AppColors.mist : AppColors.snow,
-        borderRadius: BorderRadius.circular(14),
+        color: selected ? AppColors.fog : AppColors.snow,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: selected ? AppColors.obsidian : AppColors.pebble,
+          width: selected ? 1.5 : 1,
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            method == PaymentMethod.bank
-                ? LucideIcons.landmark
-                : method == PaymentMethod.card
-                ? LucideIcons.creditCard
-                : LucideIcons.walletCards,
-            size: 18,
-            color: selected ? AppColors.obsidian : AppColors.steel,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: selected ? AppColors.obsidian : AppColors.fog,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              method == PaymentMethod.bank
+                  ? LucideIcons.landmark
+                  : method == PaymentMethod.card
+                  ? LucideIcons.creditCard
+                  : LucideIcons.walletCards,
+              size: 17,
+              color: selected ? AppColors.snow : AppColors.steel,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   method.label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.titleMd(
+                    fontSize: 13.5,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 Text(
                   method.hint,
-                  style: const TextStyle(fontSize: 11, color: AppColors.steel),
+                  style: AppTypography.bodySm(fontSize: 11.5, color: AppColors.steel),
                 ),
               ],
             ),
@@ -469,7 +581,7 @@ class _PaymentOption extends StatelessWidget {
           Icon(
             selected ? LucideIcons.circleCheck : LucideIcons.circle,
             size: 19,
-            color: selected ? AppColors.obsidian : AppColors.pebble,
+            color: selected ? AppColors.ember : AppColors.pebble,
           ),
         ],
       ),
@@ -482,32 +594,36 @@ class _SummaryRow extends StatelessWidget {
   final String value;
   final bool strong;
   final Color? color;
+
   const _SummaryRow({
     required this.label,
     required this.value,
     this.strong = false,
     this.color,
   });
+
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 7),
+    padding: const EdgeInsets.only(bottom: 8),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(color: AppColors.steel, fontSize: 12),
+            style: AppTypography.bodySm(fontSize: 13, color: AppColors.steel),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
-            color: color ?? AppColors.ink,
-          ),
+          style: strong
+              ? AppTypography.priceDisplay(fontSize: 15, color: color ?? AppColors.obsidian)
+              : AppTypography.numeric(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color ?? AppColors.obsidian,
+                ),
         ),
       ],
     ),

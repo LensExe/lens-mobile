@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/photographer_detail_model.dart';
 
 class PhotographerProfileInfo extends StatelessWidget {
@@ -15,7 +18,7 @@ class PhotographerProfileInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -23,7 +26,7 @@ class PhotographerProfileInfo extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar with active badge
+              // Avatar with active verified badge
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -32,21 +35,19 @@ class PhotographerProfileInfo extends StatelessWidget {
                     height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                      border: Border.all(color: AppColors.snow, width: 3),
+                      boxShadow: const [AppTokens.surfaceShadow],
                     ),
                     child: ClipOval(
                       child: CachedNetworkImage(
                         imageUrl: profile.avatarUrl,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(color: const Color(0xFFE8E8E9)),
-                        errorWidget: (context, url, error) => const Icon(LucideIcons.user, size: 36),
+                        placeholder: (context, url) => Container(color: AppColors.fog),
+                        errorWidget: (context, url, error) => const Icon(
+                          LucideIcons.user,
+                          size: 36,
+                          color: AppColors.steel,
+                        ),
                       ),
                     ),
                   ),
@@ -57,13 +58,13 @@ class PhotographerProfileInfo extends StatelessWidget {
                       width: 22,
                       height: 22,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF5A00),
+                        color: AppColors.emerald,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: AppColors.snow, width: 2),
                       ),
                       child: const Center(
                         child: Icon(
-                          Icons.check,
+                          LucideIcons.check,
                           color: Colors.white,
                           size: 13,
                         ),
@@ -84,11 +85,9 @@ class PhotographerProfileInfo extends StatelessWidget {
                         Flexible(
                           child: Text(
                             profile.name,
-                            style: const TextStyle(
-                              color: Color(0xFF1A1C1D),
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
+                            style: AppTypography.headlineSm(
+                              fontSize: 20,
+                              color: AppColors.obsidian,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -98,16 +97,16 @@ class PhotographerProfileInfo extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8E8E9),
+                            color: AppColors.fog,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
                           ),
                           child: Text(
                             profile.rank,
-                            style: const TextStyle(
-                              color: Color(0xFF5B4137),
+                            style: AppTypography.numeric(
                               fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.4,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.steel,
                             ),
                           ),
                         ),
@@ -118,15 +117,14 @@ class PhotographerProfileInfo extends StatelessWidget {
                     // City & Rating
                     Row(
                       children: [
-                        const Icon(LucideIcons.mapPin, size: 13, color: Color(0xFF5F5E60)),
+                        const Icon(LucideIcons.mapPin, size: 13, color: AppColors.steel),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             profile.city,
-                            style: const TextStyle(
-                              color: Color(0xFF5F5E60),
+                            style: AppTypography.bodySm(
                               fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
+                              color: AppColors.steel,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -137,28 +135,27 @@ class PhotographerProfileInfo extends StatelessWidget {
                           width: 3,
                           height: 3,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF5F5E60),
+                            color: AppColors.steel,
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.star, color: Color(0xFFFF5A00), size: 14),
+                        const Icon(LucideIcons.star, color: AppColors.ember, size: 13),
                         const SizedBox(width: 3),
                         Text(
                           '${profile.rating}',
-                          style: const TextStyle(
-                            color: Color(0xFF1A1C1D),
+                          style: AppTypography.numeric(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
+                            color: AppColors.obsidian,
                           ),
                         ),
                         const SizedBox(width: 3),
                         Text(
                           '(${profile.reviewCount})',
-                          style: const TextStyle(
-                            color: Color(0xFF5F5E60),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                          style: AppTypography.bodySm(
+                            fontSize: 11.5,
+                            color: AppColors.steel,
                           ),
                         ),
                       ],
@@ -173,12 +170,10 @@ class PhotographerProfileInfo extends StatelessWidget {
           // 2. Bio Summary
           Text(
             profile.bio,
-            style: const TextStyle(
-              color: Color(0xFF2F3132),
+            style: AppTypography.bodySm(
               fontSize: 13.5,
-              fontWeight: FontWeight.w400,
-              height: 1.45,
-            ),
+              color: AppColors.graphite,
+            ).copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
 
@@ -186,15 +181,10 @@ class PhotographerProfileInfo extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -214,7 +204,7 @@ class PhotographerProfileInfo extends StatelessWidget {
                 _buildMetricItem(
                   '${profile.completionRate}%',
                   'Nghiệm thu',
-                  LucideIcons.checkCheck,
+                  LucideIcons.shieldCheck,
                 ),
               ],
             ),
@@ -231,15 +221,14 @@ class PhotographerProfileInfo extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: const Color(0xFFA83900)),
+            Icon(icon, size: 14, color: AppColors.ember),
             const SizedBox(width: 4),
             Text(
               value,
-              style: const TextStyle(
-                color: Color(0xFF1A1C1D),
+              style: AppTypography.numeric(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
+                color: AppColors.obsidian,
               ),
             ),
           ],
@@ -247,10 +236,9 @@ class PhotographerProfileInfo extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF5F5E60),
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
+          style: AppTypography.labelSm(
+            fontSize: 11,
+            color: AppColors.steel,
           ),
         ),
       ],
@@ -261,7 +249,7 @@ class PhotographerProfileInfo extends StatelessWidget {
     return Container(
       width: 1,
       height: 28,
-      color: const Color(0xFFEEEEEF),
+      color: AppColors.pebble,
     );
   }
 }

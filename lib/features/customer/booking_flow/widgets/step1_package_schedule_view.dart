@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/booking_wizard_state.dart';
+import 'date_strip_picker.dart';
+import 'package_picker_card.dart';
 import 'photographer_summary_banner.dart';
-
-import 'package:lens_app/features/customer/booking_flow/widgets/package_picker_card.dart';
-import 'package:lens_app/features/customer/booking_flow/widgets/date_strip_picker.dart';
-import 'package:lens_app/features/customer/booking_flow/widgets/time_slots_grid.dart';
+import 'time_slots_grid.dart';
 
 class Step1PackageScheduleView extends StatelessWidget {
   final BookingWizardState state;
@@ -30,33 +32,36 @@ class Step1PackageScheduleView extends StatelessWidget {
     final dayAvail = state.availabilityMap[dateKey];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AppTokens.pageHorizontal,
+        10,
+        AppTokens.pageHorizontal,
+        32,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Photographer banner
           PhotographerSummaryBanner(profile: profile),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Section 1: Packages
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '1. Chọn Gói Chụp',
-                style: TextStyle(
-                  color: Color(0xFF1A1C1D),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
+                style: AppTypography.headlineSm(
+                  fontSize: 17,
+                  color: AppColors.obsidian,
                 ),
               ),
               Text(
                 'Có thể tuỳ biến gói',
-                style: TextStyle(
-                  color: const Color(0xFFA83900),
+                style: AppTypography.labelSm(
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  color: AppColors.ember,
                 ),
               ),
             ],
@@ -66,7 +71,7 @@ class Step1PackageScheduleView extends StatelessWidget {
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(color: AppColors.ember),
               ),
             )
           else
@@ -78,7 +83,7 @@ class Step1PackageScheduleView extends StatelessWidget {
                 onTap: () => onSelectPackage(pkg.id),
               );
             }),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Section 2: Date
           DateStripPicker(
@@ -86,7 +91,7 @@ class Step1PackageScheduleView extends StatelessWidget {
             onDateSelected: onSelectDate,
             availabilityMap: state.availabilityMap,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Section 3: Time Slot
           TimeSlotsGrid(

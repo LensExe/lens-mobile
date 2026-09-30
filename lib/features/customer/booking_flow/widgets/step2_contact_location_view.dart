@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/booking_wizard_state.dart';
 
 class Step2ContactLocationView extends StatefulWidget {
@@ -79,7 +81,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
   void _showCityPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.snow,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -93,13 +95,9 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'Chọn Tỉnh / Thành phố',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1C1D),
-                      ),
+                      style: AppTypography.titleMd(color: AppColors.obsidian),
                     ),
                     const Spacer(),
                     IconButton(
@@ -109,7 +107,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: AppColors.pebble),
               ...BookingWizardState.standardCities.map((city) {
                 final isSelected = widget.state.city == city;
                 return ListTile(
@@ -117,12 +115,8 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                     city,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.ember
-                          : const Color(0xFF1A1C1D),
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? AppColors.ember : AppColors.obsidian,
                     ),
                   ),
                   trailing: isSelected
@@ -149,24 +143,25 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AppTokens.pageHorizontal,
+        10,
+        AppTokens.pageHorizontal,
+        32,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Section 1: Thông tin liên hệ
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0C000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,13 +169,11 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       '1. Thông tin liên hệ',
-                      style: TextStyle(
-                        color: Color(0xFF1A1C1D),
+                      style: AppTypography.titleMd(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
+                        color: AppColors.obsidian,
                       ),
                     ),
                     if (widget.state.isAutofilled)
@@ -190,24 +183,24 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F7F0),
-                          borderRadius: BorderRadius.circular(999),
+                          color: AppColors.emerald.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(9999),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               LucideIcons.checkCheck,
                               size: 12,
-                              color: Color(0xFF0F9D58),
+                              color: AppColors.emerald,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              'Đã điền từ hồ sơ của bạn',
-                              style: TextStyle(
-                                color: Color(0xFF0F9D58),
-                                fontSize: 11,
+                              'Đã điền tự động',
+                              style: AppTypography.numeric(
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
+                                color: AppColors.emerald,
                               ),
                             ),
                           ],
@@ -218,12 +211,11 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 const SizedBox(height: 16),
 
                 // Họ và tên
-                const Text(
+                Text(
                   'Họ và tên *',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.labelMd(
+                    fontSize: 12.5,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -235,24 +227,24 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                     prefixIcon: const Icon(
                       LucideIcons.user,
                       size: 18,
-                      color: Color(0xFF71717A),
+                      color: AppColors.steel,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF9F9FA),
+                    fillColor: AppColors.fog,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
                         color: AppColors.ember,
                         width: 1.5,
@@ -263,20 +255,19 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 if (!widget.state.isNameValid &&
                     widget.state.contactName.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Tên phải có tối thiểu 2 ký tự',
-                    style: TextStyle(color: Colors.red, fontSize: 11),
+                    style: AppTypography.bodySm(color: AppColors.crimson, fontSize: 11),
                   ),
                 ],
                 const SizedBox(height: 14),
 
                 // Số điện thoại
-                const Text(
+                Text(
                   'Số điện thoại *',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.labelMd(
+                    fontSize: 12.5,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -289,24 +280,24 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                     prefixIcon: const Icon(
                       LucideIcons.phone,
                       size: 18,
-                      color: Color(0xFF71717A),
+                      color: AppColors.steel,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF9F9FA),
+                    fillColor: AppColors.fog,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
                         color: AppColors.ember,
                         width: 1.5,
@@ -317,9 +308,9 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 if (!widget.state.isPhoneValid &&
                     widget.state.contactPhone.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Số điện thoại không hợp lệ (VD: 0901234567)',
-                    style: TextStyle(color: Colors.red, fontSize: 11),
+                    style: AppTypography.bodySm(color: AppColors.crimson, fontSize: 11),
                   ),
                 ],
               ],
@@ -330,77 +321,68 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
           // Section 2: Địa điểm chụp
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0C000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '2. Địa điểm chụp',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
+                  style: AppTypography.titleMd(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // Tỉnh / Thành phố
-                const Text(
+                Text(
                   'Tỉnh / Thành phố *',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.labelMd(
+                    fontSize: 12.5,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 6),
                 InkWell(
                   onTap: _showCityPicker,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 13,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FA),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8E8E9)),
+                      color: AppColors.fog,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.pebble),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           LucideIcons.mapPin,
                           size: 18,
-                          color: Color(0xFF71717A),
+                          color: AppColors.steel,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             widget.state.city,
-                            style: const TextStyle(
-                              color: Color(0xFF1A1C1D),
+                            style: AppTypography.bodySm(
                               fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                              color: AppColors.obsidian,
+                            ).copyWith(fontWeight: FontWeight.w500),
                           ),
                         ),
                         const Icon(
                           LucideIcons.chevronDown,
                           size: 18,
-                          color: Color(0xFF71717A),
+                          color: AppColors.steel,
                         ),
                       ],
                     ),
@@ -409,12 +391,11 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 const SizedBox(height: 14),
 
                 // Địa chỉ cụ thể
-                const Text(
+                Text(
                   'Địa chỉ cụ thể (không bắt buộc)',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.labelMd(
+                    fontSize: 12.5,
+                    color: AppColors.obsidian,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -427,25 +408,25 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                     prefixIcon: const Icon(
                       LucideIcons.building,
                       size: 18,
-                      color: Color(0xFF71717A),
+                      color: AppColors.steel,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF9F9FA),
+                    fillColor: AppColors.fog,
                     counterText: '',
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
                         color: AppColors.ember,
                         width: 1.5,
@@ -475,12 +456,12 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Lưu số điện thoại & địa chỉ này làm mặc định cho lần sau',
-                          style: TextStyle(
-                            color: Color(0xFF5F5E60),
-                            fontSize: 13,
+                          style: AppTypography.bodySm(
+                            fontSize: 12.5,
+                            color: AppColors.steel,
                           ),
                         ),
                       ),
@@ -495,34 +476,27 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
           // Section 3: Ghi chú cho NAG
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0C000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '3. Ghi chú cho nhiếp ảnh gia',
-                  style: TextStyle(
-                    color: Color(0xFF1A1C1D),
+                  style: AppTypography.titleMd(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
+                    color: AppColors.obsidian,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                const SizedBox(height: 4),
+                Text(
                   'Ý tưởng concept, số người chụp, tư vấn trang phục...',
-                  style: TextStyle(color: Color(0xFF5F5E60), fontSize: 12),
+                  style: AppTypography.bodySm(color: AppColors.steel, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -533,18 +507,18 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                   decoration: InputDecoration(
                     hintText: 'VD: Chụp gia đình 4 người, tông màu ấm, có bé 2 tuổi, cần tư vấn trang phục...',
                     filled: true,
-                    fillColor: const Color(0xFFF9F9FA),
+                    fillColor: AppColors.fog,
                     contentPadding: const EdgeInsets.all(14),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E9)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.pebble),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
                         color: AppColors.ember,
                         width: 1.5,

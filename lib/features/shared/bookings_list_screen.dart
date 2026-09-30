@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/primary_button.dart';
 import '../customer/bookings/controllers/customer_bookings_controller.dart';
 import '../customer/bookings/models/booking_model.dart';
 import '../customer/bookings/widgets/booking_card.dart';
@@ -19,57 +22,51 @@ class BookingsListScreen extends ConsumerWidget {
     final controller = ref.read(customerBookingsControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FA),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF9F9FA),
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Lịch đặt của tôi',
-              style: TextStyle(
-                color: Color(0xFF1A1C1D),
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-                letterSpacing: -0.5,
-              ),
-            ),
             Text(
-              '${state.allBookings.length} tổng bản ghi',
-              style: const TextStyle(
-                color: Color(0xFF5F5E60),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w400,
-              ),
+              'Lịch chụp của tôi',
+              style: AppTypography.headlineMd(color: AppColors.obsidian),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${state.allBookings.length} tổng buổi chụp',
+              style: AppTypography.bodySm(color: AppColors.steel),
             ),
           ],
         ),
         actions: [
           IconButton(
             icon: Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF3F3F4),
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.snow,
                 shape: BoxShape.circle,
+                border: Border.all(color: AppColors.pebble),
+                boxShadow: const [AppTokens.surfaceShadow],
               ),
               child: const Icon(
                 LucideIcons.refreshCw,
                 size: 16,
-                color: Color(0xFF1A1C1D),
+                color: AppColors.obsidian,
               ),
             ),
             onPressed: () => controller.loadBookings(),
             tooltip: 'Tải lại',
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppTokens.pageHorizontal),
         ],
       ),
       body: RefreshIndicator(
-        color: const Color(0xFFFF5A00),
+        color: AppColors.ember,
         onRefresh: () => controller.loadBookings(),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -77,33 +74,36 @@ class BookingsListScreen extends ConsumerWidget {
             // 1. Client Workspace & Active Count Tag Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.pageHorizontal,
+                  vertical: 6,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8E8E9),
+                            color: AppColors.fog,
                             borderRadius: BorderRadius.circular(9999),
+                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
                           ),
-                          child: const Text(
-                            'CLIENT WORKSPACE',
-                            style: TextStyle(
-                              color: Color(0xFF5B4137),
-                              fontSize: 11,
+                          child: Text(
+                            'KHÁCH HÀNG',
+                            style: AppTypography.numeric(
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
+                              color: AppColors.steel,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFDBCF),
+                            color: AppColors.ember.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(9999),
                           ),
                           child: Row(
@@ -113,17 +113,17 @@ class BookingsListScreen extends ConsumerWidget {
                                 width: 6,
                                 height: 6,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFFF5A00),
+                                  color: AppColors.ember,
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 6),
                               Text(
                                 '${state.activeCount} Đang hoạt động',
-                                style: const TextStyle(
-                                  color: Color(0xFF380D00),
+                                style: AppTypography.numeric(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
+                                  color: AppColors.ember,
                                 ),
                               ),
                             ],
@@ -133,10 +133,9 @@ class BookingsListScreen extends ConsumerWidget {
                     ),
                     Text(
                       '${state.filteredBookings.length} hiển thị',
-                      style: const TextStyle(
-                        color: Color(0xFF5F5E60),
+                      style: AppTypography.bodySm(
                         fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                        color: AppColors.steel,
                       ),
                     ),
                   ],
@@ -168,7 +167,7 @@ class BookingsListScreen extends ConsumerWidget {
             ),
 
             const SliverToBoxAdapter(
-              child: SizedBox(height: 4),
+              child: SizedBox(height: 6),
             ),
 
             // 4. Bookings List or Empty State
@@ -177,7 +176,7 @@ class BookingsListScreen extends ConsumerWidget {
                 hasScrollBody: false,
                 child: Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFFFF5A00),
+                    color: AppColors.ember,
                   ),
                 ),
               )
@@ -203,7 +202,7 @@ class BookingsListScreen extends ConsumerWidget {
               ),
 
             const SliverToBoxAdapter(
-              child: SizedBox(height: 32),
+              child: SizedBox(height: 48),
             ),
           ],
         ),
@@ -221,6 +220,8 @@ class BookingsListScreen extends ConsumerWidget {
         context.push('/customer_home/bookings/${booking.id}/gallery');
         break;
       case BookingStatus.awaiting_deposit:
+        context.push('/customer_home/bookings/${booking.id}/deposit');
+        break;
       case BookingStatus.pending:
       case BookingStatus.confirmed:
       case BookingStatus.released:
@@ -250,15 +251,15 @@ class BookingsListScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               decoration: const BoxDecoration(
-                color: Color(0xFFF3F3F4),
+                color: AppColors.fog,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 LucideIcons.calendarX2,
-                size: 38,
+                size: 32,
                 color: AppColors.steel,
               ),
             ),
@@ -266,47 +267,19 @@ class BookingsListScreen extends ConsumerWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1C1D),
-              ),
+              style: AppTypography.titleMd(color: AppColors.obsidian),
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF5F5E60),
-                height: 1.4,
-              ),
+              style: AppTypography.bodySm(color: AppColors.steel),
             ),
             const SizedBox(height: 24),
-            GestureDetector(
-              onTap: () => context.go('/customer_home/discovery'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF5A00),
-                  borderRadius: BorderRadius.circular(9999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF5A00).withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Text(
-                  'Khám phá nhiếp ảnh gia',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+            PrimaryButton(
+              text: 'Khám phá nhiếp ảnh gia',
+              expand: false,
+              onPressed: () => context.go('/customer_home/discovery'),
             ),
           ],
         ),

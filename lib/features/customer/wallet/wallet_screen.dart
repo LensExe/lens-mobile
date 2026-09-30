@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/lens_page.dart';
 
 class WalletScreen extends StatelessWidget {
@@ -12,75 +12,124 @@ class WalletScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final format = NumberFormat.currency(
-      locale: 'vi_VN',
-      symbol: '₫',
-      decimalDigits: 0,
-    );
     return LensPage(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(LucideIcons.arrowLeft),
+        backgroundColor: AppColors.canvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(9999),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 18,
+                  color: AppColors.obsidian,
+                ),
+              ),
+            ),
+          ),
         ),
-        title: const Text('Ví của tôi'),
+        title: Text(
+          'Ví của tôi',
+          style: AppTypography.titleMd(color: AppColors.obsidian),
+        ),
       ),
       body: ListView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
           AppTokens.pageHorizontal,
           10,
           AppTokens.pageHorizontal,
-          32,
+          40,
         ),
         children: [
+          // Dark VIP Coin Card
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: AppColors.obsidian,
-              borderRadius: BorderRadius.circular(AppTokens.largeCardRadius),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 16,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(LucideIcons.coins, color: AppColors.ember, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'Lens Xu',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.coins, color: AppColors.ember, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Lens Xu Tích Lũy',
+                          style: AppTypography.labelMd(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(9999),
+                      ),
+                      child: Text(
+                        '1 Xu = 1 VNĐ',
+                        style: AppTypography.numeric(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 Text(
-                  format.format(120000),
-                  style: const TextStyle(
+                  AppTypography.formatCurrency(120000),
+                  style: AppTypography.priceDisplay(
+                    fontSize: 30,
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 28,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Có thể dùng cho lần thanh toán tiếp theo',
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                Text(
+                  'Có thể dùng khấu trừ trực tiếp cho lần đặt lịch tiếp theo',
+                  style: AppTypography.bodySm(color: Colors.white60),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.all(11),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(LucideIcons.gift, size: 16, color: AppColors.ember),
-                      SizedBox(width: 8),
+                      const Icon(LucideIcons.gift, size: 16, color: AppColors.ember),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Xu hoàn lại sau khi bạn xác nhận nhận ảnh.',
-                          style: TextStyle(color: Colors.white70, fontSize: 11),
+                          'Xu được hoàn tự động sau khi bạn xác nhận hoàn tất buổi chụp.',
+                          style: AppTypography.bodySm(fontSize: 11.5, color: Colors.white70),
                         ),
                       ),
                     ],
@@ -89,60 +138,87 @@ class WalletScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          LensSectionCard(
+          const SizedBox(height: 16),
+
+          // Summary Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Tóm tắt',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                Text(
+                  'Tổng quan tài khoản',
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
                 ),
                 const SizedBox(height: 14),
                 _Stat(
-                  label: 'Xu đã nhận',
-                  value: format.format(280000),
+                  label: 'Xu đã tích lũy',
+                  value: AppTypography.formatCurrency(280000),
                   icon: LucideIcons.trendingUp,
-                  color: AppColors.lagoon,
+                  color: AppColors.emerald,
                 ),
-                const SizedBox(height: 9),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
                 _Stat(
-                  label: 'Xu đã dùng',
-                  value: format.format(160000),
+                  label: 'Xu đã sử dụng',
+                  value: AppTypography.formatCurrency(160000),
                   icon: LucideIcons.ticket,
                   color: AppColors.ember,
                 ),
-                const SizedBox(height: 9),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
                 _Stat(
                   label: 'Sắp hết hạn',
-                  value: format.format(0),
+                  value: AppTypography.formatCurrency(0),
                   icon: LucideIcons.clock3,
                   color: AppColors.steel,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          LensSectionCard(
+          const SizedBox(height: 16),
+
+          // Transaction History Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Lịch sử giao dịch',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                Text(
+                  'Lịch sử biến động Xu',
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _Transaction(
                   icon: LucideIcons.gift,
-                  label: 'Hoàn Lens Xu sau khi nhận ảnh',
+                  label: 'Hoàn Lens Xu sau khi nghiệm thu ảnh',
                   date: 'Hôm nay',
                   amount: '+120.000 Xu',
                   positive: true,
                 ),
-                const Divider(height: 22),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(height: 1, color: AppColors.pebble),
+                ),
                 _Transaction(
                   icon: LucideIcons.ticket,
-                  label: 'Dùng Xu cho lịch chụp',
+                  label: 'Khấu trừ đặt cọc cho buổi chụp',
                   date: '12/09/2026',
                   amount: '-80.000 Xu',
                   positive: false,
@@ -161,34 +237,43 @@ class _Stat extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+
   const _Stat({
     required this.label,
     required this.value,
     required this.icon,
     required this.color,
   });
+
   @override
   Widget build(BuildContext context) => Row(
     children: [
       Container(
-        width: 30,
-        height: 30,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: .1),
-          borderRadius: BorderRadius.circular(9),
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, size: 15, color: color),
+        child: Icon(icon, size: 16, color: color),
       ),
-      const SizedBox(width: 9),
+      const SizedBox(width: 12),
       Expanded(
         child: Text(
           label,
-          style: const TextStyle(color: AppColors.steel, fontSize: 12),
+          style: AppTypography.bodySm(
+            fontSize: 13,
+            color: AppColors.steel,
+          ),
         ),
       ),
       Text(
         value,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        style: AppTypography.numeric(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: AppColors.obsidian,
+        ),
       ),
     ],
   );
@@ -200,6 +285,7 @@ class _Transaction extends StatelessWidget {
   final String date;
   final String amount;
   final bool positive;
+
   const _Transaction({
     required this.icon,
     required this.label,
@@ -207,37 +293,49 @@ class _Transaction extends StatelessWidget {
     required this.amount,
     required this.positive,
   });
+
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Icon(
-        icon,
-        size: 17,
-        color: positive ? AppColors.lagoon : AppColors.ember,
+      Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: (positive ? AppColors.emerald : AppColors.ember).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 17,
+          color: positive ? AppColors.emerald : AppColors.ember,
+        ),
       ),
-      const SizedBox(width: 9),
+      const SizedBox(width: 12),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: AppTypography.titleMd(
+                fontSize: 13,
+                color: AppColors.obsidian,
+              ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               date,
-              style: const TextStyle(color: AppColors.steel, fontSize: 11),
+              style: AppTypography.bodySm(fontSize: 11, color: AppColors.steel),
             ),
           ],
         ),
       ),
       Text(
         amount,
-        style: TextStyle(
-          fontSize: 12,
+        style: AppTypography.numeric(
+          fontSize: 13.5,
           fontWeight: FontWeight.w700,
-          color: positive ? AppColors.lagoon : AppColors.ink,
+          color: positive ? AppColors.emerald : AppColors.obsidian,
         ),
       ),
     ],

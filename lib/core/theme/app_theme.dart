@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
-
-import 'package:google_fonts/google_fonts.dart';
+import 'app_tokens.dart';
+import 'app_typography.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -11,66 +12,20 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: AppColors.obsidian,
       scaffoldBackgroundColor: AppColors.mist,
-      fontFamily: GoogleFonts.dmSans().fontFamily,
-      textTheme: GoogleFonts.dmSansTextTheme(baseTheme.textTheme).copyWith(
-        displayLarge: const TextStyle(
-          fontSize: 64,
-          fontWeight: FontWeight.w700,
-          color: AppColors.obsidian,
-          height: 1.0,
-          letterSpacing: -1.5,
-        ),
-        displayMedium: const TextStyle(
-          fontSize: 56,
-          fontWeight: FontWeight.w700,
-          color: AppColors.obsidian,
-          height: 1.12,
-          letterSpacing: -0.5,
-        ),
-        displaySmall: const TextStyle(
-          fontSize: 40,
-          fontWeight: FontWeight.w700,
-          color: AppColors.obsidian,
-          height: 1.25,
-          letterSpacing: -0.5,
-        ),
-        headlineMedium: const TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w600,
-          color: AppColors.obsidian,
-          height: 1.28,
-          letterSpacing: -0.5,
-        ),
-        headlineSmall: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.obsidian,
-          height: 1.35,
-        ),
-        titleLarge: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.obsidian,
-          height: 1.45,
-        ),
-        bodyLarge: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: AppColors.obsidian,
-          height: 1.5,
-        ),
-        bodyMedium: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.obsidian,
-          height: 1.56,
-        ),
-        labelSmall: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          color: AppColors.steel,
-          height: 1.8,
-        ),
+      fontFamily: GoogleFonts.inter().fontFamily,
+      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme).copyWith(
+        displayLarge: AppTypography.display(),
+        headlineLarge: AppTypography.headlineLg(),
+        headlineMedium: AppTypography.headlineMd(),
+        headlineSmall: AppTypography.headlineSm(),
+        titleLarge: AppTypography.headlineSm(),
+        titleMedium: AppTypography.titleMd(),
+        bodyLarge: AppTypography.bodyLg(),
+        bodyMedium: AppTypography.bodyMd(),
+        bodySmall: AppTypography.bodySm(),
+        labelLarge: AppTypography.titleMd(),
+        labelMedium: AppTypography.labelMd(),
+        labelSmall: AppTypography.labelSm(),
       ),
       colorScheme: const ColorScheme.light(
         primary: AppColors.obsidian,
@@ -80,7 +35,7 @@ class AppTheme {
         error: AppColors.destructive,
         onPrimary: AppColors.snow,
         onSecondary: AppColors.snow,
-        onSurface: AppColors.ink,
+        onSurface: AppColors.obsidian,
         onError: AppColors.snow,
       ),
       appBarTheme: const AppBarTheme(
@@ -98,15 +53,15 @@ class AppTheme {
           vertical: 13,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppTokens.inputFieldRadius),
           borderSide: const BorderSide(color: AppColors.pebble),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppTokens.inputFieldRadius),
           borderSide: const BorderSide(color: AppColors.pebble),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppTokens.inputFieldRadius),
           borderSide: const BorderSide(color: AppColors.obsidian, width: 1.2),
         ),
         hintStyle: const TextStyle(color: AppColors.ash, fontSize: 14),
@@ -116,8 +71,8 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.pebble),
+          borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+          side: const BorderSide(color: AppColors.pebble, width: 1.0),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -125,32 +80,41 @@ class AppTheme {
           backgroundColor: AppColors.ember,
           foregroundColor: AppColors.snow,
           elevation: 0,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+          minimumSize: const Size(0, AppTokens.primaryButtonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppTokens.pillRadius),
           ),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.01 * 16,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.obsidian,
-          minimumSize: const Size(0, 46),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          side: const BorderSide(color: AppColors.pebble),
+          backgroundColor: AppColors.snow,
+          minimumSize: const Size(0, AppTokens.primaryButtonHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          side: const BorderSide(color: AppColors.pebble, width: 1.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppTokens.pillRadius),
           ),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.01 * 15,
+          ),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.snow,
+        backgroundColor: Colors.transparent, // Handled by frosted container
         selectedItemColor: AppColors.obsidian,
         unselectedItemColor: AppColors.steel,
         type: BottomNavigationBarType.fixed,
-        elevation: 10,
+        elevation: 0,
         showUnselectedLabels: true,
         selectedLabelStyle: TextStyle(
           fontSize: 11,

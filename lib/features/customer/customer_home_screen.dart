@@ -6,6 +6,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/glass_container.dart';
 import '../../core/widgets/lens_page.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../features/customer/bookings/controllers/customer_bookings_controller.dart';
@@ -102,8 +104,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   0,
                 ),
                 child: _buildSectionHeading(
-                  'Lịch chụp sắp tới',
-                  'Theo dõi tiến độ và các khoản cần xử lý',
+                  'Lịch chụp của bạn',
+                  'Theo dõi tiến độ và các khoản thanh toán',
                   onSeeAll: () => context.go('/customer_home/bookings'),
                 ),
               ),
@@ -119,9 +121,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 itemBuilder: (context, index) => Padding(
                   padding: EdgeInsets.fromLTRB(
                     AppTokens.pageHorizontal,
-                    index == 0 ? 4 : 8,
+                    index == 0 ? 8 : 10,
                     AppTokens.pageHorizontal,
-                    index == visible.length - 1 ? 0 : 0,
+                    index == visible.length - 1 ? 4 : 0,
                   ),
                   child: _OverviewBookingCard(
                     booking: visible[index],
@@ -141,7 +143,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             SliverToBoxAdapter(
               child: _buildDiscoverySection(context, recommendations),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
         ),
       ),
@@ -152,42 +154,52 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        22,
+        18,
         AppTokens.pageHorizontal,
-        8,
+        6,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${_greeting()}, $firstName ✦',
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: AppColors.steel),
+                Row(
+                  children: [
+                    Text(
+                      '${_greeting()}, $firstName',
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text('✦', style: TextStyle(color: AppColors.ember, fontSize: 11)),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tổng quan lịch chụp',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Theo dõi lịch đặt, thanh toán và những khoảnh khắc sắp tới của bạn.',
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: AppColors.steel),
+                  'Tổng quan studio',
+                  style: AppTypography.headlineMd(color: AppColors.obsidian),
                 ),
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Cài đặt',
-            onPressed: () => context.go('/customer_home/more'),
-            icon: const Icon(
-              LucideIcons.circleUserRound,
-              color: AppColors.obsidian,
+          InkWell(
+            onTap: () => context.go('/customer_home/more'),
+            borderRadius: BorderRadius.circular(9999),
+            child: Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.pebble),
+                boxShadow: const [AppTokens.surfaceShadow],
+                color: AppColors.snow,
+              ),
+              child: Text(
+                firstName.isNotEmpty ? firstName.substring(0, 1).toUpperCase() : 'L',
+                style: AppTypography.titleMd(color: AppColors.obsidian),
+              ),
             ),
           ),
         ],
@@ -208,30 +220,34 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         'Tổng buổi chụp',
         bookings.length,
         AppColors.fog,
+        AppColors.obsidian,
       ),
       _MetricData(
         LucideIcons.walletCards,
         'Cần thanh toán',
         needsPayment.length,
-        AppColors.ember.withValues(alpha: .1),
+        AppColors.ember.withValues(alpha: .12),
+        AppColors.ember,
       ),
       _MetricData(
-        LucideIcons.calendarClock,
+        LucideIcons.clock4,
         'Chờ xác nhận',
         pending.length,
-        const Color(0xFFE6F4F2),
+        AppColors.lagoon.withValues(alpha: .12),
+        AppColors.lagoon,
       ),
       _MetricData(
         LucideIcons.checkCircle2,
         'Đã hoàn thành',
         completed.length,
-        const Color(0xFFD1FAE5),
+        AppColors.emerald.withValues(alpha: .12),
+        AppColors.emerald,
       ),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        22,
+        18,
         AppTokens.pageHorizontal,
         0,
       ),
@@ -243,41 +259,49 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 1.32,
+          childAspectRatio: 1.45,
         ),
         itemBuilder: (context, index) {
           final metric = metrics[index];
-          return LensSectionCard(
+          return Container(
             padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: metric.background,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Icon(metric.icon, size: 17, color: metric.iconColor),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: metric.background,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(metric.icon, size: 17, color: metric.iconColor),
+                    ),
                     Text(
                       '${metric.value}',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      metric.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall
-                          ?.copyWith(color: AppColors.ink),
+                      style: AppTypography.numeric(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.obsidian,
+                      ),
                     ),
                   ],
+                ),
+                Text(
+                  metric.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelSm(color: AppColors.steel),
                 ),
               ],
             ),
@@ -293,6 +317,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     VoidCallback? onSeeAll,
   }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
           child: Column(
@@ -300,21 +325,40 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTypography.headlineSm(color: AppColors.obsidian),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: AppColors.steel),
+                style: AppTypography.bodySm(color: AppColors.steel),
               ),
             ],
           ),
         ),
         if (onSeeAll != null)
-          TextButton(onPressed: onSeeAll, child: const Text('Xem tất cả')),
+          TextButton(
+            onPressed: onSeeAll,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Xem tất cả',
+                  style: AppTypography.labelMd(color: AppColors.ember),
+                ),
+                const SizedBox(width: 2),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 14,
+                  color: AppColors.ember,
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -323,31 +367,50 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final items = const [
       (_OverviewFilter.all, 'Tất cả'),
       (_OverviewFilter.payment, 'Cần thanh toán'),
-      (_OverviewFilter.pending, 'Chờ xác nhận'),
-      (_OverviewFilter.completed, 'Đã hoàn thành'),
+      (_OverviewFilter.pending, 'Chờ duyệt'),
+      (_OverviewFilter.completed, 'Đã hoàn tất'),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        12,
+        14,
         AppTokens.pageHorizontal,
-        4,
+        6,
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         child: Row(
-          children: items
-              .map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    label: Text(item.$2),
-                    selected: _filter == item.$1,
-                    onSelected: (_) => setState(() => _filter = item.$1),
+          children: items.map((item) {
+            final isSelected = _filter == item.$1;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: InkWell(
+                onTap: () => setState(() => _filter = item.$1),
+                borderRadius: BorderRadius.circular(9999),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  height: AppTokens.filterChipHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.obsidian : AppColors.fog,
+                    borderRadius: BorderRadius.circular(9999),
+                    border: isSelected
+                        ? null
+                        : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                  ),
+                  child: Text(
+                    item.$2,
+                    style: AppTypography.labelMd(
+                      color: isSelected ? AppColors.snow : AppColors.steel,
+                    ),
                   ),
                 ),
-              )
-              .toList(),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -361,28 +424,43 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         AppTokens.pageHorizontal,
         0,
       ),
-      child: LensSectionCard(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.snow,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.pebble),
+          boxShadow: const [AppTokens.surfaceShadow],
+        ),
         child: Column(
           children: [
-            const Icon(
-              LucideIcons.calendarDays,
-              size: 28,
-              color: AppColors.steel,
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.fog,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.calendarDays,
+                size: 24,
+                color: AppColors.steel,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               filter == _OverviewFilter.completed
                   ? 'Chưa có buổi chụp hoàn thành'
                   : 'Chưa có buổi chụp phù hợp',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: AppTypography.titleMd(color: AppColors.obsidian),
             ),
-            const SizedBox(height: 5),
-            const Text(
-              'Tìm một nhiếp ảnh gia phù hợp để bắt đầu lưu giữ khoảnh khắc.',
+            const SizedBox(height: 6),
+            Text(
+              'Khám phá nhiếp ảnh gia hàng đầu và đặt lịch chụp cho bạn.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.steel, fontSize: 13),
+              style: AppTypography.bodySm(color: AppColors.steel),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             PrimaryButton(
               text: 'Tìm nhiếp ảnh gia',
               expand: false,
@@ -410,6 +488,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               ? 'Thanh toán tiền cọc'
               : 'Thanh toán phần còn lại',
           hint: 'Hoàn tất để giữ lịch chụp của bạn.',
+          color: AppColors.ember,
           onTap: () => context.push(
             '/customer_home/bookings/${booking.id}/${booking.status == BookingStatus.awaiting_deposit ? 'deposit' : 'pay'}',
           ),
@@ -419,12 +498,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     if (pending.isNotEmpty) {
       items.add(
         _TodoItem(
-          icon: LucideIcons.calendarClock,
+          icon: LucideIcons.clock4,
           title: 'Chờ nhiếp ảnh gia xác nhận',
           hint: '${pending.first.photographerName} đang xem yêu cầu của bạn.',
+          color: AppColors.lagoon,
           onTap: () =>
               context.push('/customer_home/bookings/${pending.first.id}'),
-          lagoon: true,
         ),
       );
     }
@@ -434,8 +513,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           icon: LucideIcons.messageSquare,
           title: 'Bạn có tin nhắn mới',
           hint: '$unread tin nhắn chưa đọc từ nhiếp ảnh gia.',
+          color: AppColors.obsidian,
           onTap: () => context.go('/customer_home/messages'),
-          lagoon: true,
         ),
       );
     }
@@ -443,9 +522,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       items.add(
         const _TodoItem(
           icon: LucideIcons.checkCircle2,
-          title: 'Mọi thứ đang được cập nhật',
-          hint: 'Bạn chưa có việc cần xử lý.',
-          lagoon: true,
+          title: 'Mọi việc đã sẵn sàng',
+          hint: 'Hiện tại bạn không có khoản nào cần xử lý.',
+          color: AppColors.emerald,
         ),
       );
     }
@@ -456,12 +535,28 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         AppTokens.pageHorizontal,
         0,
       ),
-      child: LensSectionCard(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.snow,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.pebble),
+          boxShadow: const [AppTokens.surfaceShadow],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _CardTitle(icon: LucideIcons.clock3, title: 'Việc cần làm'),
-            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(LucideIcons.sparkles, size: 16, color: AppColors.ember),
+                const SizedBox(width: 8),
+                Text(
+                  'Việc cần làm',
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
             ...items.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -478,65 +573,102 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        12,
+        14,
         AppTokens.pageHorizontal,
         0,
       ),
-      child: LensSectionCard(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.snow,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.pebble),
+          boxShadow: const [AppTokens.surfaceShadow],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _CardTitle(
-              icon: LucideIcons.sunMedium,
-              title: 'Ngày chụp gần nhất',
+            Row(
+              children: [
+                const Icon(LucideIcons.calendarClock, size: 16, color: AppColors.ember),
+                const SizedBox(width: 8),
+                Text(
+                  'Lịch chụp gần nhất',
+                  style: AppTypography.titleMd(color: AppColors.obsidian),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             if (nearest == null)
-              const Text(
-                'Bạn chưa có lịch chụp sắp tới.',
-                style: TextStyle(color: AppColors.steel, fontSize: 13),
+              Text(
+                'Bạn chưa có lịch chụp nào sắp tới.',
+                style: AppTypography.bodySm(color: AppColors.steel),
               )
             else
               InkWell(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 onTap: () =>
                     context.push('/customer_home/bookings/${nearest.id}'),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.mist,
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppColors.fog,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        nearest.timeSlot ?? '--:--',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        nearest.style,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${_formatDate(nearest.date)} · ${nearest.location}',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.steel,
-                          fontSize: 12,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            nearest.timeSlot ?? '--:--',
+                            style: AppTypography.numeric(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.obsidian,
+                            ),
+                          ),
+                          BookingStatusPill(status: nearest.status, compact: true),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'với ${nearest.photographerName}',
-                        style: const TextStyle(
-                          color: AppColors.steel,
-                          fontSize: 12,
-                        ),
+                        nearest.style,
+                        style: AppTypography.titleMd(color: AppColors.obsidian),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.calendar, size: 13, color: AppColors.steel),
+                          const SizedBox(width: 5),
+                          Text(
+                            _formatDate(nearest.date),
+                            style: AppTypography.numeric(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.steel,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(LucideIcons.mapPin, size: 13, color: AppColors.steel),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              nearest.location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySm(color: AppColors.steel),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'với nhiếp ảnh gia ${nearest.photographerName}',
+                        style: AppTypography.labelSm(color: AppColors.steel),
                       ),
                     ],
                   ),
@@ -560,12 +692,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           Padding(
             padding: const EdgeInsets.only(right: AppTokens.pageHorizontal),
             child: _buildSectionHeading(
-              'Sẵn sàng cho buổi chụp tiếp theo?',
-              'Khám phá theo phong cách bạn yêu thích.',
+              'Gợi ý dành cho bạn',
+              'Khám phá theo phong cách nghệ thuật yêu thích',
               onSeeAll: () => context.go('/customer_home/discovery'),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (photographers.isEmpty)
             const SizedBox(
               height: 120,
@@ -575,9 +707,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             )
           else
             SizedBox(
-              height: 240,
+              height: 250,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(right: AppTokens.pageHorizontal),
                 itemCount: photographers.take(6).length,
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
@@ -615,30 +748,13 @@ class _MetricData {
   final String label;
   final int value;
   final Color background;
-  const _MetricData(this.icon, this.label, this.value, this.background);
-  Color get iconColor => background == AppColors.fog
-      ? AppColors.steel
-      : background == const Color(0xFFE6F4F2)
-      ? AppColors.lagoon
-      : background == const Color(0xFFD1FAE5)
-      ? AppColors.success
-      : AppColors.ember;
-}
-
-class _CardTitle extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  const _CardTitle({required this.icon, required this.title});
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(icon, size: 17, color: AppColors.ember),
-      const SizedBox(width: 8),
-      Text(
-        title,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-      ),
-    ],
+  final Color iconColor;
+  const _MetricData(
+    this.icon,
+    this.label,
+    this.value,
+    this.background,
+    this.iconColor,
   );
 }
 
@@ -646,54 +762,55 @@ class _TodoItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String hint;
+  final Color color;
   final VoidCallback? onTap;
-  final bool lagoon;
   const _TodoItem({
     required this.icon,
     required this.title,
     required this.hint,
+    required this.color,
     this.onTap,
-    this.lagoon = false,
   });
+
   @override
   Widget build(BuildContext context) {
-    final color = lagoon ? AppColors.lagoon : AppColors.ember;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(11),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.mist,
+          color: AppColors.fog,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: .1),
+                color: color.withValues(alpha: .12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 16, color: color),
+              child: Icon(icon, size: 17, color: color),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.titleMd(
+                      fontSize: 13,
+                      color: AppColors.obsidian,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     hint,
-                    style: const TextStyle(
+                    style: AppTypography.bodySm(
                       fontSize: 11,
                       color: AppColors.steel,
                     ),
@@ -718,6 +835,7 @@ class _OverviewBookingCard extends StatelessWidget {
   final Booking booking;
   final bool featured;
   const _OverviewBookingCard({required this.booking, required this.featured});
+
   @override
   Widget build(BuildContext context) {
     final end = booking.timeSlot == null || booking.packageSnapshot == null
@@ -726,125 +844,220 @@ class _OverviewBookingCard extends StatelessWidget {
             booking.timeSlot!,
             booking.packageSnapshot!.durationHours * 60,
           );
-    return LensSectionCard(
-      padding: const EdgeInsets.all(14),
+
+    final isAwaitingDeposit = booking.status == BookingStatus.awaiting_deposit;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.snow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: const [AppTokens.surfaceShadow],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.fog,
-                backgroundImage: booking.photographerAvatar == null
-                    ? null
-                    : NetworkImage(booking.photographerAvatar!),
-                child: booking.photographerAvatar == null
-                    ? Text(
-                        booking.photographerName.isEmpty
-                            ? '?'
-                            : booking.photographerName.substring(0, 1),
-                      )
-                    : null,
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  color: AppColors.fog,
+                ),
+                child: ClipOval(
+                  child: booking.photographerAvatar != null &&
+                          booking.photographerAvatar!.isNotEmpty
+                      ? Image.network(
+                          booking.photographerAvatar!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Center(
+                            child: Text(
+                              booking.photographerName.isNotEmpty
+                                  ? booking.photographerName.substring(0, 1)
+                                  : '?',
+                              style: AppTypography.titleMd(),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            booking.photographerName.isNotEmpty
+                                ? booking.photographerName.substring(0, 1)
+                                : '?',
+                            style: AppTypography.titleMd(),
+                          ),
+                        ),
+                ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            booking.photographerName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        BookingStatusPill(
-                          status: booking.status,
-                          compact: true,
-                        ),
-                      ],
+                    Text(
+                      booking.photographerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.titleMd(
+                        fontSize: 15,
+                        color: AppColors.obsidian,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       booking.style,
-                      style: const TextStyle(
-                        color: AppColors.steel,
+                      style: AppTypography.bodySm(
                         fontSize: 12,
+                        color: AppColors.steel,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                NumberFormat.currency(
-                  locale: 'vi_VN',
-                  symbol: '₫',
-                  decimalDigits: 0,
-                ).format(booking.price),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              BookingStatusPill(status: booking.status, compact: true),
             ],
           ),
-          const SizedBox(height: 11),
-          Row(
-            children: [
-              const Icon(
-                LucideIcons.calendarDays,
-                size: 14,
-                color: AppColors.steel,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _dateLabel(booking.date),
-                style: const TextStyle(fontSize: 12, color: AppColors.steel),
-              ),
-              if (booking.timeSlot != null)
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.fog,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  LucideIcons.calendarDays,
+                  size: 14,
+                  color: AppColors.steel,
+                ),
+                const SizedBox(width: 6),
                 Text(
-                  ' · ${booking.timeSlot}${end == null ? '' : '–$end'}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.steel),
+                  _dateLabel(booking.date),
+                  style: AppTypography.numeric(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.obsidian,
+                  ),
                 ),
-              const SizedBox(width: 12),
-              const Icon(LucideIcons.mapPin, size: 14, color: AppColors.steel),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  booking.location,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: AppColors.steel),
+                if (booking.timeSlot != null)
+                  Text(
+                    ' · ${booking.timeSlot}${end == null ? '' : '–$end'}',
+                    style: AppTypography.numeric(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.steel,
+                    ),
+                  ),
+                const SizedBox(width: 12),
+                const Icon(LucideIcons.mapPin, size: 14, color: AppColors.steel),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    booking.location,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySm(
+                      fontSize: 12,
+                      color: AppColors.steel,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (featured && booking.status != BookingStatus.cancelled) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             _BookingProgress(status: booking.status),
           ],
-          const SizedBox(height: 11),
+          const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  _hint(booking),
-                  style: const TextStyle(fontSize: 11, color: AppColors.steel),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tổng chi phí',
+                    style: AppTypography.labelSm(
+                      fontSize: 10,
+                      color: AppColors.steel,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    AppTypography.formatCurrency(booking.price),
+                    style: AppTypography.priceDisplay(
+                      fontSize: 15,
+                      color: AppColors.obsidian,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              if (isAwaitingDeposit)
+                FilledButton(
+                  onPressed: () => GoRouter.of(context).push(
+                    '/customer_home/bookings/${booking.id}/deposit',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.ember,
+                    foregroundColor: AppColors.snow,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    minimumSize: const Size(0, 36),
+                  ),
+                  child: const Text(
+                    'Đặt cọc ngay',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                )
+              else
+                OutlinedButton(
+                  onPressed: () => GoRouter.of(context)
+                      .push('/customer_home/bookings/${booking.id}'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.obsidian,
+                    side: const BorderSide(color: AppColors.pebble),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    minimumSize: const Size(0, 34),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Chi tiết',
+                        style: AppTypography.labelMd(
+                          fontSize: 12,
+                          color: AppColors.obsidian,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        LucideIcons.chevronRight,
+                        size: 14,
+                        color: AppColors.steel,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              TextButton(
-                onPressed: () =>
-                    GoRouter.of(context)
-                        .push('/customer_home/bookings/${booking.id}'),
-                child: const Text('Chi tiết'),
-              ),
             ],
           ),
         ],
@@ -869,21 +1082,12 @@ class _OverviewBookingCard extends StatelessWidget {
     ).add(Duration(minutes: minutes.round()));
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
-
-  static String _hint(Booking booking) => switch (booking.status) {
-    BookingStatus.awaiting_deposit => 'Giữ lịch sau khi thanh toán cọc',
-    BookingStatus.pending => 'Đang chờ nhiếp ảnh gia xác nhận',
-    BookingStatus.confirmed =>
-      'Còn lại ${NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0).format(booking.remainingAmount)}',
-    BookingStatus.held => 'Lens đang giữ tiền an toàn',
-    BookingStatus.released => 'Buổi chụp đã hoàn tất',
-    BookingStatus.cancelled => 'Lịch đặt đã huỷ',
-  };
 }
 
 class _BookingProgress extends StatelessWidget {
   final BookingStatus status;
   const _BookingProgress({required this.status});
+
   @override
   Widget build(BuildContext context) {
     final active = switch (status) {
@@ -894,7 +1098,7 @@ class _BookingProgress extends StatelessWidget {
       BookingStatus.released => 4,
       BookingStatus.cancelled => 0,
     };
-    const labels = ['Đã đặt cọc', 'Xác nhận lịch', 'Thanh toán', 'Hoàn thành'];
+    const labels = ['Đặt cọc', 'Xác nhận', 'Thanh toán', 'Hoàn tất'];
     return Row(
       children: [
         for (var i = 0; i < labels.length; i++) ...[
@@ -902,21 +1106,25 @@ class _BookingProgress extends StatelessWidget {
             child: Column(
               children: [
                 Container(
-                  width: 20,
-                  height: 20,
+                  width: 22,
+                  height: 22,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: i < active
-                        ? AppColors.lagoon
+                        ? AppColors.emerald
                         : i == active
-                        ? AppColors.ember
-                        : AppColors.fog,
+                            ? AppColors.ember
+                            : AppColors.fog,
+                    border: Border.all(
+                      color: i <= active ? Colors.transparent : AppColors.pebble,
+                      width: 1,
+                    ),
                   ),
                   child: i < active
                       ? const Icon(
                           LucideIcons.check,
-                          size: 12,
+                          size: 13,
                           color: Colors.white,
                         )
                       : Text(
@@ -924,20 +1132,18 @@ class _BookingProgress extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             color: i == active ? Colors.white : AppColors.steel,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
                   labels[i],
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 9,
-                    color: i <= active ? AppColors.ink : AppColors.steel,
-                    fontWeight: i <= active
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                    fontSize: 10,
+                    color: i <= active ? AppColors.obsidian : AppColors.steel,
+                    fontWeight: i <= active ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ],
@@ -946,8 +1152,12 @@ class _BookingProgress extends StatelessWidget {
           if (i < labels.length - 1)
             Expanded(
               child: Container(
-                height: 1,
-                color: i < active ? AppColors.lagoon : AppColors.pebble,
+                height: 2,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: i < active ? AppColors.emerald : AppColors.pebble,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
         ],
@@ -959,10 +1169,11 @@ class _BookingProgress extends StatelessWidget {
 class _RecommendationCard extends StatelessWidget {
   final PhotographerModel photographer;
   const _RecommendationCard({required this.photographer});
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 175,
+      width: 180,
       child: InkWell(
         onTap: () =>
             context.push('/customer_home/photographer/${photographer.id}'),
@@ -971,6 +1182,7 @@ class _RecommendationCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppTokens.cardRadius),
             color: AppColors.slate,
+            border: Border.all(color: AppColors.pebble),
             image: DecorationImage(
               image: NetworkImage(photographer.coverImageUrl),
               fit: BoxFit.cover,
@@ -980,37 +1192,48 @@ class _RecommendationCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppTokens.cardRadius),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black87],
+                colors: [
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.black.withValues(alpha: 0.85),
+                ],
+                stops: const [0.4, 1.0],
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(
-                      LucideIcons.star,
-                      color: AppColors.ember,
-                      size: 13,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      photographer.rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                    GlassContainer.mediaBadge(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.star,
+                            color: AppColors.ember,
+                            size: 11,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            photographer.rating.toStringAsFixed(1),
+                            style: AppTypography.numeric(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Spacer(),
                     if (photographer.isFeatured)
                       const Icon(
                         LucideIcons.badgeCheck,
-                        color: Colors.white,
-                        size: 16,
+                        color: AppColors.emerald,
+                        size: 18,
                       ),
                   ],
                 ),
@@ -1019,9 +1242,9 @@ class _RecommendationCard extends StatelessWidget {
                   photographer.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: AppTypography.titleMd(
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1029,7 +1252,19 @@ class _RecommendationCard extends StatelessWidget {
                   '${photographer.city} · ${photographer.styles.take(1).join()}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  style: AppTypography.bodySm(
+                    color: Colors.white70,
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  AppTypography.formatCurrency(photographer.pricePerSession),
+                  style: AppTypography.numeric(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -1042,6 +1277,7 @@ class _RecommendationCard extends StatelessWidget {
 
 class _LoadingCards extends StatelessWidget {
   const _LoadingCards();
+
   @override
   Widget build(BuildContext context) {
     return Padding(

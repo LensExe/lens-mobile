@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/booking_model.dart';
 
 class BookingProgressStepper extends StatelessWidget {
@@ -15,7 +18,6 @@ class BookingProgressStepper extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Determine step states (0: Booked, 1: Shot Done, 2: Review Proofs, 3: Sign-off)
     int currentStep = 0;
     String statusTitle = 'Đang chờ xử lý';
     String proofInfo = '';
@@ -65,18 +67,16 @@ class BookingProgressStepper extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFA83900),
+                    color: AppColors.ember,
                     shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   statusTitle,
-                  style: const TextStyle(
-                    color: Color(0xFFA83900),
+                  style: AppTypography.labelMd(
                     fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
+                    color: AppColors.ember,
                   ),
                 ),
               ],
@@ -84,10 +84,9 @@ class BookingProgressStepper extends StatelessWidget {
             if (proofInfo.isNotEmpty)
               Text(
                 proofInfo,
-                style: const TextStyle(
-                  color: Color(0xFF5F5E60),
+                style: AppTypography.bodySm(
                   fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
+                  color: AppColors.steel,
                 ),
               ),
           ],
@@ -99,16 +98,16 @@ class BookingProgressStepper extends StatelessWidget {
           children: List.generate(4, (index) {
             Color segmentColor;
             if (index < currentStep) {
-              segmentColor = const Color(0xFFFF5A00);
+              segmentColor = AppColors.emerald;
             } else if (index == currentStep) {
-              segmentColor = const Color(0xFFFF5A00);
+              segmentColor = AppColors.ember;
             } else {
-              segmentColor = const Color(0xFFE8E8E9);
+              segmentColor = AppColors.mist;
             }
 
             return Expanded(
               child: Container(
-                height: 6,
+                height: 4,
                 margin: EdgeInsets.only(right: index < 3 ? 6.0 : 0),
                 decoration: BoxDecoration(
                   color: segmentColor,
@@ -139,23 +138,22 @@ class BookingProgressStepper extends StatelessWidget {
     FontWeight fontWeight;
 
     if (isCurrent) {
-      textColor = const Color(0xFFA83900);
-      fontWeight = FontWeight.w800;
+      textColor = AppColors.ember;
+      fontWeight = FontWeight.w700;
     } else if (isActive) {
-      textColor = const Color(0xFF1A1C1D);
+      textColor = AppColors.obsidian;
       fontWeight = FontWeight.w600;
     } else {
-      textColor = const Color(0xFF5F5E60);
+      textColor = AppColors.steel;
       fontWeight = FontWeight.w400;
     }
 
     return Text(
       text,
-      style: TextStyle(
-        color: textColor,
+      style: AppTypography.labelSm(
         fontSize: 11,
-        fontWeight: fontWeight,
-      ),
+        color: textColor,
+      ).copyWith(fontWeight: fontWeight),
     );
   }
 }
