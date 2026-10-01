@@ -127,7 +127,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   ),
                   child: _OverviewBookingCard(
                     booking: visible[index],
-                    featured: index == 0,
                   ),
                 ),
               ),
@@ -867,8 +866,7 @@ class _TodoItem extends StatelessWidget {
 
 class _OverviewBookingCard extends StatelessWidget {
   final Booking booking;
-  final bool featured;
-  const _OverviewBookingCard({required this.booking, required this.featured});
+  const _OverviewBookingCard({required this.booking});
 
   @override
   Widget build(BuildContext context) {
@@ -1017,7 +1015,7 @@ class _OverviewBookingCard extends StatelessWidget {
               ],
             ),
           ),
-          if (featured && booking.status != BookingStatus.cancelled) ...[
+          if (booking.status != BookingStatus.cancelled) ...[
             const SizedBox(height: 14),
             _BookingProgress(status: booking.status),
           ],
