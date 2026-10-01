@@ -20,7 +20,10 @@ class EscrowSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal, vertical: 6),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppTokens.pageHorizontal,
+        vertical: 6,
+      ),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.snow,
@@ -104,7 +107,9 @@ class EscrowSummaryCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.fog,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: AppColors.pebble.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: const Icon(
                   LucideIcons.chevronRight,

@@ -65,7 +65,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
               disabledBackgroundColor: const Color(0xFFE8E8E9),
               disabledForegroundColor: const Color(0xFF8E8E93),
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTokens.pillRadius),
               ),
@@ -88,12 +88,16 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                         widget.leadingIcon!,
                         const SizedBox(width: 8),
                       ],
-                      Text(
-                        widget.text,
-                        style: AppTypography.titleMd(
-                          color: isEnabled
-                              ? AppColors.snow
-                              : const Color(0xFF8E8E93),
+                      Flexible(
+                        child: Text(
+                          widget.text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.titleMd(
+                            color: isEnabled
+                                ? AppColors.snow
+                                : const Color(0xFF8E8E93),
+                          ),
                         ),
                       ),
                     ],

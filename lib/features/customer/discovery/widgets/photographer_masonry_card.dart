@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_tokens.dart';
 import '../../../../../core/theme/app_typography.dart';
@@ -46,8 +47,12 @@ class PhotographerMasonryCard extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: photographer.coverImageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: AppColors.mist),
-                    errorWidget: (context, url, error) => Container(color: AppColors.mist, child: const Icon(LucideIcons.imageOff)),
+                    placeholder: (context, url) =>
+                        Container(color: AppColors.mist),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.mist,
+                      child: const Icon(LucideIcons.imageOff),
+                    ),
                   ),
                 ),
                 Positioned(

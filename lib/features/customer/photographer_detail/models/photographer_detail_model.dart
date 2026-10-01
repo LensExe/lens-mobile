@@ -3,8 +3,10 @@ class PortfolioItem {
   final String imageUrl;
   final String title;
   final String style; // 'Thời trang', 'Chân dung', 'Đường phố', 'Cưới', 'Phim 35mm', 'Sự kiện'
-  final String subtitle; // e.g. "Harper's Bazaar Vietnam • Fall Cover", "The Row Lookbook"
-  final String cameraGear; // e.g. "Sony A7R V", "Leica M11 • 35mm", "Profoto D2 • 85mm"
+  final String
+  subtitle; // e.g. "Harper's Bazaar Vietnam • Fall Cover", "The Row Lookbook"
+  final String
+  cameraGear; // e.g. "Sony A7R V", "Leica M11 • 35mm", "Profoto D2 • 85mm"
   final bool isFeatured; // Hero card or grid card
 
   const PortfolioItem({
@@ -26,7 +28,10 @@ class ProfilePackage {
   final String duration;
   final List<String> deliverables;
   final bool isMostSelected;
-  final String highlightBadge; // e.g. "Được chọn nhiều nhất", "Sản xuất chuyên nghiệp"
+  final int? photoCount;
+  final int? deliveryDays;
+  final String
+  highlightBadge; // e.g. "Được chọn nhiều nhất", "Sản xuất chuyên nghiệp"
 
   const ProfilePackage({
     required this.id,
@@ -36,6 +41,8 @@ class ProfilePackage {
     required this.duration,
     required this.deliverables,
     this.isMostSelected = false,
+    this.photoCount,
+    this.deliveryDays,
     this.highlightBadge = '',
   });
 }
@@ -122,4 +129,29 @@ class PhotographerProfile {
     required this.reviews,
     required this.gearInfo,
   });
+
+  PhotographerProfile copyWith({double? rating, int? reviewCount}) =>
+      PhotographerProfile(
+        id: id,
+        name: name,
+        avatarUrl: avatarUrl,
+        coverImageUrl: coverImageUrl,
+        city: city,
+        rank: rank,
+        rating: rating ?? this.rating,
+        reviewCount: reviewCount ?? this.reviewCount,
+        startingPrice: startingPrice,
+        bio: bio,
+        experienceYears: experienceYears,
+        completedShoots: completedShoots,
+        completionRate: completionRate,
+        isVerified: isVerified,
+        isInsured: isInsured,
+        verificationBadge: verificationBadge,
+        styles: styles,
+        portfolio: portfolio,
+        packages: packages,
+        reviews: reviews,
+        gearInfo: gearInfo,
+      );
 }

@@ -172,7 +172,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                       style: AppTypography.bodySm(color: AppColors.steel),
                     ),
                     const SizedBox(width: 4),
-                    const Text('✦', style: TextStyle(color: AppColors.ember, fontSize: 11)),
+                    const Text(
+                      '✦',
+                      style: TextStyle(color: AppColors.ember, fontSize: 11),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -197,7 +200,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 color: AppColors.snow,
               ),
               child: Text(
-                firstName.isNotEmpty ? firstName.substring(0, 1).toUpperCase() : 'L',
+                firstName.isNotEmpty
+                    ? firstName.substring(0, 1).toUpperCase()
+                    : 'L',
                 style: AppTypography.titleMd(color: AppColors.obsidian),
               ),
             ),
@@ -285,7 +290,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         color: metric.background,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(metric.icon, size: 17, color: metric.iconColor),
+                      child: Icon(
+                        metric.icon,
+                        size: 17,
+                        color: metric.iconColor,
+                      ),
                     ),
                     Text(
                       '${metric.value}',
@@ -399,7 +408,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     borderRadius: BorderRadius.circular(9999),
                     border: isSelected
                         ? null
-                        : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                        : Border.all(
+                            color: AppColors.pebble.withValues(alpha: 0.5),
+                          ),
                   ),
                   child: Text(
                     item.$2,
@@ -548,7 +559,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           children: [
             Row(
               children: [
-                const Icon(LucideIcons.sparkles, size: 16, color: AppColors.ember),
+                const Icon(
+                  LucideIcons.sparkles,
+                  size: 16,
+                  color: AppColors.ember,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Việc cần làm',
@@ -590,7 +605,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           children: [
             Row(
               children: [
-                const Icon(LucideIcons.calendarClock, size: 16, color: AppColors.ember),
+                const Icon(
+                  LucideIcons.calendarClock,
+                  size: 16,
+                  color: AppColors.ember,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Lịch chụp gần nhất',
@@ -615,7 +634,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.fog,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+                    border: Border.all(
+                      color: AppColors.pebble.withValues(alpha: 0.6),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,7 +652,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                               color: AppColors.obsidian,
                             ),
                           ),
-                          BookingStatusPill(status: nearest.status, compact: true),
+                          BookingStatusPill(
+                            status: nearest.status,
+                            compact: true,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -642,7 +666,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(LucideIcons.calendar, size: 13, color: AppColors.steel),
+                          const Icon(
+                            LucideIcons.calendar,
+                            size: 13,
+                            color: AppColors.steel,
+                          ),
                           const SizedBox(width: 5),
                           Text(
                             _formatDate(nearest.date),
@@ -653,14 +681,20 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Icon(LucideIcons.mapPin, size: 13, color: AppColors.steel),
+                          const Icon(
+                            LucideIcons.mapPin,
+                            size: 13,
+                            color: AppColors.steel,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               nearest.location,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.bodySm(color: AppColors.steel),
+                              style: AppTypography.bodySm(
+                                color: AppColors.steel,
+                              ),
                             ),
                           ),
                         ],
@@ -870,7 +904,8 @@ class _OverviewBookingCard extends StatelessWidget {
                   color: AppColors.fog,
                 ),
                 child: ClipOval(
-                  child: booking.photographerAvatar != null &&
+                  child:
+                      booking.photographerAvatar != null &&
                           booking.photographerAvatar!.isNotEmpty
                       ? Image.network(
                           booking.photographerAvatar!,
@@ -929,46 +964,55 @@ class _OverviewBookingCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.fog,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: AppColors.pebble.withValues(alpha: 0.5),
+              ),
             ),
-            child: Row(
+            child: Column(
               children: [
-                const Icon(
-                  LucideIcons.calendarDays,
-                  size: 14,
-                  color: AppColors.steel,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _dateLabel(booking.date),
-                  style: AppTypography.numeric(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.obsidian,
-                  ),
-                ),
-                if (booking.timeSlot != null)
-                  Text(
-                    ' · ${booking.timeSlot}${end == null ? '' : '–$end'}',
-                    style: AppTypography.numeric(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.calendarDays,
+                      size: 14,
                       color: AppColors.steel,
                     ),
-                  ),
-                const SizedBox(width: 12),
-                const Icon(LucideIcons.mapPin, size: 14, color: AppColors.steel),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    booking.location,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySm(
-                      fontSize: 12,
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${_dateLabel(booking.date)}${booking.timeSlot == null ? '' : ' · ${booking.timeSlot}${end == null ? '' : '–$end'}'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.numeric(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.obsidian,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.mapPin,
+                      size: 14,
                       color: AppColors.steel,
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        booking.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySm(
+                          fontSize: 12,
+                          color: AppColors.steel,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1003,9 +1047,8 @@ class _OverviewBookingCard extends StatelessWidget {
               const Spacer(),
               if (isAwaitingDeposit)
                 FilledButton(
-                  onPressed: () => GoRouter.of(context).push(
-                    '/customer_home/bookings/${booking.id}/deposit',
-                  ),
+                  onPressed: () => GoRouter.of(context)
+                      .push('/customer_home/bookings/${booking.id}/deposit'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.ember,
                     foregroundColor: AppColors.snow,
@@ -1025,8 +1068,9 @@ class _OverviewBookingCard extends StatelessWidget {
                 )
               else
                 OutlinedButton(
-                  onPressed: () => GoRouter.of(context)
-                      .push('/customer_home/bookings/${booking.id}'),
+                  onPressed: () =>
+                      GoRouter.of(context)
+                          .push('/customer_home/bookings/${booking.id}'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.obsidian,
                     side: const BorderSide(color: AppColors.pebble),
@@ -1114,10 +1158,12 @@ class _BookingProgress extends StatelessWidget {
                     color: i < active
                         ? AppColors.emerald
                         : i == active
-                            ? AppColors.ember
-                            : AppColors.fog,
+                        ? AppColors.ember
+                        : AppColors.fog,
                     border: Border.all(
-                      color: i <= active ? Colors.transparent : AppColors.pebble,
+                      color: i <= active
+                          ? Colors.transparent
+                          : AppColors.pebble,
                       width: 1,
                     ),
                   ),

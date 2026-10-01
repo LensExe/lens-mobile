@@ -115,7 +115,9 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                     city,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                       color: isSelected ? AppColors.ember : AppColors.obsidian,
                     ),
                   ),
@@ -196,7 +198,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Đã điền tự động',
+                              'Đã điền từ hồ sơ của bạn',
                               style: AppTypography.numeric(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
@@ -257,7 +259,10 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                   const SizedBox(height: 4),
                   Text(
                     'Tên phải có tối thiểu 2 ký tự',
-                    style: AppTypography.bodySm(color: AppColors.crimson, fontSize: 11),
+                    style: AppTypography.bodySm(
+                      color: AppColors.crimson,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -310,7 +315,10 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                   const SizedBox(height: 4),
                   Text(
                     'Số điện thoại không hợp lệ (VD: 0901234567)',
-                    style: AppTypography.bodySm(color: AppColors.crimson, fontSize: 11),
+                    style: AppTypography.bodySm(
+                      color: AppColors.crimson,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ],
@@ -496,7 +504,10 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                 const SizedBox(height: 4),
                 Text(
                   'Ý tưởng concept, số người chụp, tư vấn trang phục...',
-                  style: AppTypography.bodySm(color: AppColors.steel, fontSize: 12),
+                  style: AppTypography.bodySm(
+                    color: AppColors.steel,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(

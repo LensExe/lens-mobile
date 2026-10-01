@@ -63,26 +63,30 @@ class BookingStepperHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'BƯỚC ${currentStep + 1} / 3',
-                    style: AppTypography.numeric(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ember,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'BƯỚC ${currentStep + 1} / 3',
+                      style: AppTypography.numeric(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ember,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _stepTitle,
-                    style: AppTypography.titleMd(
-                      fontSize: 15,
-                      color: AppColors.obsidian,
+                    const SizedBox(height: 2),
+                    Text(
+                      _stepTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.titleMd(
+                        fontSize: 15,
+                        color: AppColors.obsidian,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

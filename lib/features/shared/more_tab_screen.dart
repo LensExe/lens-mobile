@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/lens_page.dart';
+import '../../core/widgets/customer_avatar.dart';
 import '../../providers/data_providers.dart';
 
 class MoreTabScreen extends ConsumerWidget {
@@ -16,7 +17,13 @@ class MoreTabScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authUserProvider);
     final initials = (user?.name.trim().isNotEmpty ?? false)
-        ? user!.name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+        ? user!.name
+              .trim()
+              .split(' ')
+              .map((e) => e.isNotEmpty ? e[0] : '')
+              .take(2)
+              .join()
+              .toUpperCase()
         : 'KH';
 
     return LensPage(
@@ -71,9 +78,11 @@ class MoreTabScreen extends ConsumerWidget {
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      initials,
-                      style: AppTypography.headlineSm(
+                    child: CustomerAvatar(
+                      url: user?.avatarUrl ?? '',
+                      initials: initials,
+                      size: 56,
+                      fallbackStyle: AppTypography.headlineSm(
                         color: AppColors.ember,
                         fontSize: 20,
                       ).copyWith(fontWeight: FontWeight.w800),
@@ -115,9 +124,7 @@ class MoreTabScreen extends ConsumerWidget {
                         const SizedBox(height: 3),
                         Text(
                           user?.email ?? 'customer@lens.com',
-                          style: AppTypography.labelSm(
-                            color: AppColors.steel,
-                          ),
+                          style: AppTypography.labelSm(color: AppColors.steel),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -200,8 +207,10 @@ class MoreTabScreen extends ConsumerWidget {
                 icon: LucideIcons.headphones,
                 title: 'Trung tâm trợ giúp Lens Care',
                 subtitle: 'Hỗ trợ khách hàng 24/7 và giải quyết khiếu nại',
-                onTap: () =>
-                    _showMessage(context, 'Tổng đài Lens Care sẽ kết nối trong giây lát.'),
+                onTap: () => _showMessage(
+                  context,
+                  'Tổng đài Lens Care sẽ kết nối trong giây lát.',
+                ),
               ),
               _MenuItem(
                 icon: LucideIcons.fileText,
@@ -240,9 +249,8 @@ class MoreTabScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Đăng xuất tài khoản',
-                    style: AppTypography.bodyMd(
-                      color: AppColors.crimson,
-                    ).copyWith(fontWeight: FontWeight.w700),
+                    style: AppTypography.bodyMd(color: AppColors.crimson)
+                        .copyWith(fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -291,7 +299,8 @@ class MoreTabScreen extends ConsumerWidget {
         ),
         title: Text(
           'Đăng xuất tài khoản?',
-          style: AppTypography.titleMd(fontSize: 18).copyWith(fontWeight: FontWeight.w700),
+          style: AppTypography.titleMd(fontSize: 18)
+              .copyWith(fontWeight: FontWeight.w700),
         ),
         content: Text(
           'Bạn sẽ cần đăng nhập lại để tiếp tục quản lý lịch chụp và số dư ví.',
@@ -314,7 +323,8 @@ class MoreTabScreen extends ConsumerWidget {
                   ),
                   child: Text(
                     'Huỷ',
-                    style: AppTypography.labelMd(color: AppColors.obsidian).copyWith(fontWeight: FontWeight.w600),
+                    style: AppTypography.labelMd(color: AppColors.obsidian)
+                        .copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -333,9 +343,8 @@ class MoreTabScreen extends ConsumerWidget {
                   ),
                   child: Text(
                     'Đăng xuất',
-                    style: AppTypography.labelMd(
-                      color: AppColors.snow,
-                    ).copyWith(fontWeight: FontWeight.w700),
+                    style: AppTypography.labelMd(color: AppColors.snow)
+                        .copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -345,8 +354,10 @@ class MoreTabScreen extends ConsumerWidget {
       ),
     );
     if (shouldLogout == true && context.mounted) {
-      ref.read(authUserProvider.notifier).setUser(null);
-      context.go('/login');
+      await ref.read(authUserProvider.notifier).logout();
+      if (context.mounted) {
+        context.go('/customer_home/discovery');
+      }
     }
   }
 }
@@ -367,10 +378,7 @@ class _MenuSection extends StatelessWidget {
           style: AppTypography.labelMd(
             color: AppColors.steel,
             fontSize: 11,
-          ).copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
+          ).copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.6),
         ),
       ),
       Container(
@@ -434,11 +442,7 @@ class _MenuItem extends StatelessWidget {
                   : AppColors.fog,
               borderRadius: BorderRadius.circular(AppTokens.nestedBadgeRadius),
             ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: iconColor ?? AppColors.obsidian,
-            ),
+            child: Icon(icon, size: 18, color: iconColor ?? AppColors.obsidian),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -447,10 +451,8 @@ class _MenuItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTypography.bodyMd(color: AppColors.obsidian).copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                  style: AppTypography.bodyMd(color: AppColors.obsidian)
+                      .copyWith(fontWeight: FontWeight.w600, fontSize: 14),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -473,4 +475,3 @@ class _MenuItem extends StatelessWidget {
     ),
   );
 }
-

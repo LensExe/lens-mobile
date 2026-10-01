@@ -110,29 +110,34 @@ class _DateStripPickerState extends State<DateStripPicker> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '2. Chọn Ngày Chụp',
-                    style: TextStyle(
-                      color: Color(0xFF1A1C1D),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '2. Chọn Ngày Chụp',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xFF1A1C1D),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    monthLabel,
-                    style: const TextStyle(
-                      color: Color(0xFF5F5E60),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
+                    const SizedBox(height: 2),
+                    Text(
+                      monthLabel,
+                      style: const TextStyle(
+                        color: Color(0xFF5F5E60),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Row(
                 children: [
                   _MonthNavButton(

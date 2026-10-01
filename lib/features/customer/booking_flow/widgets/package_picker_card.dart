@@ -71,7 +71,9 @@ class PackagePickerCard extends StatelessWidget {
                           color: isSelected ? AppColors.ember : AppColors.fog,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? Colors.transparent : AppColors.pebble,
+                            color: isSelected
+                                ? Colors.transparent
+                                : AppColors.pebble,
                           ),
                         ),
                         child: isSelected
@@ -119,9 +121,10 @@ class PackagePickerCard extends StatelessWidget {
                   // Price & Duration
                   Padding(
                     padding: const EdgeInsets.only(left: 34),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           AppTypography.formatCurrency(package.price),
@@ -130,7 +133,6 @@ class PackagePickerCard extends StatelessWidget {
                             color: AppColors.ember,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -139,7 +141,9 @@ class PackagePickerCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.fog,
                             borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                            border: Border.all(
+                              color: AppColors.pebble.withValues(alpha: 0.5),
+                            ),
                           ),
                           child: Text(
                             package.duration,

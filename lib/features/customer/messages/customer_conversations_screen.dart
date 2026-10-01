@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/utils/vietnamese_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_typography.dart';
@@ -31,12 +33,12 @@ class _CustomerConversationsScreenState
   @override
   Widget build(BuildContext context) {
     final conversations = ref.watch(conversationsProvider);
-    final query = _searchController.text.trim().toLowerCase();
+    final query = foldVietnamese(_searchController.text.trim());
     final visible = conversations.where((conversation) {
       final matchesQuery =
           query.isEmpty ||
-          conversation.otherPartyName.toLowerCase().contains(query) ||
-          conversation.lastMessage.toLowerCase().contains(query);
+          foldVietnamese(conversation.otherPartyName).contains(query) ||
+          foldVietnamese(conversation.lastMessage).contains(query);
       final matchesUnread = !_unreadOnly || conversation.unreadCount > 0;
       return matchesQuery && matchesUnread;
     }).toList();
@@ -67,7 +69,9 @@ class _CustomerConversationsScreenState
               decoration: BoxDecoration(
                 color: AppColors.fog,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+                border: Border.all(
+                  color: AppColors.pebble.withValues(alpha: 0.6),
+                ),
               ),
               child: TextField(
                 controller: _searchController,
@@ -75,7 +79,11 @@ class _CustomerConversationsScreenState
                 decoration: InputDecoration(
                   hintText: 'Tìm cuộc trò chuyện, nhiếp ảnh gia...',
                   hintStyle: AppTypography.bodySm(color: AppColors.steel),
-                  prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppColors.steel),
+                  prefixIcon: const Icon(
+                    LucideIcons.search,
+                    size: 18,
+                    color: AppColors.steel,
+                  ),
                   suffixIcon: _searchController.text.isEmpty
                       ? null
                       : IconButton(
@@ -83,7 +91,11 @@ class _CustomerConversationsScreenState
                             _searchController.clear();
                             setState(() {});
                           },
-                          icon: const Icon(LucideIcons.x, size: 16, color: AppColors.steel),
+                          icon: const Icon(
+                            LucideIcons.x,
+                            size: 16,
+                            color: AppColors.steel,
+                          ),
                         ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -183,9 +195,7 @@ class _CustomerConversationsScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              filtered
-                  ? 'Thử đổi từ khoá hoặc chọn bộ lọc Tất cả.'
-                  : 'Khi bạn đặt lịch chụp, các thông báo và trao đổi với nhiếp ảnh gia sẽ hiển thị tại đây.',
+              filtered ? 'Thử đổi từ khoá hoặc chọn bộ lọc Tất cả.' : 'Khi bạn đặt lịch chụp, các thông báo và trao đổi với nhiếp ảnh gia sẽ hiển thị tại đây.',
               textAlign: TextAlign.center,
               style: AppTypography.bodySm(color: AppColors.steel),
             ),
@@ -266,16 +276,17 @@ class _ConversationCard extends StatelessWidget {
                           conversation.lastMessage,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodySm(
-                            fontSize: 13,
-                            color: conversation.unreadCount > 0
-                                ? AppColors.obsidian
-                                : AppColors.steel,
-                          ).copyWith(
-                            fontWeight: conversation.unreadCount > 0
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
+                          style:
+                              AppTypography.bodySm(
+                                fontSize: 13,
+                                color: conversation.unreadCount > 0
+                                    ? AppColors.obsidian
+                                    : AppColors.steel,
+                              ).copyWith(
+                                fontWeight: conversation.unreadCount > 0
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
                         ),
                       ),
                       if (conversation.unreadCount > 0) ...[

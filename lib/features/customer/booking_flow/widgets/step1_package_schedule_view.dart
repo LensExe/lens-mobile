@@ -47,8 +47,8 @@ class Step1PackageScheduleView extends StatelessWidget {
           const SizedBox(height: 22),
 
           // Section 1: Packages
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 '1. Chọn Gói Chụp',
@@ -57,6 +57,7 @@ class Step1PackageScheduleView extends StatelessWidget {
                   color: AppColors.obsidian,
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
                 'Có thể tuỳ biến gói',
                 style: AppTypography.labelSm(

@@ -1,12 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/filter_criteria.dart';
 import '../models/photographer_model.dart';
-import '../repositories/mock_photographer_repository.dart';
 import '../repositories/photographer_repository.dart';
-
-final discoveryRepositoryProvider = Provider<PhotographerRepository>((ref) {
-  return MockPhotographerRepository();
-});
+import '../repositories/discovery_repository_provider.dart';
 
 class DiscoveryState {
   final bool isLoading;
@@ -15,6 +12,8 @@ class DiscoveryState {
   final SortOption sortOption;
   final int currentPage;
   final bool hasNextPage;
+  final int totalCount;
+  final String? errorMessage;
 
   DiscoveryState({
     this.isLoading = true,
@@ -23,6 +22,8 @@ class DiscoveryState {
     this.sortOption = SortOption.featured,
     this.currentPage = 1,
     this.hasNextPage = false,
+    this.totalCount = 0,
+    this.errorMessage,
   });
 
   DiscoveryState copyWith({
@@ -32,6 +33,9 @@ class DiscoveryState {
     SortOption? sortOption,
     int? currentPage,
     bool? hasNextPage,
+    int? totalCount,
+    String? errorMessage,
+    bool clearError = false,
   }) {
     return DiscoveryState(
       isLoading: isLoading ?? this.isLoading,
@@ -40,9 +44,11 @@ class DiscoveryState {
       sortOption: sortOption ?? this.sortOption,
       currentPage: currentPage ?? this.currentPage,
       hasNextPage: hasNextPage ?? this.hasNextPage,
+      totalCount: totalCount ?? this.totalCount,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
-  
+
   int get activeFilterCount {
     int count = 0;
     if (criteria.city != null && criteria.city != 'Tất cả') count++;
@@ -56,6 +62,7 @@ class DiscoveryState {
 }
 
 class DiscoveryController extends Notifier<DiscoveryState> {
+  int _requestNumber = 0;
   @override
   DiscoveryState build() {
     // Initial state
@@ -65,28 +72,42 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     return initialState;
   }
 
-  PhotographerRepository get _repository => ref.read(discoveryRepositoryProvider);
+  PhotographerRepository get _repository =>
+      ref.read(discoveryRepositoryProvider);
 
   Future<void> _fetchCurrentPage() async {
-    state = state.copyWith(isLoading: true);
+    final request = ++_requestNumber;
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final allResults = await _repository.getPhotographers(
         criteria: state.criteria,
         sort: state.sortOption,
       );
-      
+
+      if (request != _requestNumber) return;
+      final start = (state.currentPage - 1) * 9;
       state = state.copyWith(
         isLoading: false,
-        photographers: allResults,
-        hasNextPage: false,
+        photographers: allResults.skip(start).take(9).toList(),
+        totalCount: allResults.length,
+        hasNextPage: start + 9 < allResults.length,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      if (request != _requestNumber) return;
+      state = state.copyWith(
+        isLoading: false,
+        photographers: const [],
+        errorMessage:
+            'Không thể tải danh sách nhiếp ảnh gia. Vui lòng thử lại.',
+      );
     }
   }
 
   void goToPage(int page) {
-    if (page < 1) return;
+    if (page < 1 ||
+        (state.totalCount > 0 && (page - 1) * 9 >= state.totalCount)) {
+      return;
+    }
     state = state.copyWith(currentPage: page);
     _fetchCurrentPage();
   }
@@ -131,8 +152,42 @@ class DiscoveryController extends Notifier<DiscoveryState> {
   void search(String query) {
     updateFilters(state.criteria.copyWith(searchQuery: query));
   }
+
+  void applyQuery(Uri uri) {
+    final query = uri.queryParameters;
+    final experience = Experience.values.where(
+      (value) => value.name == query['exp'],
+    );
+    final sort = SortOption.values.where(
+      (value) => value.name == query['sort'],
+    );
+    final criteria = FilterCriteria(
+      searchQuery: query['q'],
+      city: query['city'],
+      minPrice: double.tryParse(query['priceMin'] ?? ''),
+      maxPrice: double.tryParse(query['priceMax'] ?? ''),
+      availableDate: DateTime.tryParse(query['date'] ?? ''),
+      minRating: double.tryParse(query['rating'] ?? ''),
+      experience: experience.isEmpty ? null : experience.first,
+      styles:
+          query['styles']
+              ?.split(',')
+              .where((value) => value.isNotEmpty)
+              .toList() ??
+          [],
+    );
+    state = state.copyWith(
+      criteria: criteria,
+      sortOption: sort.isEmpty ? SortOption.featured : sort.first,
+      currentPage: int.tryParse(query['page'] ?? '') ?? 1,
+    );
+    _fetchCurrentPage();
+  }
+
+  void retry() => _fetchCurrentPage();
 }
 
-final discoveryControllerProvider = NotifierProvider<DiscoveryController, DiscoveryState>(() {
-  return DiscoveryController();
-});
+final discoveryControllerProvider =
+    NotifierProvider<DiscoveryController, DiscoveryState>(() {
+      return DiscoveryController();
+    });

@@ -81,12 +81,66 @@ class User {
   final String name;
   final String email;
   final String role; // 'client' or 'photographer'
+  final String phone;
+  final String city;
+  final String address;
+  final String avatarUrl;
+  final bool saveAsDefault;
+  final bool twoFactorEnabled;
 
   User({
     required this.id,
     required this.name,
     required this.email,
     required this.role,
+    this.phone = '',
+    this.city = '',
+    this.address = '',
+    this.avatarUrl = '',
+    this.saveAsDefault = false,
+    this.twoFactorEnabled = false,
+  });
+
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? role,
+    String? phone,
+    String? city,
+    String? address,
+    String? avatarUrl,
+    bool? saveAsDefault,
+    bool? twoFactorEnabled,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      phone: phone ?? this.phone,
+      city: city ?? this.city,
+      address: address ?? this.address,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      saveAsDefault: saveAsDefault ?? this.saveAsDefault,
+      twoFactorEnabled: twoFactorEnabled ?? this.twoFactorEnabled,
+    );
+  }
+}
+
+class ActiveSession {
+  final String id;
+  final String deviceName;
+  final String location;
+  final String lastActive;
+  final bool isCurrent;
+
+  ActiveSession({
+    required this.id,
+    required this.deviceName,
+    required this.location,
+    required this.lastActive,
+    this.isCurrent = false,
   });
 }
 
@@ -99,6 +153,8 @@ class Conversation {
   final String lastMessage;
   final int unreadCount;
   final DateTime updatedAt;
+  final bool isOnline;
+  final bool aiAssistantEnabled;
 
   Conversation({
     required this.id,
@@ -109,12 +165,16 @@ class Conversation {
     required this.lastMessage,
     required this.unreadCount,
     required this.updatedAt,
+    this.isOnline = false,
+    this.aiAssistantEnabled = false,
   });
 
   Conversation copyWith({
     String? lastMessage,
     int? unreadCount,
     DateTime? updatedAt,
+    bool? isOnline,
+    bool? aiAssistantEnabled,
   }) {
     return Conversation(
       id: id,
@@ -125,6 +185,8 @@ class Conversation {
       lastMessage: lastMessage ?? this.lastMessage,
       unreadCount: unreadCount ?? this.unreadCount,
       updatedAt: updatedAt ?? this.updatedAt,
+      isOnline: isOnline ?? this.isOnline,
+      aiAssistantEnabled: aiAssistantEnabled ?? this.aiAssistantEnabled,
     );
   }
 }

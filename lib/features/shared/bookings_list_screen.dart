@@ -13,13 +13,72 @@ import '../customer/bookings/widgets/booking_card.dart';
 import '../customer/bookings/widgets/booking_status_filter_tabs.dart';
 import '../customer/bookings/widgets/escrow_summary_card.dart';
 
-class BookingsListScreen extends ConsumerWidget {
+class BookingsListScreen extends ConsumerStatefulWidget {
   const BookingsListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BookingsListScreen> createState() => _BookingsListScreenState();
+}
+
+class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(customerBookingsControllerProvider);
     final controller = ref.read(customerBookingsControllerProvider.notifier);
+
+    if (state.errorMessage != null && state.allBookings.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Lịch chụp của tôi')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(state.errorMessage!),
+              TextButton(
+                onPressed: controller.loadBookings,
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Calculate 4 summary metrics for Flow 9
+    final totalCount = state.allBookings.length;
+    final pendingCount = state.allBookings
+        .where((b) => b.status == BookingStatus.pending)
+        .length;
+    final needsActionCount = state.allBookings
+        .where(
+          (b) =>
+              b.status == BookingStatus.awaiting_deposit ||
+              b.status == BookingStatus.confirmed,
+        )
+        .length;
+    final completedCount = state.allBookings
+        .where((b) => b.status == BookingStatus.released)
+        .length;
+
+    // Filter by search query if any
+    final displayList = state.filteredBookings.where((booking) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase();
+      return booking.photographerName.toLowerCase().contains(query) ||
+          booking.style.toLowerCase().contains(query) ||
+          booking.location.toLowerCase().contains(query) ||
+          (booking.note?.toLowerCase().contains(query) ?? false) ||
+          booking.displayCode.toLowerCase().contains(query);
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -37,7 +96,7 @@ class BookingsListScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              '${state.allBookings.length} tổng buổi chụp',
+              '$totalCount tổng lịch chụp · $needsActionCount cần xử lý',
               style: AppTypography.bodySm(color: AppColors.steel),
             ),
           ],
@@ -69,73 +128,192 @@ class BookingsListScreen extends ConsumerWidget {
         color: AppColors.ember,
         onRefresh: () => controller.loadBookings(),
         child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           slivers: [
-            // 1. Client Workspace & Active Count Tag Header
+            // 1. Search Bar (Flow 9)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppTokens.pageHorizontal,
-                  vertical: 6,
+                padding: const EdgeInsets.fromLTRB(
+                  AppTokens.pageHorizontal,
+                  8,
+                  AppTokens.pageHorizontal,
+                  12,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.snow,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.pebble),
+                    boxShadow: const [AppTokens.surfaceShadow],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) =>
+                        setState(() => _searchQuery = val.trim()),
+                    decoration: InputDecoration(
+                      hintText:
+                          'Tìm theo tên thợ, địa điểm, phong cách, mã đơn...',
+                      hintStyle: AppTypography.bodySm(
+                        color: AppColors.steel,
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(
+                        LucideIcons.search,
+                        size: 18,
+                        color: AppColors.steel,
+                      ),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                LucideIcons.x,
+                                size: 16,
+                                color: AppColors.steel,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Urgent Action Banner (Flow 9)
+            if (needsActionCount > 0)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppTokens.pageHorizontal,
+                    0,
+                    AppTokens.pageHorizontal,
+                    14,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.ember.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.ember.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.fog,
-                            borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.ember,
+                            shape: BoxShape.circle,
                           ),
-                          child: Text(
-                            'KHÁCH HÀNG',
-                            style: AppTypography.numeric(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.steel,
-                            ),
+                          child: const Icon(
+                            LucideIcons.bellRing,
+                            color: Colors.white,
+                            size: 16,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.ember.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(9999),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.ember,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
                               Text(
-                                '${state.activeCount} Đang hoạt động',
-                                style: AppTypography.numeric(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.ember,
+                                'Cần bạn xử lý ngay ($needsActionCount đơn)',
+                                style: AppTypography.titleMd(
+                                  fontSize: 13,
+                                  color: AppColors.obsidian,
+                                ).copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Hoàn tất đặt cọc hoặc thanh toán đợt 2 để giữ chỗ lịch chụp.',
+                                style: AppTypography.bodySm(
+                                  fontSize: 11.5,
+                                  color: AppColors.steel,
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: () {
+                            controller.selectTab('Cần thanh toán');
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.ember,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9999),
+                            ),
+                          ),
+                          child: const Text(
+                            'Xem ngay',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
                       ],
                     ),
-                    Text(
-                      '${state.filteredBookings.length} hiển thị',
-                      style: AppTypography.bodySm(
-                        fontSize: 12,
-                        color: AppColors.steel,
+                  ),
+                ),
+              ),
+
+            // 3. 4 Summary Metrics Cards (Flow 9)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.pageHorizontal,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _MetricCard(
+                        title: 'Tổng lịch',
+                        value: '$totalCount',
+                        icon: LucideIcons.calendar,
+                        color: AppColors.obsidian,
+                        onTap: () => controller.selectTab('Tất cả'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricCard(
+                        title: 'Chờ thợ nhận',
+                        value: '$pendingCount',
+                        icon: LucideIcons.clock3,
+                        color: AppColors.warning,
+                        onTap: () => controller.selectTab('Chờ xác nhận'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricCard(
+                        title: 'Cần xử lý',
+                        value: '$needsActionCount',
+                        icon: LucideIcons.alertCircle,
+                        color: AppColors.ember,
+                        onTap: () => controller.selectTab('Cần thanh toán'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricCard(
+                        title: 'Hoàn thành',
+                        value: '$completedCount',
+                        icon: LucideIcons.checkCircle2,
+                        color: AppColors.emerald,
+                        onTap: () => controller.selectTab('Đã hoàn tất'),
                       ),
                     ),
                   ],
@@ -143,10 +321,10 @@ class BookingsListScreen extends ConsumerWidget {
               ),
             ),
 
-            // 2. Status Filter Tabs (Horizontal list)
+            // 4. Status Filter Tabs (Horizontal list)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                padding: const EdgeInsets.only(top: 14, bottom: 8),
                 child: BookingStatusFilterTabs(
                   selectedTab: state.selectedTab,
                   onTabSelected: (tab) => controller.selectTab(tab),
@@ -155,55 +333,47 @@ class BookingsListScreen extends ConsumerWidget {
               ),
             ),
 
-            // 3. Escrow Protection Summary Card
+            // 5. Escrow Protection Summary Card
             SliverToBoxAdapter(
               child: EscrowSummaryCard(
                 totalAmount: state.totalEscrowHeld,
                 activeShootsCount: state.inProgressBookings.length,
                 onTap: () {
-                  controller.selectTab('Đang thực hiện');
+                  controller.selectTab('Tất cả');
                 },
               ),
             ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 6),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 6)),
 
-            // 4. Bookings List or Empty State
+            // 6. Bookings List or Empty State
             if (state.isLoading)
               const SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.ember,
-                  ),
+                  child: CircularProgressIndicator(color: AppColors.ember),
                 ),
               )
-            else if (state.filteredBookings.isEmpty)
+            else if (displayList.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: _buildEmptyState(context, state.selectedTab),
               )
             else
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final booking = state.filteredBookings[index];
-                    return BookingCard(
-                      booking: booking,
-                      onTap: () => _handleCardTap(context, booking),
-                      onPrimaryAction: () => _handlePrimaryAction(context, booking),
-                      onMessage: () => _handleMessage(context, booking),
-                    );
-                  },
-                  childCount: state.filteredBookings.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final booking = displayList[index];
+                  return BookingCard(
+                    booking: booking,
+                    onTap: () => _handleCardTap(context, booking),
+                    onPrimaryAction: () =>
+                        _handlePrimaryAction(context, booking),
+                    onMessage: () => _handleMessage(context, booking),
+                  );
+                }, childCount: displayList.length),
               ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 48),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
         ),
       ),
@@ -222,8 +392,10 @@ class BookingsListScreen extends ConsumerWidget {
       case BookingStatus.awaiting_deposit:
         context.push('/customer_home/bookings/${booking.id}/deposit');
         break;
-      case BookingStatus.pending:
       case BookingStatus.confirmed:
+        context.push('/customer_home/bookings/${booking.id}/pay');
+        break;
+      case BookingStatus.pending:
       case BookingStatus.released:
       case BookingStatus.cancelled:
         context.push('/customer_home/bookings/${booking.id}');
@@ -241,7 +413,8 @@ class BookingsListScreen extends ConsumerWidget {
 
     if (selectedTab == 'Tất cả') {
       title = 'Bạn chưa có lịch đặt nào';
-      subtitle = 'Hãy khám phá các nhiếp ảnh gia hàng đầu và đặt lịch chụp ảnh ngay!';
+      subtitle =
+          'Hãy khám phá các nhiếp ảnh gia hàng đầu và đặt lịch chụp ảnh ngay!';
     }
 
     return Padding(
@@ -280,6 +453,64 @@ class BookingsListScreen extends ConsumerWidget {
               text: 'Khám phá nhiếp ảnh gia',
               expand: false,
               onPressed: () => context.go('/customer_home/discovery'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.snow,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.pebble),
+          boxShadow: const [AppTokens.surfaceShadow],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: AppTypography.numeric(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.obsidian,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: AppTypography.labelSm(
+                fontSize: 10,
+                color: AppColors.steel,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

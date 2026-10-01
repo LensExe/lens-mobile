@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/outlined_button.dart';
@@ -31,7 +32,9 @@ class CountUpStat extends StatelessWidget {
           tween: Tween<double>(begin: 0, end: endValue),
           duration: const Duration(seconds: 2),
           builder: (context, value, child) {
-            final formatted = isInt ? value.toInt().toString() : value.toStringAsFixed(1);
+            final formatted = isInt
+                ? value.toInt().toString()
+                : value.toStringAsFixed(1);
             return Text(
               '$formatted$suffix',
               style: const TextStyle(
@@ -61,15 +64,19 @@ class KineticBand extends StatefulWidget {
   State<KineticBand> createState() => _KineticBandState();
 }
 
-class _KineticBandState extends State<KineticBand> with SingleTickerProviderStateMixin {
+class _KineticBandState extends State<KineticBand>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    )..repeat();
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
@@ -78,8 +85,9 @@ class _KineticBandState extends State<KineticBand> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final text = "Chân dung • Cưới • Sự kiện • Du lịch • Thời trang • Ẩm thực • Gia đình • Kiến trúc • ";
-    
+    final text =
+        "Chân dung • Cưới • Sự kiện • Du lịch • Thời trang • Ẩm thực • Gia đình • Kiến trúc • ";
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: const BoxDecoration(
@@ -101,15 +109,18 @@ class _KineticBandState extends State<KineticBand> with SingleTickerProviderStat
           scrollDirection: Axis.horizontal,
           physics: const NeverScrollableScrollPhysics(),
           child: Row(
-            children: List.generate(4, (index) => Text(
-              text,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: AppColors.obsidian,
-                letterSpacing: -0.5,
+            children: List.generate(
+              4,
+              (index) => Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.obsidian,
+                  letterSpacing: -0.5,
+                ),
               ),
-            )),
+            ),
           ),
         ),
       ),
@@ -136,12 +147,16 @@ class _StyleShowcaseState extends State<StyleShowcase> {
   @override
   Widget build(BuildContext context) {
     final photographers = MockDatabase.photographers;
-    
+
     return Column(
       children: [
         const Text(
           'Xem trước phong cách',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.obsidian),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: AppColors.obsidian,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -168,7 +183,7 @@ class _StyleShowcaseState extends State<StyleShowcase> {
                     value = _pageController.page! - index;
                     value = (1 - (value.abs() * 0.15)).clamp(0.0, 1.0);
                   }
-                  
+
                   return Center(
                     child: SizedBox(
                       height: Curves.easeOut.transform(value) * 400,
@@ -182,7 +197,11 @@ class _StyleShowcaseState extends State<StyleShowcase> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: const [
-                      BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
                     ],
                   ),
                   child: ClipRRect(
@@ -193,7 +212,8 @@ class _StyleShowcaseState extends State<StyleShowcase> {
                         Image.network(
                           photographers[index].cover,
                           fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => Container(color: AppColors.fog),
+                          errorBuilder: (c, e, s) =>
+                              Container(color: AppColors.fog),
                         ),
                         Positioned(
                           bottom: 16,
@@ -210,16 +230,27 @@ class _StyleShowcaseState extends State<StyleShowcase> {
                               children: [
                                 Text(
                                   photographers[index].name,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(LucideIcons.star, color: AppColors.ember, size: 14),
+                                    const Icon(
+                                      LucideIcons.star,
+                                      color: AppColors.ember,
+                                      size: 14,
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       '${photographers[index].rating} • ${photographers[index].styles.first}',
-                                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -248,7 +279,10 @@ class LandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Collect all portfolio images for the gallery
-    final galleryImages = MockDatabase.photographers.expand((p) => p.portfolio).take(6).toList();
+    final galleryImages = MockDatabase.photographers
+        .expand((p) => p.portfolio)
+        .take(6)
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.mist,
@@ -259,79 +293,128 @@ class LandingScreen extends StatelessWidget {
             children: [
               // --- 1. HERO SECTION ---
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 32.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.snow.withAlpha(180),
-                          border: Border.all(color: AppColors.pebble),
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(LucideIcons.star, color: AppColors.ember, size: 16),
-                            SizedBox(width: 8),
-                            Text(
-                              'Hơn 1.200 nhiếp ảnh gia trên khắp Việt Nam',
-                              style: TextStyle(color: AppColors.steel, fontSize: 12, fontWeight: FontWeight.w500),
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                          ],
-                        ),
-                      ),
-                    ).animate().fade(duration: 500.ms).slideY(begin: 0.5, end: 0, curve: Curves.easeOutQuad),
+                            decoration: BoxDecoration(
+                              color: AppColors.snow.withAlpha(180),
+                              border: Border.all(color: AppColors.pebble),
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  LucideIcons.star,
+                                  color: AppColors.ember,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Hơn 1.200 nhiếp ảnh gia trên khắp Việt Nam',
+                                  style: TextStyle(
+                                    color: AppColors.steel,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .animate()
+                        .fade(duration: 500.ms)
+                        .slideY(begin: 0.5, end: 0, curve: Curves.easeOutQuad),
                     const SizedBox(height: 24),
                     RichText(
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 40, fontWeight: FontWeight.w700, color: AppColors.obsidian, height: 1.12),
-                        children: [
-                          TextSpan(text: 'Tìm nhiếp ảnh gia\ncho mọi\n'),
-                          TextSpan(text: 'khoảnh khắc', style: TextStyle(color: AppColors.ash)),
-                        ],
-                      ),
-                    ).animate().fade(delay: 200.ms, duration: 500.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad),
+                          text: const TextSpan(
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.obsidian,
+                              height: 1.12,
+                            ),
+                            children: [
+                              TextSpan(text: 'Tìm nhiếp ảnh gia\ncho mọi\n'),
+                              TextSpan(
+                                text: 'khoảnh khắc',
+                                style: TextStyle(color: AppColors.ash),
+                              ),
+                            ],
+                          ),
+                        )
+                        .animate()
+                        .fade(delay: 200.ms, duration: 500.ms)
+                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad),
                     const SizedBox(height: 20),
                     const Text(
-                      'Xem portfolio, so sánh đánh giá và đặt lịch với nhiếp ảnh gia phù hợp, tất cả trên một nền tảng.',
-                      style: TextStyle(fontSize: 16, color: AppColors.steel, height: 1.5),
-                    ).animate().fade(delay: 400.ms, duration: 500.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad),
+                          'Xem portfolio, so sánh đánh giá và đặt lịch với nhiếp ảnh gia phù hợp, tất cả trên một nền tảng.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.steel,
+                            height: 1.5,
+                          ),
+                        )
+                        .animate()
+                        .fade(delay: 400.ms, duration: 500.ms)
+                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad),
                     const SizedBox(height: 32),
-                    
+
                     Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.snow,
-                        borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: AppColors.pebble),
-                        boxShadow: const [BoxShadow(color: Color(0x33000000), offset: Offset(0, 8), blurRadius: 30, spreadRadius: -12)],
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          const Icon(LucideIcons.search, color: AppColors.steel, size: 20),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Phong cách, địa điểm...',
-                                hintStyle: TextStyle(color: AppColors.steel, fontSize: 14),
-                                border: InputBorder.none,
-                                isDense: true,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.snow,
+                            borderRadius: BorderRadius.circular(100),
+                            border: Border.all(color: AppColors.pebble),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x33000000),
+                                offset: Offset(0, 8),
+                                blurRadius: 30,
+                                spreadRadius: -12,
                               ),
-                            ),
+                            ],
                           ),
-                          PrimaryButton(
-                            text: 'Tìm kiếm',
-                            onPressed: () {},
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              const Icon(
+                                LucideIcons.search,
+                                color: AppColors.steel,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Phong cách, địa điểm...',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.steel,
+                                      fontSize: 14,
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              PrimaryButton(text: 'Tìm kiếm', onPressed: () {}),
+                            ],
                           ),
-                        ],
-                      ),
-                    ).animate().fade(delay: 600.ms, duration: 500.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad),
+                        )
+                        .animate()
+                        .fade(delay: 600.ms, duration: 500.ms)
+                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad),
                   ],
                 ),
               ),
@@ -341,7 +424,10 @@ class LandingScreen extends StatelessWidget {
               // --- 2. STATS STRIP ---
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.snow,
                   borderRadius: BorderRadius.circular(32),
@@ -351,15 +437,39 @@ class LandingScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: const [
-                        Expanded(child: CountUpStat(endValue: 1200, suffix: '+', label: 'Nhiếp ảnh gia')),
-                        Expanded(child: CountUpStat(endValue: 28000, suffix: '+', label: 'Buổi chụp hoàn thành')),
+                        Expanded(
+                          child: CountUpStat(
+                            endValue: 1200,
+                            suffix: '+',
+                            label: 'Nhiếp ảnh gia',
+                          ),
+                        ),
+                        Expanded(
+                          child: CountUpStat(
+                            endValue: 28000,
+                            suffix: '+',
+                            label: 'Buổi chụp hoàn thành',
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 32),
                     Row(
                       children: const [
-                        Expanded(child: CountUpStat(endValue: 63, label: 'Tỉnh thành phủ sóng')),
-                        Expanded(child: CountUpStat(endValue: 4.9, suffix: '/5', label: 'Đánh giá trung bình', isInt: false)),
+                        Expanded(
+                          child: CountUpStat(
+                            endValue: 63,
+                            label: 'Tỉnh thành phủ sóng',
+                          ),
+                        ),
+                        Expanded(
+                          child: CountUpStat(
+                            endValue: 4.9,
+                            suffix: '/5',
+                            label: 'Đánh giá trung bình',
+                            isInt: false,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -379,19 +489,30 @@ class LandingScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Khoảnh khắc trên Lens', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.obsidian)),
+                    const Text(
+                      'Khoảnh khắc trên Lens',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.obsidian,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    const Text('Hàng nghìn bộ ảnh thực tế từ cộng đồng nhiếp ảnh gia.', style: TextStyle(fontSize: 14, color: AppColors.steel)),
+                    const Text(
+                      'Hàng nghìn bộ ảnh thực tế từ cộng đồng nhiếp ảnh gia.',
+                      style: TextStyle(fontSize: 14, color: AppColors.steel),
+                    ),
                     const SizedBox(height: 24),
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.75, // 3:4 aspect ratio
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.75, // 3:4 aspect ratio
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
                       itemCount: galleryImages.length,
                       itemBuilder: (context, index) {
                         return ClipRRect(
@@ -399,7 +520,8 @@ class LandingScreen extends StatelessWidget {
                           child: Image.network(
                             galleryImages[index],
                             fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => Container(color: AppColors.fog),
+                            errorBuilder: (c, e, s) =>
+                                Container(color: AppColors.fog),
                           ),
                         );
                       },

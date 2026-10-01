@@ -1,10 +1,53 @@
 import '../domain/models/models.dart';
 
 class MockDatabase {
-  static final User customerUser = User(id: 'u1', name: 'Nguyễn Văn A', email: 'customer@lens.com', role: 'client');
-  static final User photographerUser = User(id: 'u2', name: 'Studio YC', email: 'photo@lens.com', role: 'photographer');
+  static final User customerUser = User(
+    id: 'u-khachhang',
+    name: 'Trần Khách Hàng',
+    email: 'customer@lens.com',
+    role: 'client',
+    phone: '0901234567',
+    city: 'TP. Hồ Chí Minh',
+    address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    saveAsDefault: true,
+    twoFactorEnabled: true,
+  );
+  static final User photographerUser = User(
+    id: 'u2',
+    name: 'Alex Photography',
+    email: 'photo@lens.com',
+    role: 'photographer',
+    phone: '0912345678',
+    city: 'Hồ Chí Minh',
+    address: '45 Lê Lợi, Quận 1',
+  );
 
   static User? currentUser;
+
+  static List<ActiveSession> activeSessions = [
+    ActiveSession(
+      id: 'sess-1',
+      deviceName: 'iPhone 15 Pro (Ứng dụng này)',
+      location: 'TP. Hồ Chí Minh, Việt Nam',
+      lastActive: 'Đang hoạt động',
+      isCurrent: true,
+    ),
+    ActiveSession(
+      id: 'sess-2',
+      deviceName: 'MacBook Pro · Chrome 129',
+      location: 'TP. Hồ Chí Minh, Việt Nam',
+      lastActive: '2 giờ trước',
+      isCurrent: false,
+    ),
+    ActiveSession(
+      id: 'sess-3',
+      deviceName: 'iPad Air · Safari',
+      location: 'Đà Lạt, Việt Nam',
+      lastActive: '3 ngày trước',
+      isCurrent: false,
+    ),
+  ];
 
   static final List<Photographer> photographers = [
     Photographer(
@@ -24,8 +67,18 @@ class MockDatabase {
         'https://images.unsplash.com/photo-1519741497674-611481863552',
       ],
       packages: [
-        PhotographerPackage(id: 'pkg1', name: 'Gói Tiêu chuẩn', duration: '2 giờ', price: 2000000),
-        PhotographerPackage(id: 'pkg2', name: 'Gói Cao cấp', duration: '4 giờ', price: 3500000),
+        PhotographerPackage(
+          id: 'pkg1',
+          name: 'Gói Tiêu chuẩn',
+          duration: '2 giờ',
+          price: 2000000,
+        ),
+        PhotographerPackage(
+          id: 'pkg2',
+          name: 'Gói Cao cấp',
+          duration: '4 giờ',
+          price: 3500000,
+        ),
       ],
     ),
     Photographer(
@@ -44,7 +97,12 @@ class MockDatabase {
         'https://images.unsplash.com/photo-1542038784456-1ea8e935640e',
       ],
       packages: [
-        PhotographerPackage(id: 'pkg3', name: 'Chụp Sản phẩm', duration: '3 giờ', price: 3500000),
+        PhotographerPackage(
+          id: 'pkg3',
+          name: 'Chụp Sản phẩm',
+          duration: '3 giờ',
+          price: 3500000,
+        ),
       ],
     ),
   ];
@@ -115,23 +173,27 @@ class MockDatabase {
   static List<Conversation> conversations = [
     Conversation(
       id: 'c1',
-      bookingId: 'b2',
+      bookingId: 'bk-85014',
       otherPartyId: 'p1',
-      otherPartyName: 'Alex Photography',
+      otherPartyName: 'Minh Hà Studio',
       otherPartyAvatar: 'https://i.pravatar.cc/150?u=p1',
       lastMessage: 'Chào bạn, mình đã nhận được lịch đặt chụp.',
       unreadCount: 1,
       updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
+      isOnline: true,
+      aiAssistantEnabled: true,
     ),
     Conversation(
       id: 'c2',
-      bookingId: 'b1',
+      bookingId: 'bk-84920',
       otherPartyId: 'p2',
-      otherPartyName: 'Studio YC',
+      otherPartyName: 'Elena Rostova',
       otherPartyAvatar: 'https://i.pravatar.cc/150?u=p2',
       lastMessage: 'Ok bạn.',
       unreadCount: 0,
       updatedAt: DateTime.now().subtract(const Duration(days: 1)),
+      isOnline: false,
+      aiAssistantEnabled: false,
     ),
   ];
 
@@ -141,13 +203,13 @@ class MockDatabase {
       conversationId: 'c1',
       senderId: 'p1',
       senderRole: 'ai',
-      text: 'Chào bạn, mình là trợ lý AI của Alex Photography. Vui lòng để lại lời nhắn, Alex sẽ trả lời sớm nhất.',
+      text: 'Chào bạn, mình là trợ lý AI của Minh Hà Studio. Vui lòng để lại lời nhắn, Minh Hà sẽ trả lời sớm nhất.',
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
     ),
     Message(
       id: 'm2',
       conversationId: 'c1',
-      senderId: 'u1',
+      senderId: 'u-khachhang',
       senderRole: 'customer',
       text: 'Mình muốn trao đổi thêm về concept.',
       timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
@@ -163,7 +225,7 @@ class MockDatabase {
     Message(
       id: 'm4',
       conversationId: 'c2',
-      senderId: 'u1',
+      senderId: 'u-khachhang',
       senderRole: 'customer',
       text: 'Mình đã xem qua portfolio.',
       timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 2)),

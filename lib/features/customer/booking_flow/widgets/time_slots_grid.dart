@@ -49,7 +49,10 @@ class TimeSlotsGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               const Text(
                 '3. Chọn Giờ Bắt Đầu',
@@ -60,7 +63,6 @@ class TimeSlotsGrid extends StatelessWidget {
                   letterSpacing: -0.2,
                 ),
               ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(

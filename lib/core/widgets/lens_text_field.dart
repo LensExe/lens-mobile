@@ -9,6 +9,7 @@ class LensTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final int maxLines;
 
   const LensTextField({
     super.key,
@@ -18,6 +19,7 @@ class LensTextField extends StatelessWidget {
     this.suffixIcon,
     this.keyboardType,
     this.validator,
+    this.maxLines = 1,
   });
 
   @override
@@ -25,6 +27,7 @@ class LensTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
       style: const TextStyle(color: AppColors.ink, fontSize: 14),

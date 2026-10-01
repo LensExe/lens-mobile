@@ -2,12 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/photographer_detail_model.dart';
 import '../repositories/photographer_detail_repository.dart';
-import '../repositories/mock_photographer_detail_repository.dart';
-
-final photographerDetailRepositoryProvider =
-    Provider<PhotographerDetailRepository>((ref) {
-      return MockPhotographerDetailRepository();
-    });
+import '../repositories/photographer_detail_repository_provider.dart';
 
 class PhotographerDetailState {
   final bool isLoading;
@@ -16,6 +11,7 @@ class PhotographerDetailState {
   final String selectedPortfolioStyle;
   final ProfilePackage? selectedPackage;
   final bool isBookmarked;
+  final String? errorMessage;
 
   const PhotographerDetailState({
     this.isLoading = true,
@@ -24,6 +20,7 @@ class PhotographerDetailState {
     this.selectedPortfolioStyle = 'Tất cả',
     this.selectedPackage,
     this.isBookmarked = false,
+    this.errorMessage,
   });
 
   PhotographerDetailState copyWith({
@@ -33,6 +30,8 @@ class PhotographerDetailState {
     String? selectedPortfolioStyle,
     ProfilePackage? selectedPackage,
     bool? isBookmarked,
+    String? errorMessage,
+    bool clearError = false,
   }) {
     return PhotographerDetailState(
       isLoading: isLoading ?? this.isLoading,
@@ -42,6 +41,7 @@ class PhotographerDetailState {
           selectedPortfolioStyle ?? this.selectedPortfolioStyle,
       selectedPackage: selectedPackage ?? this.selectedPackage,
       isBookmarked: isBookmarked ?? this.isBookmarked,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
@@ -64,7 +64,7 @@ class PhotographerDetailController extends Notifier<PhotographerDetailState> {
       ref.read(photographerDetailRepositoryProvider);
 
   Future<void> loadProfile(String id) async {
-    state = state.copyWith(isLoading: true);
+    state = const PhotographerDetailState(isLoading: true);
     try {
       final profile = await _repo.getPhotographerProfile(id);
       final defaultPkg = profile.packages.isNotEmpty
@@ -79,9 +79,13 @@ class PhotographerDetailController extends Notifier<PhotographerDetailState> {
         selectedPackage: defaultPkg,
         selectedTabIndex: 0,
         selectedPortfolioStyle: 'Tất cả',
+        clearError: true,
       );
     } catch (_) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Không thể tải hồ sơ nhiếp ảnh gia.',
+      );
     }
   }
 

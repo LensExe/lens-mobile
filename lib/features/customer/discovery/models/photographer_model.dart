@@ -1,9 +1,4 @@
-enum Experience {
-  under1Year,
-  from1To3Years,
-  from3To5Years,
-  over5Years,
-}
+enum Experience { under1Year, from1To3Years, from3To5Years, over5Years }
 
 class PhotographerModel {
   final String id;
@@ -35,4 +30,21 @@ class PhotographerModel {
     required this.styles,
     required this.availableDates,
   });
+
+  PhotographerModel copyWith({double? rating, int? reviewCount}) =>
+      PhotographerModel(
+        id: id,
+        name: name,
+        avatarUrl: avatarUrl,
+        coverImageUrl: coverImageUrl,
+        city: city,
+        rating: rating ?? this.rating,
+        reviewCount: reviewCount ?? this.reviewCount,
+        pricePerSession: pricePerSession,
+        isFeatured: isFeatured,
+        isVerified: isVerified,
+        experience: experience,
+        styles: styles,
+        availableDates: availableDates,
+      );
 }

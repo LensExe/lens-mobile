@@ -8,6 +8,7 @@ import 'dart:async';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../providers/data_providers.dart';
 import '../controllers/discovery_controller.dart';
 import '../models/filter_criteria.dart';
 import '../models/photo_style_options.dart';
@@ -44,6 +45,11 @@ class _PhotographersDiscoveryScreenState
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final uri = GoRouterState.of(context).uri;
+      if (uri.queryParameters.isNotEmpty) {
+        ref.read(discoveryControllerProvider.notifier).applyQuery(uri);
+      }
       final criteria = ref.read(discoveryControllerProvider).criteria;
       if (criteria.searchQuery != null && criteria.searchQuery!.isNotEmpty) {
         _searchController.text = criteria.searchQuery!;
@@ -63,7 +69,50 @@ class _PhotographersDiscoveryScreenState
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       ref.read(discoveryControllerProvider.notifier).search(query);
+      _syncUrl();
     });
+  }
+
+  void _syncUrl() {
+    if (!mounted) return;
+    final state = ref.read(discoveryControllerProvider);
+    final criteria = state.criteria;
+    final params = <String, String>{};
+    if (criteria.searchQuery?.trim().isNotEmpty == true) {
+      params['q'] = criteria.searchQuery!.trim();
+    }
+    if (criteria.city?.isNotEmpty == true && criteria.city != 'Tất cả') {
+      params['city'] = criteria.city!;
+    }
+    if (criteria.minPrice != null) {
+      params['priceMin'] = criteria.minPrice!.toStringAsFixed(0);
+    }
+    if (criteria.maxPrice != null) {
+      params['priceMax'] = criteria.maxPrice!.toStringAsFixed(0);
+    }
+    if (criteria.availableDate != null) {
+      final date = criteria.availableDate!;
+      params['date'] =
+          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+    if (criteria.minRating != null) {
+      params['rating'] = criteria.minRating!.toString();
+    }
+    if (criteria.experience != null) params['exp'] = criteria.experience!.name;
+    if (criteria.styles.isNotEmpty) {
+      params['styles'] = criteria.styles.join(',');
+    }
+    if (state.sortOption != SortOption.featured) {
+      params['sort'] = state.sortOption.name;
+    }
+    if (state.currentPage > 1) params['page'] = state.currentPage.toString();
+    final target = Uri(
+      path: '/customer_home/discovery',
+      queryParameters: params.isEmpty ? null : params,
+    ).toString();
+    if (GoRouterState.of(context).uri.toString() != target) {
+      context.replace(target);
+    }
   }
 
   void _openFilterBottomSheet() {
@@ -78,6 +127,7 @@ class _PhotographersDiscoveryScreenState
           ref
               .read(discoveryControllerProvider.notifier)
               .updateFilters(newCriteria);
+          _syncUrl();
         },
       ),
     );
@@ -93,6 +143,7 @@ class _PhotographersDiscoveryScreenState
         initialSort: currentSort,
         onApply: (newSort) {
           ref.read(discoveryControllerProvider.notifier).updateSort(newSort);
+          _syncUrl();
         },
       ),
     );
@@ -102,6 +153,7 @@ class _PhotographersDiscoveryScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(discoveryControllerProvider);
     final controller = ref.read(discoveryControllerProvider.notifier);
+    final isGuest = ref.watch(authUserProvider) == null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -137,6 +189,43 @@ class _PhotographersDiscoveryScreenState
                 ),
               ),
             ),
+            if (isGuest)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.snow,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.pebble),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Tạo tài khoản để đặt lịch và trò chuyện với nhiếp ảnh gia.',
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => context.go('/login'),
+                              child: const Text('Đăng nhập'),
+                            ),
+                            const SizedBox(width: 8),
+                            FilledButton(
+                              onPressed: () => context.go('/signup'),
+                              child: const Text('Đăng ký'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             // Top App Bar & Search
             SliverToBoxAdapter(
               child: Padding(
@@ -189,6 +278,8 @@ class _PhotographersDiscoveryScreenState
                                                 .notifier,
                                           )
                                           .search('');
+                                      _syncUrl();
+                                      setState(() {});
                                     },
                                     child: const Icon(
                                       LucideIcons.x,
@@ -302,10 +393,13 @@ class _PhotographersDiscoveryScreenState
                       child: GestureDetector(
                         onTap: () {
                           if (isAllGenres) {
-                            controller.clearFilters();
+                            controller.updateFilters(
+                              state.criteria.copyWith(styles: []),
+                            );
                           } else {
                             controller.toggleStyle(style);
                           }
+                          _syncUrl();
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
@@ -362,27 +456,31 @@ class _PhotographersDiscoveryScreenState
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${state.photographers.length}',
-                            style: AppTypography.numeric(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.obsidian,
+                    Expanded(
+                      child: RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${state.totalCount}',
+                              style: AppTypography.numeric(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.obsidian,
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: ' nhiếp ảnh gia',
-                            style: AppTypography.bodySm(
-                              color: AppColors.steel,
-                            ).copyWith(fontSize: 13),
-                          ),
-                        ],
+                            TextSpan(
+                              text: ' nhiếp ảnh gia',
+                              style: AppTypography.bodySm(
+                                color: AppColors.steel,
+                              ).copyWith(fontSize: 13),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     Builder(
                       builder: (context) {
                         final isCustomSort =
@@ -391,8 +489,9 @@ class _PhotographersDiscoveryScreenState
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: _openSortBottomSheet,
-                            borderRadius:
-                                BorderRadius.circular(AppTokens.pillRadius),
+                            borderRadius: BorderRadius.circular(
+                              AppTokens.pillRadius,
+                            ),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
                               height: AppTokens.filterChipHeight,
@@ -427,16 +526,17 @@ class _PhotographersDiscoveryScreenState
                                   const SizedBox(width: 6),
                                   Text(
                                     _sortLabel(state.sortOption),
-                                    style: AppTypography.labelMd(
-                                      color: isCustomSort
-                                          ? AppColors.ember
-                                          : AppColors.obsidian,
-                                      fontSize: 12,
-                                    ).copyWith(
-                                      fontWeight: isCustomSort
-                                          ? FontWeight.w700
-                                          : FontWeight.w600,
-                                    ),
+                                    style:
+                                        AppTypography.labelMd(
+                                          color: isCustomSort
+                                              ? AppColors.ember
+                                              : AppColors.obsidian,
+                                          fontSize: 12,
+                                        ).copyWith(
+                                          fontWeight: isCustomSort
+                                              ? FontWeight.w700
+                                              : FontWeight.w600,
+                                        ),
                                   ),
                                   const SizedBox(width: 4),
                                   Icon(
@@ -465,6 +565,21 @@ class _PhotographersDiscoveryScreenState
                   child: CircularProgressIndicator(color: AppColors.ember),
                 ),
               )
+            else if (state.errorMessage != null)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(state.errorMessage!),
+                      TextButton(
+                        onPressed: controller.retry,
+                        child: const Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             else if (state.photographers.isEmpty)
               SliverFillRemaining(
                 child: Center(
@@ -490,6 +605,7 @@ class _PhotographersDiscoveryScreenState
                         onPressed: () {
                           _searchController.clear();
                           controller.clearFilters();
+                          _syncUrl();
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.ember),
@@ -561,7 +677,11 @@ class _PhotographersDiscoveryScreenState
                                 ),
                                 const SizedBox(width: 8),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    _searchController.clear();
+                                    controller.clearFilters();
+                                    _syncUrl();
+                                  },
                                   child: const Text(
                                     'Xem tất cả',
                                     style: TextStyle(
@@ -591,6 +711,44 @@ class _PhotographersDiscoveryScreenState
                 ),
               ),
 
+            if (!state.isLoading &&
+                state.errorMessage == null &&
+                state.totalCount > 9)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: state.currentPage > 1
+                            ? () {
+                                controller.previous();
+                                _syncUrl();
+                              }
+                            : null,
+                        child: const Text('Trước'),
+                      ),
+                      Text(
+                        'Trang ${state.currentPage}/${(state.totalCount / 9).ceil()}',
+                      ),
+                      TextButton(
+                        onPressed: state.hasNextPage
+                            ? () {
+                                controller.next();
+                                _syncUrl();
+                              }
+                            : null,
+                        child: const Text('Tiếp'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 36)),
           ],
         ),
@@ -608,6 +766,8 @@ class _PhotographersDiscoveryScreenState
         return 'Giá thấp đến cao';
       case SortOption.priceDesc:
         return 'Giá cao đến thấp';
+      case SortOption.reviewCount:
+        return 'Nhiều đánh giá';
     }
   }
 }

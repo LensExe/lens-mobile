@@ -29,6 +29,7 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
     (option: SortOption.rating, label: 'Đánh giá cao'),
     (option: SortOption.priceAsc, label: 'Giá thấp đến cao'),
     (option: SortOption.priceDesc, label: 'Giá cao đến thấp'),
+    (option: SortOption.reviewCount, label: 'Nhiều đánh giá nhất'),
   ];
 
   @override
@@ -121,7 +122,9 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
                             _selectedOption = item.option;
                           });
                         },
-                        borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppTokens.cardRadius,
+                        ),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           curve: Curves.easeInOut,
@@ -131,8 +134,9 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
                             color: isSelected
                                 ? AppColors.ember.withValues(alpha: 0.04)
                                 : AppColors.snow,
-                            borderRadius:
-                                BorderRadius.circular(AppTokens.cardRadius),
+                            borderRadius: BorderRadius.circular(
+                              AppTokens.cardRadius,
+                            ),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.ember
@@ -148,15 +152,16 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
                               Expanded(
                                 child: Text(
                                   item.label,
-                                  style: AppTypography.bodyMd(
-                                    color: isSelected
-                                        ? AppColors.obsidian
-                                        : AppColors.obsidian,
-                                  ).copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                  ),
+                                  style:
+                                      AppTypography.bodyMd(
+                                        color: isSelected
+                                            ? AppColors.obsidian
+                                            : AppColors.obsidian,
+                                      ).copyWith(
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                      ),
                                 ),
                               ),
                               // Custom Radio Indicator

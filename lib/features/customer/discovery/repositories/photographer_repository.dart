@@ -6,4 +6,5 @@ abstract class PhotographerRepository {
     FilterCriteria? criteria,
     SortOption sort = SortOption.featured,
   });
+  Future<void> recordReview(String photographerId, double rating);
 }

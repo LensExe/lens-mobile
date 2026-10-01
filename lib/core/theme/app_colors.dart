@@ -22,7 +22,9 @@ class AppColors {
   static const Color snow = Color(
     0xFFFFFFFF,
   ); // Trắng tinh (nền thẻ chính - SurfaceCard)
-  static const Color canvas = Color(0xFFF9F9FA); // Nền màn hình chính (Surface canvas)
+  static const Color canvas = Color(
+    0xFFF9F9FA,
+  ); // Nền màn hình chính (Surface canvas)
   static const Color surface = Color(0xFFF9F9FA);
 
   // --- Brand / Accents ---

@@ -17,12 +17,13 @@ class BookingStatusFilterTabs extends StatelessWidget {
   });
 
   static const List<String> tabs = [
-    'Đang thực hiện',
     'Tất cả',
-    'Chờ duyệt',
-    'Đã xác nhận',
+    'Chờ đặt cọc',
+    'Chờ xác nhận',
+    'Chờ thanh toán',
+    'Sàn đang giữ tiền',
     'Hoàn thành',
-    'Đã hủy',
+    'Đã huỷ',
   ];
 
   @override
@@ -32,7 +33,9 @@ class BookingStatusFilterTabs extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.pageHorizontal,
+        ),
         itemCount: tabs.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -53,7 +56,9 @@ class BookingStatusFilterTabs extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9999),
                 border: isSelected
                     ? null
-                    : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                    : Border.all(
+                        color: AppColors.pebble.withValues(alpha: 0.5),
+                      ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -66,8 +71,14 @@ class BookingStatusFilterTabs extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.ember : AppColors.mist,
                       shape: BoxShape.circle,

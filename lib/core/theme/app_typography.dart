@@ -85,16 +85,14 @@ abstract final class AppTypography {
     color: color,
   );
 
-  static TextStyle bodySm({
-    Color color = AppColors.steel,
-    double? fontSize,
-  }) => GoogleFonts.inter(
-    fontSize: fontSize ?? 13,
-    fontWeight: FontWeight.w400,
-    height: 18 / 13,
-    letterSpacing: 0,
-    color: color,
-  );
+  static TextStyle bodySm({Color color = AppColors.steel, double? fontSize}) =>
+      GoogleFonts.inter(
+        fontSize: fontSize ?? 13,
+        fontWeight: FontWeight.w400,
+        height: 18 / 13,
+        letterSpacing: 0,
+        color: color,
+      );
 
   // --- Labels ---
   static TextStyle labelMd({
@@ -108,16 +106,14 @@ abstract final class AppTypography {
     color: color,
   );
 
-  static TextStyle labelSm({
-    Color color = AppColors.steel,
-    double? fontSize,
-  }) => GoogleFonts.inter(
-    fontSize: fontSize ?? 11,
-    fontWeight: FontWeight.w500,
-    height: 14 / 11,
-    letterSpacing: 0.03 * (fontSize ?? 11),
-    color: color,
-  );
+  static TextStyle labelSm({Color color = AppColors.steel, double? fontSize}) =>
+      GoogleFonts.inter(
+        fontSize: fontSize ?? 11,
+        fontWeight: FontWeight.w500,
+        height: 14 / 11,
+        letterSpacing: 0.03 * (fontSize ?? 11),
+        color: color,
+      );
 
   // --- Price Display with Tabular Figures ---
   static TextStyle priceDisplay({

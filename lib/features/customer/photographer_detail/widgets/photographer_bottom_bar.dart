@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -24,8 +25,9 @@ class PhotographerBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayPrice =
-        selectedPackage != null ? selectedPackage!.price : startingPrice;
+    final displayPrice = selectedPackage != null
+        ? selectedPackage!.price
+        : startingPrice;
     final priceLabel = selectedPackage != null ? 'Gói đã chọn' : 'Giá chỉ từ';
 
     return ClipRect(

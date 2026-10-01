@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/outlined_button.dart';
@@ -21,17 +22,38 @@ class UiGalleryScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text('Buttons', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
+          const Text(
+            'Buttons',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.obsidian,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: PrimaryButton(text: 'Book demo', onPressed: () {})),
+              Expanded(
+                child: PrimaryButton(text: 'Book demo', onPressed: () {}),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: OutlinedWhiteButton(text: 'View projects', onPressed: () {})),
+              Expanded(
+                child: OutlinedWhiteButton(
+                  text: 'View projects',
+                  onPressed: () {},
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 32),
-          const Text('Badges', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
+          const Text(
+            'Badges',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.obsidian,
+            ),
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,
@@ -43,15 +65,27 @@ class UiGalleryScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 32),
-          const Text('Cards', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
+          const Text(
+            'Cards',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.obsidian,
+            ),
+          ),
           const SizedBox(height: 16),
           SurfaceCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('White Surface Card (36px radius)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'White Surface Card (36px radius)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
-                const Text('Used for primary card surface on the canvas. Flat design, no shadow.'),
+                const Text(
+                  'Used for primary card surface on the canvas. Flat design, no shadow.',
+                ),
                 const SizedBox(height: 16),
                 PrimaryButton(text: 'Action inside card', onPressed: () {}),
               ],
@@ -63,9 +97,14 @@ class UiGalleryScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Muted Surface Card (28px radius)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  'Muted Surface Card (28px radius)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 SizedBox(height: 8),
-                Text('Secondary card or tag surface, slightly elevated feel against white.'),
+                Text(
+                  'Secondary card or tag surface, slightly elevated feel against white.',
+                ),
               ],
             ),
           ),

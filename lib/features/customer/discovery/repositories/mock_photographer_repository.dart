@@ -1,17 +1,18 @@
 import '../models/filter_criteria.dart';
 import '../models/photographer_model.dart';
 import 'photographer_repository.dart';
+import '../../../../core/utils/vietnamese_text.dart';
 
 class MockPhotographerRepository implements PhotographerRepository {
   // Khi có REST API / GraphQL, chỉ cần tạo file ApiPhotographerRepository.dart implements PhotographerRepository và inject vào UI
-  
+
   final List<PhotographerModel> _mockData = [
     PhotographerModel(
       id: 'p1',
       name: 'Minh Hà Studio',
       avatarUrl: 'https://i.pravatar.cc/150?u=minhha',
       coverImageUrl: 'https://images.unsplash.com/photo-1554080353-a576cf803bda?auto=format&fit=crop&q=80',
-      city: 'Hồ Chí Minh',
+      city: 'TP. Hồ Chí Minh',
       rating: 4.98,
       reviewCount: 124,
       pricePerSession: 2800000,
@@ -19,22 +20,28 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: true,
       experience: Experience.over5Years,
       styles: ['Thời trang', 'Chân dung'],
-      availableDates: [DateTime.now().add(const Duration(days: 1)), DateTime.now().add(const Duration(days: 3))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 1)),
+        DateTime.now().add(const Duration(days: 3)),
+      ],
     ),
     PhotographerModel(
       id: 'p2',
       name: 'Elena Rostova',
       avatarUrl: 'https://i.pravatar.cc/150?u=elena',
       coverImageUrl: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&q=80',
-      city: 'Hà Nội',
-      rating: 4.95,
-      reviewCount: 89,
-      pricePerSession: 1900000,
+      city: 'TP. Hồ Chí Minh',
+      rating: 4.98,
+      reviewCount: 64,
+      pricePerSession: 2800000,
       isFeatured: true,
       isVerified: true,
-      experience: Experience.from3To5Years,
-      styles: ['Chân dung', 'Sự kiện'],
-      availableDates: [DateTime.now().add(const Duration(days: 2)), DateTime.now().add(const Duration(days: 5))],
+      experience: Experience.over5Years,
+      styles: ['Thời trang', 'Chân dung'],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 2)),
+        DateTime.now().add(const Duration(days: 5)),
+      ],
     ),
     PhotographerModel(
       id: 'p3',
@@ -64,14 +71,17 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: false,
       experience: Experience.from1To3Years,
       styles: ['Cưới', 'Gia đình'],
-      availableDates: [DateTime.now().add(const Duration(days: 4)), DateTime.now().add(const Duration(days: 6))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 4)),
+        DateTime.now().add(const Duration(days: 6)),
+      ],
     ),
     PhotographerModel(
       id: 'p5',
       name: 'Tuấn Đạt',
       avatarUrl: 'https://i.pravatar.cc/150?u=tuandat',
       coverImageUrl: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&q=80',
-      city: 'Hồ Chí Minh',
+      city: 'TP. Hồ Chí Minh',
       rating: 4.6,
       reviewCount: 32,
       pricePerSession: 1200000,
@@ -94,7 +104,10 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: true,
       experience: Experience.from3To5Years,
       styles: ['Du lịch', 'Chân dung'],
-      availableDates: [DateTime.now().add(const Duration(days: 5)), DateTime.now().add(const Duration(days: 7))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 5)),
+        DateTime.now().add(const Duration(days: 7)),
+      ],
     ),
     PhotographerModel(
       id: 'p7',
@@ -109,7 +122,10 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: false,
       experience: Experience.under1Year,
       styles: ['Đường phố', 'Sự kiện'],
-      availableDates: [DateTime.now().add(const Duration(days: 1)), DateTime.now().add(const Duration(days: 2))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 1)),
+        DateTime.now().add(const Duration(days: 2)),
+      ],
     ),
     PhotographerModel(
       id: 'p8',
@@ -146,7 +162,7 @@ class MockPhotographerRepository implements PhotographerRepository {
       name: 'Lê Khoa',
       avatarUrl: 'https://i.pravatar.cc/150?u=lekhoa',
       coverImageUrl: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&q=80',
-      city: 'Hồ Chí Minh',
+      city: 'TP. Hồ Chí Minh',
       rating: 4.4,
       reviewCount: 12,
       pricePerSession: 900000,
@@ -154,7 +170,10 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: false,
       experience: Experience.under1Year,
       styles: ['Sự kiện'],
-      availableDates: [DateTime.now().add(const Duration(days: 2)), DateTime.now().add(const Duration(days: 4))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 2)),
+        DateTime.now().add(const Duration(days: 4)),
+      ],
     ),
     PhotographerModel(
       id: 'p11',
@@ -199,7 +218,10 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: false,
       experience: Experience.from1To3Years,
       styles: ['Gia đình', 'Chân dung'],
-      availableDates: [DateTime.now().add(const Duration(days: 2)), DateTime.now().add(const Duration(days: 3))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 2)),
+        DateTime.now().add(const Duration(days: 3)),
+      ],
     ),
     PhotographerModel(
       id: 'p14',
@@ -221,7 +243,7 @@ class MockPhotographerRepository implements PhotographerRepository {
       name: 'Trang Nguyễn',
       avatarUrl: 'https://i.pravatar.cc/150?u=trangnguyen',
       coverImageUrl: 'https://images.unsplash.com/photo-1496095493478-f71e54868f04?auto=format&fit=crop&q=80',
-      city: 'Hồ Chí Minh',
+      city: 'TP. Hồ Chí Minh',
       rating: 4.88,
       reviewCount: 110,
       pricePerSession: 2600000,
@@ -229,9 +251,24 @@ class MockPhotographerRepository implements PhotographerRepository {
       isVerified: true,
       experience: Experience.over5Years,
       styles: ['Ẩm thực', 'Sản phẩm'],
-      availableDates: [DateTime.now().add(const Duration(days: 1)), DateTime.now().add(const Duration(days: 5))],
+      availableDates: [
+        DateTime.now().add(const Duration(days: 1)),
+        DateTime.now().add(const Duration(days: 5)),
+      ],
     ),
   ];
+
+  @override
+  Future<void> recordReview(String photographerId, double rating) async {
+    final index = _mockData.indexWhere((item) => item.id == photographerId);
+    if (index < 0) throw StateError('Không tìm thấy nhiếp ảnh gia.');
+    final current = _mockData[index];
+    final count = current.reviewCount + 1;
+    _mockData[index] = current.copyWith(
+      rating: (current.rating * current.reviewCount + rating) / count,
+      reviewCount: count,
+    );
+  }
 
   @override
   Future<List<PhotographerModel>> getPhotographers({
@@ -245,27 +282,40 @@ class MockPhotographerRepository implements PhotographerRepository {
 
     if (criteria != null) {
       // Filter by Search Query
-      if (criteria.searchQuery != null && criteria.searchQuery!.trim().isNotEmpty) {
-        final query = _removeDiacritics(criteria.searchQuery!.trim().toLowerCase());
+      if (criteria.searchQuery != null &&
+          criteria.searchQuery!.trim().isNotEmpty) {
+        final query = foldVietnamese(
+          criteria.searchQuery!.trim().toLowerCase(),
+        );
         filteredList = filteredList.where((p) {
-          final nameMatch = _removeDiacritics(p.name.toLowerCase()).contains(query);
-          final cityMatch = _removeDiacritics(p.city.toLowerCase()).contains(query);
-          final styleMatch = p.styles.any((s) => _removeDiacritics(s.toLowerCase()).contains(query));
+          final nameMatch = foldVietnamese(p.name.toLowerCase())
+              .contains(query);
+          final cityMatch = foldVietnamese(p.city.toLowerCase())
+              .contains(query);
+          final styleMatch = p.styles.any(
+            (s) => foldVietnamese(s.toLowerCase()).contains(query),
+          );
           return nameMatch || cityMatch || styleMatch;
         }).toList();
       }
 
       // Filter by City
       if (criteria.city != null && criteria.city != 'Tất cả') {
-        filteredList = filteredList.where((p) => p.city == criteria.city).toList();
+        filteredList = filteredList
+            .where((p) => p.city == criteria.city)
+            .toList();
       }
 
       // Filter by Price Range
       if (criteria.minPrice != null) {
-        filteredList = filteredList.where((p) => p.pricePerSession >= criteria.minPrice!).toList();
+        filteredList = filteredList
+            .where((p) => p.pricePerSession >= criteria.minPrice!)
+            .toList();
       }
       if (criteria.maxPrice != null) {
-        filteredList = filteredList.where((p) => p.pricePerSession <= criteria.maxPrice!).toList();
+        filteredList = filteredList
+            .where((p) => p.pricePerSession <= criteria.maxPrice!)
+            .toList();
       }
 
       // Filter by Styles
@@ -279,22 +329,27 @@ class MockPhotographerRepository implements PhotographerRepository {
       // Filter by Available Date
       if (criteria.availableDate != null) {
         filteredList = filteredList.where((p) {
-          return p.availableDates.any((d) => 
-            d.year == criteria.availableDate!.year && 
-            d.month == criteria.availableDate!.month && 
-            d.day == criteria.availableDate!.day
+          return p.availableDates.any(
+            (d) =>
+                d.year == criteria.availableDate!.year &&
+                d.month == criteria.availableDate!.month &&
+                d.day == criteria.availableDate!.day,
           );
         }).toList();
       }
 
       // Filter by Rating
       if (criteria.minRating != null) {
-        filteredList = filteredList.where((p) => p.rating >= criteria.minRating!).toList();
+        filteredList = filteredList
+            .where((p) => p.rating >= criteria.minRating!)
+            .toList();
       }
 
       // Filter by Experience
       if (criteria.experience != null) {
-        filteredList = filteredList.where((p) => p.experience == criteria.experience).toList();
+        filteredList = filteredList
+            .where((p) => p.experience == criteria.experience)
+            .toList();
       }
     }
 
@@ -304,29 +359,29 @@ class MockPhotographerRepository implements PhotographerRepository {
         filteredList.sort((a, b) {
           if (a.isFeatured && !b.isFeatured) return -1;
           if (!a.isFeatured && b.isFeatured) return 1;
-          return b.rating.compareTo(a.rating); // If both featured or not, sort by rating desc
+          return b.rating.compareTo(
+            a.rating,
+          ); // If both featured or not, sort by rating desc
         });
         break;
       case SortOption.rating:
         filteredList.sort((a, b) => b.rating.compareTo(a.rating));
         break;
       case SortOption.priceAsc:
-        filteredList.sort((a, b) => a.pricePerSession.compareTo(b.pricePerSession));
+        filteredList.sort(
+          (a, b) => a.pricePerSession.compareTo(b.pricePerSession),
+        );
         break;
       case SortOption.priceDesc:
-        filteredList.sort((a, b) => b.pricePerSession.compareTo(a.pricePerSession));
+        filteredList.sort(
+          (a, b) => b.pricePerSession.compareTo(a.pricePerSession),
+        );
+        break;
+      case SortOption.reviewCount:
+        filteredList.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
         break;
     }
 
     return filteredList;
-  }
-
-  String _removeDiacritics(String str) {
-    const withDia = 'áàảãạâấầẩẫậăắằẳẵặđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ';
-    const withoutDia = 'aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyy';
-    for (int i = 0; i < withDia.length; i++) {
-      str = str.replaceAll(withDia[i], withoutDia[i]);
-    }
-    return str;
   }
 }

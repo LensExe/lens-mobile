@@ -122,7 +122,9 @@ class _FactChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isHighlight ? AppColors.emerald.withValues(alpha: 0.1) : AppColors.fog,
+        color: isHighlight
+            ? AppColors.emerald.withValues(alpha: 0.1)
+            : AppColors.fog,
         borderRadius: BorderRadius.circular(9999),
         border: Border.all(
           color: isHighlight

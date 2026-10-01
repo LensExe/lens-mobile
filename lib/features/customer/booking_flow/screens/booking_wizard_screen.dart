@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,8 +15,13 @@ import '../widgets/step3_review_agreement_view.dart';
 
 class BookingWizardScreen extends ConsumerStatefulWidget {
   final String photographerId;
+  final String? initialPackageId;
 
-  const BookingWizardScreen({super.key, required this.photographerId});
+  const BookingWizardScreen({
+    super.key,
+    required this.photographerId,
+    this.initialPackageId,
+  });
 
   @override
   ConsumerState<BookingWizardScreen> createState() =>
@@ -23,15 +30,44 @@ class BookingWizardScreen extends ConsumerStatefulWidget {
 
 class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
   DateTime? _lastSubmitTime;
+  Timer? _armTimer;
+  bool _confirmArmed = false;
+
+  @override
+  void dispose() {
+    _armTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armConfirmation() {
+    _armTimer?.cancel();
+    setState(() => _confirmArmed = false);
+    _armTimer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _confirmArmed = true);
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref
-          .read(bookingWizardControllerProvider.notifier)
-          .init(widget.photographerId);
-    });
+    Future.microtask(_initializeBooking);
+  }
+
+  @override
+  void didUpdateWidget(covariant BookingWizardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.photographerId != widget.photographerId ||
+        oldWidget.initialPackageId != widget.initialPackageId) {
+      Future.microtask(_initializeBooking);
+    }
+  }
+
+  void _initializeBooking() {
+    if (!mounted) return;
+    ref.invalidate(bookingWizardControllerProvider);
+    ref
+        .read(bookingWizardControllerProvider.notifier)
+        .init(widget.photographerId, packageId: widget.initialPackageId);
   }
 
   void _onNext() {
@@ -63,6 +99,7 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
         return;
       }
       controller.nextStep();
+      _armConfirmation();
     } else if (state.currentStep == 2) {
       _onSubmit();
     }
@@ -84,6 +121,7 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
   }
 
   Future<void> _onSubmit() async {
+    if (!_confirmArmed) return;
     // Chống bấm đúp nhanh 400ms theo tài liệu nghiệp vụ
     final now = DateTime.now();
     if (_lastSubmitTime != null &&
@@ -115,7 +153,8 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
       context.go('/customer_home/bookings/${booking.id}/deposit');
     } else {
       final error =
-          state.errorMessage ?? 'Không thể tạo đơn đặt lịch, vui lòng thử lại';
+          ref.read(bookingWizardControllerProvider).errorMessage ??
+          'Không thể tạo đơn đặt lịch, vui lòng thử lại';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error),
@@ -141,7 +180,8 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
       isCtaEnabled = state.isStep2Valid;
       ctaText = 'Tiếp tục: Xem lại & Cam kết';
     } else if (state.currentStep == 2) {
-      isCtaEnabled = state.agreedToTerms && !state.isSubmitting;
+      isCtaEnabled =
+          _confirmArmed && state.agreedToTerms && !state.isSubmitting;
       ctaText = 'Xác nhận & đặt cọc 30%';
     }
 
@@ -198,9 +238,7 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                 border: Border(
                   top: BorderSide(color: AppColors.pebble, width: 1.0),
                 ),
-                boxShadow: [
-                  AppTokens.surfaceShadow,
-                ],
+                boxShadow: [AppTokens.surfaceShadow],
               ),
               child: PrimaryButton(
                 text: ctaText,

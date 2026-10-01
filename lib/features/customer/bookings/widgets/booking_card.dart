@@ -25,7 +25,10 @@ class BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal, vertical: 6),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppTokens.pageHorizontal,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: AppColors.snow,
         borderRadius: BorderRadius.circular(20),
@@ -43,7 +46,10 @@ class BookingCard extends StatelessWidget {
               // 1. Top Header Bar
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: const BoxDecoration(
                   color: AppColors.fog,
                   border: Border(
@@ -53,35 +59,31 @@ class BookingCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          '#${booking.displayCode}',
-                          style: AppTypography.numeric(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.obsidian,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '#${booking.displayCode}',
+                            style: AppTypography.numeric(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.obsidian,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: AppColors.steel,
-                            shape: BoxShape.circle,
+                          Text(
+                            booking.createdTimeAgo ?? 'Vừa xong',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.labelSm(
+                              fontSize: 12,
+                              color: AppColors.steel,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          booking.createdTimeAgo ?? 'Vừa xong',
-                          style: AppTypography.labelSm(
-                            fontSize: 12,
-                            color: AppColors.steel,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 6),
                     _buildStatusPill(booking.status),
                   ],
                 ),
@@ -109,7 +111,8 @@ class BookingCard extends StatelessWidget {
                                 color: AppColors.fog,
                               ),
                               child: ClipOval(
-                                child: booking.photographerAvatar != null &&
+                                child:
+                                    booking.photographerAvatar != null &&
                                         booking.photographerAvatar!.isNotEmpty
                                     ? CachedNetworkImage(
                                         imageUrl: booking.photographerAvatar!,
@@ -124,7 +127,8 @@ class BookingCard extends StatelessWidget {
                                         errorWidget: (_, _, _) => Center(
                                           child: Text(
                                             booking.photographerName.isNotEmpty
-                                                ? booking.photographerName.substring(0, 1)
+                                                ? booking.photographerName
+                                                      .substring(0, 1)
                                                 : '?',
                                             style: AppTypography.titleMd(),
                                           ),
@@ -133,7 +137,8 @@ class BookingCard extends StatelessWidget {
                                     : Center(
                                         child: Text(
                                           booking.photographerName.isNotEmpty
-                                              ? booking.photographerName.substring(0, 1)
+                                              ? booking.photographerName
+                                                    .substring(0, 1)
                                               : '?',
                                           style: AppTypography.titleMd(),
                                         ),
@@ -149,7 +154,10 @@ class BookingCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: AppColors.ember,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.snow, width: 2),
+                                  border: Border.all(
+                                    color: AppColors.snow,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                             ),
@@ -176,11 +184,18 @@ class BookingCard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: AppColors.fog,
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                                      border: Border.all(
+                                        color: AppColors.pebble.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
                                     ),
                                     child: Text(
                                       'PRO',
@@ -196,7 +211,11 @@ class BookingCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  const Icon(LucideIcons.star, color: AppColors.ember, size: 13),
+                                  const Icon(
+                                    LucideIcons.star,
+                                    color: AppColors.ember,
+                                    size: 13,
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     '${booking.rating}',
@@ -229,7 +248,9 @@ class BookingCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: AppColors.fog,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+                              border: Border.all(
+                                color: AppColors.pebble.withValues(alpha: 0.6),
+                              ),
                             ),
                             child: const Icon(
                               LucideIcons.messageCircle,
@@ -249,7 +270,9 @@ class BookingCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.fog,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                        border: Border.all(
+                          color: AppColors.pebble.withValues(alpha: 0.5),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,18 +293,30 @@ class BookingCard extends StatelessWidget {
                               ),
                               if (booking.packageSnapshot != null) ...[
                                 const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.ember.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(9999),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 130,
                                   ),
-                                  child: Text(
-                                    booking.packageSnapshot!.name,
-                                    style: AppTypography.labelSm(
-                                      fontSize: 11,
-                                      color: AppColors.ember,
-                                    ).copyWith(fontWeight: FontWeight.w700),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.ember.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(9999),
+                                    ),
+                                    child: Text(
+                                      booking.packageSnapshot!.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.labelSm(
+                                        fontSize: 11,
+                                        color: AppColors.ember,
+                                      ).copyWith(fontWeight: FontWeight.w700),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -291,7 +326,11 @@ class BookingCard extends StatelessWidget {
                           // Time Row
                           Row(
                             children: [
-                              const Icon(LucideIcons.calendar, size: 13, color: AppColors.steel),
+                              const Icon(
+                                LucideIcons.calendar,
+                                size: 13,
+                                color: AppColors.steel,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -310,7 +349,11 @@ class BookingCard extends StatelessWidget {
                           // Location Row
                           Row(
                             children: [
-                              const Icon(LucideIcons.mapPin, size: 13, color: AppColors.steel),
+                              const Icon(
+                                LucideIcons.mapPin,
+                                size: 13,
+                                color: AppColors.steel,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -336,9 +379,8 @@ class BookingCard extends StatelessWidget {
                       const SizedBox(height: 14),
 
                     // 5. Total Package & Escrow Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,6 +402,7 @@ class BookingCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
                         _buildEscrowBadge(booking),
                       ],
                     ),
@@ -381,6 +424,8 @@ class BookingCard extends StatelessWidget {
                               alignment: Alignment.center,
                               child: Text(
                                 _getPrimaryActionLabel(booking),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: AppTypography.labelMd(
                                   fontSize: 13.5,
                                   color: AppColors.snow,
@@ -474,10 +519,7 @@ class BookingCard extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 5),
           Text(
@@ -533,18 +575,12 @@ class BookingCard extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
           Text(
             text,
-            style: AppTypography.labelSm(
-              fontSize: 11,
-              color: AppColors.steel,
-            ),
+            style: AppTypography.labelSm(fontSize: 11, color: AppColors.steel),
           ),
         ],
       ),

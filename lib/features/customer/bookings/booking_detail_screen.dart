@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -14,6 +14,7 @@ import 'controllers/customer_bookings_controller.dart';
 import 'models/booking_model.dart';
 import 'widgets/booking_progress_stepper.dart';
 import 'widgets/booking_status_pill.dart';
+import 'widgets/cancel_booking_dialog.dart';
 
 class BookingDetailScreen extends ConsumerWidget {
   final String bookingId;
@@ -51,18 +52,65 @@ class BookingDetailScreen extends ConsumerWidget {
       );
     }
 
-    return LensPage(
-      appBar: AppBar(
-        backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Center(
-            child: InkWell(
-              onTap: () => context.pop(),
-              borderRadius: BorderRadius.circular(9999),
-              child: Container(
+    void handleBack() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/customer_home/bookings');
+      }
+    }
+
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        context.go('/customer_home/bookings');
+      },
+      child: LensPage(
+        appBar: AppBar(
+          backgroundColor: AppColors.canvas,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Center(
+              child: InkWell(
+                onTap: handleBack,
+                borderRadius: BorderRadius.circular(9999),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.snow,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.pebble),
+                    boxShadow: const [AppTokens.surfaceShadow],
+                  ),
+                  child: const Icon(
+                    LucideIcons.arrowLeft,
+                    size: 18,
+                    color: AppColors.obsidian,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          title: Text(
+            'Chi tiết lịch đặt',
+            style: AppTypography.titleMd(color: AppColors.obsidian),
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Tải hoá đơn VAT',
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Yêu cầu xuất hoá đơn VAT điện tử đã được gửi tới hệ thống LENS Care.',
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              ),
+              icon: Container(
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
@@ -72,71 +120,78 @@ class BookingDetailScreen extends ConsumerWidget {
                   boxShadow: const [AppTokens.surfaceShadow],
                 ),
                 child: const Icon(
-                  LucideIcons.arrowLeft,
-                  size: 18,
+                  LucideIcons.receipt,
+                  size: 16,
                   color: AppColors.obsidian,
                 ),
               ),
             ),
-          ),
-        ),
-        title: Text(
-          'Chi tiết lịch đặt',
-          style: AppTypography.titleMd(color: AppColors.obsidian),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Chia sẻ',
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Đã sao chép liên kết lịch chụp')),
-            ),
-            icon: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.snow,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.pebble),
-                boxShadow: const [AppTokens.surfaceShadow],
+            IconButton(
+              tooltip: 'Chia sẻ',
+              onPressed: () async {
+                await Clipboard.setData(
+                  ClipboardData(text: '/customer_home/bookings/${booking.id}'),
+                );
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã sao chép liên kết lịch chụp'),
+                  ),
+                );
+              },
+              icon: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.snow,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  boxShadow: const [AppTokens.surfaceShadow],
+                ),
+                child: const Icon(
+                  LucideIcons.share2,
+                  size: 16,
+                  color: AppColors.obsidian,
+                ),
               ),
-              child: const Icon(
-                LucideIcons.share2,
-                size: 16,
-                color: AppColors.obsidian,
-              ),
             ),
-          ),
-          const SizedBox(width: AppTokens.pageHorizontal),
-        ],
-      ),
-      body: RefreshIndicator(
-        color: AppColors.ember,
-        onRefresh: () => ref
-            .read(customerBookingsControllerProvider.notifier)
-            .loadBookings(),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          padding: const EdgeInsets.fromLTRB(
-            AppTokens.pageHorizontal,
-            12,
-            AppTokens.pageHorizontal,
-            40,
-          ),
-          children: [
-            _BookingHeading(booking: booking),
-            const SizedBox(height: 14),
-            _BookingSummary(booking: booking),
-            const SizedBox(height: 12),
-            _BookingCost(booking: booking),
-            const SizedBox(height: 12),
-            _BookingActions(booking: booking),
-            const SizedBox(height: 12),
-            _EscrowNotice(),
-            const SizedBox(height: 12),
-            _TimelineCard(booking: booking),
+            const SizedBox(width: AppTokens.pageHorizontal),
           ],
+        ),
+        body: RefreshIndicator(
+          color: AppColors.ember,
+          onRefresh: () => ref
+              .read(customerBookingsControllerProvider.notifier)
+              .loadBookings(),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: const EdgeInsets.fromLTRB(
+              AppTokens.pageHorizontal,
+              12,
+              AppTokens.pageHorizontal,
+              40,
+            ),
+            children: [
+              _BookingHeading(booking: booking),
+              const SizedBox(height: 14),
+              _BookingSummary(booking: booking),
+              const SizedBox(height: 12),
+              _BookingCost(booking: booking),
+              const SizedBox(height: 12),
+              _BookingActions(booking: booking),
+              const SizedBox(height: 12),
+              if (booking.status == BookingStatus.held ||
+                  booking.status == BookingStatus.released) ...[
+                _EmbeddedGalleryPanel(booking: booking),
+                const SizedBox(height: 12),
+              ],
+              _EscrowNotice(),
+              const SizedBox(height: 12),
+              _TimelineCard(booking: booking),
+            ],
+          ),
         ),
       ),
     );
@@ -148,32 +203,22 @@ class _BookingHeading extends StatelessWidget {
   const _BookingHeading({required this.booking});
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Buổi chụp #${booking.displayCode}',
-                  style: AppTypography.headlineSm(
-                    fontSize: 20,
-                    color: AppColors.obsidian,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${_dateLabel(booking.date)} · Mã đặt: ${booking.id}',
-              style: AppTypography.bodySm(color: AppColors.steel),
-            ),
-          ],
+      Text(
+        'Buổi chụp #${booking.displayCode}',
+        style: AppTypography.headlineSm(
+          fontSize: 20,
+          color: AppColors.obsidian,
         ),
       ),
+      const SizedBox(height: 4),
+      Text(
+        '${_dateLabel(booking.date)} · Mã đặt: ${booking.id}',
+        style: AppTypography.bodySm(color: AppColors.steel),
+      ),
+      const SizedBox(height: 8),
       BookingStatusPill(status: booking.status),
     ],
   );
@@ -207,7 +252,8 @@ class _BookingSummary extends StatelessWidget {
                   color: AppColors.fog,
                 ),
                 child: ClipOval(
-                  child: booking.photographerAvatar != null &&
+                  child:
+                      booking.photographerAvatar != null &&
                           booking.photographerAvatar!.isNotEmpty
                       ? CachedNetworkImage(
                           imageUrl: booking.photographerAvatar!,
@@ -257,25 +303,60 @@ class _BookingSummary extends StatelessWidget {
                   ],
                 ),
               ),
-              InkWell(
-                onTap: () => context.push(
-                  '/customer_home/messages/${booking.photographerId}',
-                ),
-                borderRadius: BorderRadius.circular(9999),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.fog,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Số điện thoại liên hệ: 0912 345 678'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(9999),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.fog,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.pebble.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.phone,
+                        color: AppColors.obsidian,
+                        size: 16,
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    LucideIcons.messageCircle,
-                    color: AppColors.obsidian,
-                    size: 17,
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => context.push(
+                      '/customer_home/messages/${booking.photographerId}',
+                    ),
+                    borderRadius: BorderRadius.circular(9999),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.fog,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.pebble.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.messageCircle,
+                        color: AppColors.obsidian,
+                        size: 17,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -358,6 +439,12 @@ class _BookingCost extends StatelessWidget {
               highlightColor: AppColors.ember,
             ),
           ],
+          const SizedBox(height: 10),
+          _CostRow(
+            label: 'Lens Xu hoàn lại tích luỹ (+5%)',
+            amount: (booking.price * 0.05).round(),
+            highlightColor: AppColors.emerald,
+          ),
         ],
       ),
     );
@@ -370,134 +457,163 @@ class _BookingActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Widget content;
     switch (booking.status) {
       case BookingStatus.awaiting_deposit:
-        content = _ActionRow(
+        return _ActionCard(
           icon: LucideIcons.walletCards,
-          message: 'Đặt cọc 30% để giữ lịch. Yêu cầu sẽ được gửi tới nhiếp ảnh gia sau khi thanh toán.',
-          action: PrimaryButton(
-            text: 'Đặt cọc ngay',
-            expand: false,
+          iconColor: AppColors.ember,
+          iconBgColor: AppColors.ember.withValues(alpha: 0.1),
+          title: 'Chờ đặt cọc giữ lịch',
+          message: 'Đặt cọc 30% để giữ lịch chụp. Yêu cầu sẽ được chuyển tới nhiếp ảnh gia ngay sau khi thanh toán.',
+          primaryAction: PrimaryButton(
+            text:
+                'Đặt cọc ngay · ${AppTypography.formatCurrency(booking.depositAmount)}',
+            height: 48,
             onPressed: () =>
                 context.push('/customer_home/bookings/${booking.id}/deposit'),
           ),
+          secondaryAction: TextButton(
+            onPressed: () => _cancel(context, ref),
+            child: Text(
+              'Huỷ lịch chụp',
+              style: AppTypography.labelMd(color: AppColors.crimson),
+            ),
+          ),
         );
+
       case BookingStatus.pending:
-        content = _ActionRow(
+        return _ActionCard(
           icon: LucideIcons.clock3,
-          message: 'Bạn đã đặt cọc. Đang chờ nhiếp ảnh gia xác nhận; nếu bị từ chối, tiền cọc sẽ hoàn lại.',
-          action: OutlinedButton(
+          iconColor: AppColors.ember,
+          iconBgColor: AppColors.ember.withValues(alpha: 0.1),
+          title: 'Đang chờ nhiếp ảnh gia xác nhận',
+          message: 'Bạn đã đặt cọc thành công. Nhiếp ảnh gia sẽ phản hồi trong 24 giờ; nếu bị từ chối, toàn bộ tiền cọc sẽ được hoàn 100% vào Ví.',
+          primaryAction: OutlinedButton(
             onPressed: () => _cancel(context, ref),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.pebble),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              side: BorderSide(
+                color: AppColors.crimson.withValues(alpha: 0.35),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+              ),
+              minimumSize: const Size.fromHeight(46),
             ),
-            child: Text(
-              'Huỷ yêu cầu',
-              style: AppTypography.labelMd(color: AppColors.obsidian),
-            ),
-          ),
-        );
-      case BookingStatus.confirmed:
-        content = _ActionRow(
-          icon: LucideIcons.creditCard,
-          message: 'Nhiếp ảnh gia đã xác nhận lịch chụp. Bạn có thể thanh toán phần còn lại.',
-          action: PrimaryButton(
-            text: 'Thanh toán ${_money(booking.remainingAmount)}',
-            expand: false,
-            onPressed: () =>
-                context.push('/customer_home/bookings/${booking.id}/pay'),
-          ),
-        );
-      case BookingStatus.held:
-        content = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _ActionRow(
-              icon: LucideIcons.shieldCheck,
-              message: 'Lens đang giữ tiền an toàn qua Escrow. Vui lòng mở bộ sưu tập và xác nhận nghiệm thu sau khi nhận đủ ảnh.',
-              action: null,
-            ),
-            const SizedBox(height: 14),
-            Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => context.push(
-                      '/customer_home/bookings/${booking.id}/gallery',
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.pebble),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-                      minimumSize: const Size(0, 48),
-                    ),
-                    child: Text(
-                      'Mở bộ ảnh',
-                      style: AppTypography.labelMd(color: AppColors.obsidian),
-                    ),
-                  ),
+                const Icon(
+                  LucideIcons.xCircle,
+                  size: 16,
+                  color: AppColors.crimson,
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Nghiệm thu ảnh',
-                    height: 48,
-                    onPressed: () => context.push(
-                      '/customer_home/bookings/${booking.id}/gallery',
-                    ),
-                  ),
+                Text(
+                  'Huỷ yêu cầu đặt lịch',
+                  style: AppTypography.labelMd(color: AppColors.crimson),
                 ),
               ],
             ),
-          ],
+          ),
         );
+
+      case BookingStatus.confirmed:
+        return _ActionCard(
+          icon: LucideIcons.creditCard,
+          iconColor: AppColors.emerald,
+          iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
+          title: 'Lịch chụp đã được xác nhận',
+          message: 'Nhiếp ảnh gia đã nhận lịch. Vui lòng thanh toán 70% còn lại trước ngày chụp để kích hoạt bảo vệ Escrow.',
+          primaryAction: PrimaryButton(
+            text:
+                'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+            height: 48,
+            onPressed: () =>
+                context.push('/customer_home/bookings/${booking.id}/pay'),
+          ),
+          secondaryAction: TextButton(
+            onPressed: () => _cancel(context, ref),
+            child: Text(
+              'Huỷ lịch chụp',
+              style: AppTypography.labelMd(color: AppColors.crimson),
+            ),
+          ),
+        );
+
+      case BookingStatus.held:
+        return _ActionCard(
+          icon: LucideIcons.shieldCheck,
+          iconColor: AppColors.emerald,
+          iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
+          title: 'Đang bảo vệ Escrow 100%',
+          message: 'Lens đang giữ tiền an toàn qua Escrow. Vui lòng mở bộ sưu tập và xác nhận nghiệm thu sau khi nhận đủ ảnh.',
+          primaryAction: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => context.push(
+                    '/customer_home/bookings/${booking.id}/gallery',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.pebble),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+                    ),
+                    minimumSize: const Size(0, 48),
+                  ),
+                  child: Text(
+                    'Mở bộ ảnh',
+                    style: AppTypography.labelMd(color: AppColors.obsidian),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Nghiệm thu ảnh',
+                  height: 48,
+                  onPressed: () => context.push(
+                    '/customer_home/bookings/${booking.id}/gallery',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          secondaryAction: _canCancel(booking.status)
+              ? TextButton(
+                  onPressed: () => _cancel(context, ref),
+                  child: Text(
+                    'Huỷ lịch / Khiếu nại',
+                    style: AppTypography.labelMd(color: AppColors.crimson),
+                  ),
+                )
+              : null,
+        );
+
       case BookingStatus.released:
-        content = _ActionRow(
+        return _ActionCard(
           icon: LucideIcons.checkCircle2,
-          message: 'Buổi chụp đã hoàn tất và ảnh đã nghiệm thu thành công.',
-          action: PrimaryButton(
-            text: 'Xem lại bộ ảnh',
-            expand: false,
+          iconColor: AppColors.emerald,
+          iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
+          title: 'Buổi chụp hoàn tất',
+          message: 'Ảnh đã nghiệm thu thành công. Toàn bộ tiền đã được giải ngân an toàn cho nhiếp ảnh gia.',
+          primaryAction: PrimaryButton(
+            text: 'Xem lại bộ sưu tập ảnh',
+            height: 48,
             onPressed: () =>
                 context.push('/customer_home/bookings/${booking.id}/gallery'),
           ),
         );
+
       case BookingStatus.cancelled:
-        content = const _ActionRow(
+        return const _ActionCard(
           icon: LucideIcons.circleX,
-          message: 'Lịch đặt chụp này đã được huỷ bỏ.',
-          action: null,
+          iconColor: AppColors.crimson,
+          iconBgColor: Color(0x1AE11D48),
+          title: 'Lịch đặt chụp đã huỷ',
+          message: 'Lịch chụp này đã được huỷ bỏ theo chính sách hoàn tiền.',
         );
     }
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.snow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.pebble),
-        boxShadow: const [AppTokens.surfaceShadow],
-      ),
-      child: Column(
-        children: [
-          content,
-          if (_canCancel(booking.status)) ...[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => _cancel(context, ref),
-                child: Text(
-                  'Huỷ lịch chụp',
-                  style: AppTypography.labelMd(color: AppColors.crimson),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 
   bool _canCancel(BookingStatus status) =>
@@ -507,45 +623,7 @@ class _BookingActions extends ConsumerWidget {
       status == BookingStatus.held;
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.snow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Huỷ lịch chụp?',
-          style: AppTypography.titleMd(color: AppColors.obsidian),
-        ),
-        content: Text(
-          'Bạn có chắc muốn huỷ lịch này không? Chính sách bảo vệ hoàn tiền sẽ được áp dụng theo quy định của Lens.',
-          style: AppTypography.bodySm(color: AppColors.steel),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(false),
-            child: Text(
-              'Quay lại',
-              style: AppTypography.labelMd(color: AppColors.steel),
-            ),
-          ),
-          FilledButton(
-            onPressed: () => context.pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.crimson,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)),
-            ),
-            child: const Text('Xác nhận huỷ'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true || !context.mounted) return;
-    await ref
-        .read(customerBookingsControllerProvider.notifier)
-        .updateStatus(booking.id, BookingStatus.cancelled);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Đã huỷ lịch chụp')));
+    await CancelBookingDialog.show(context, booking);
   }
 }
 
@@ -599,10 +677,7 @@ class _EscrowNotice extends StatelessWidget {
         Expanded(
           child: Text(
             'Lens bảo vệ 100% Escrow: Khoản thanh toán chỉ được giải ngân cho nhiếp ảnh gia sau khi bạn xác nhận đã nhận ảnh.',
-            style: AppTypography.bodySm(
-              fontSize: 12.5,
-              color: AppColors.steel,
-            ),
+            style: AppTypography.bodySm(fontSize: 12.5, color: AppColors.steel),
           ),
         ),
       ],
@@ -610,43 +685,87 @@ class _EscrowNotice extends StatelessWidget {
   );
 }
 
-class _ActionRow extends StatelessWidget {
+class _ActionCard extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+  final String title;
   final String message;
-  final Widget? action;
+  final Widget? primaryAction;
+  final Widget? secondaryAction;
 
-  const _ActionRow({
+  const _ActionCard({
     required this.icon,
+    this.iconColor = AppColors.obsidian,
+    this.iconBgColor = AppColors.fog,
+    required this.title,
     required this.message,
-    required this.action,
+    this.primaryAction,
+    this.secondaryAction,
   });
 
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppColors.fog,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 18, color: AppColors.obsidian),
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.snow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: const [AppTokens.surfaceShadow],
       ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Text(
-          message,
-          style: AppTypography.bodySm(
-            fontSize: 13,
-            color: AppColors.steel,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 20, color: iconColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.titleMd(
+                        fontSize: 15,
+                        color: AppColors.obsidian,
+                      ).copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      message,
+                      style: AppTypography.bodySm(
+                        fontSize: 12.5,
+                        color: AppColors.steel,
+                      ).copyWith(height: 1.45),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
+          if (primaryAction != null) ...[
+            const SizedBox(height: 16),
+            primaryAction!,
+          ],
+          if (secondaryAction != null) ...[
+            const SizedBox(height: 8),
+            Center(child: secondaryAction!),
+          ],
+        ],
       ),
-      if (action != null) ...[const SizedBox(width: 10), action!],
-    ],
-  );
+    );
+  }
 }
 
 class _InfoRow extends StatelessWidget {
@@ -700,17 +819,23 @@ class _CostRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(
-        label,
-        style: AppTypography.bodySm(
-          fontSize: 13,
-          color: isStrong ? AppColors.obsidian : AppColors.steel,
+      Expanded(
+        child: Text(
+          label,
+          style: AppTypography.bodySm(
+            fontSize: 13,
+            color: isStrong ? AppColors.obsidian : AppColors.steel,
+          ),
         ),
       ),
+      const SizedBox(width: 8),
       Text(
         AppTypography.formatCurrency(amount),
         style: isStrong
-            ? AppTypography.priceDisplay(fontSize: 16, color: AppColors.obsidian)
+            ? AppTypography.priceDisplay(
+                fontSize: 16,
+                color: AppColors.obsidian,
+              )
             : AppTypography.numeric(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -734,8 +859,119 @@ String _initials(String value) => value
     .join()
     .toUpperCase();
 
-String _money(int amount) => NumberFormat.currency(
-  locale: 'vi_VN',
-  symbol: '₫',
-  decimalDigits: 0,
-).format(amount);
+class _EmbeddedGalleryPanel extends StatelessWidget {
+  final Booking booking;
+  const _EmbeddedGalleryPanel({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    final delivered = booking.uploadedProofsCount;
+    final previews = booking.deliveryPhotoUrls.take(4).toList();
+    final total = booking.packageSnapshot?.photoCount ?? previews.length;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.snow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: const [AppTokens.surfaceShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    LucideIcons.image,
+                    size: 18,
+                    color: AppColors.ember,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Bộ sưu tập bàn giao',
+                    style: AppTypography.titleMd(color: AppColors.obsidian),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.fog,
+                  borderRadius: BorderRadius.circular(9999),
+                  border: Border.all(
+                    color: AppColors.pebble.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  '$delivered / $total ảnh',
+                  style: AppTypography.numeric(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.obsidian,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 4-preview grid
+          if (previews.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('Nhiếp ảnh gia chưa giao ảnh cho lịch này.'),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: previews.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1.25,
+              ),
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CachedNetworkImage(
+                    imageUrl: previews[index],
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => Container(color: AppColors.fog),
+                    errorWidget: (_, _, _) => Container(
+                      color: AppColors.fog,
+                      child: const Icon(
+                        LucideIcons.image,
+                        color: AppColors.steel,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: () =>
+                context.push('/customer_home/bookings/${booking.id}/gallery'),
+            icon: const Icon(LucideIcons.externalLink, size: 15),
+            label: Text(
+              'Mở toàn bộ bộ sưu tập & nghiệm thu',
+              style: AppTypography.labelMd(color: AppColors.obsidian),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.pebble),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9999),
+              ),
+              minimumSize: const Size.fromHeight(44),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

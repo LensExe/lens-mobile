@@ -15,15 +15,24 @@ class PhotoStyleOptions {
 
   /// Metadata kèm keyword để map ảnh demo hoặc icon
   static const Map<String, ({String keyword, String description})> metadata = {
-    'Chân dung': (keyword: 'portrait', description: 'Ảnh cá nhân, thần thái tự nhiên'),
+    'Chân dung': (
+      keyword: 'portrait',
+      description: 'Ảnh cá nhân, thần thái tự nhiên',
+    ),
     'Gia đình': (keyword: 'family', description: 'Khoảnh khắc gia đình ấm áp'),
     'Cưới': (keyword: 'wedding', description: 'Phóng sự cưới, ảnh viện'),
     'Sự kiện': (keyword: 'event', description: 'Tiệc, hội nghị, sự kiện'),
-    'Thời trang': (keyword: 'fashion', description: 'Lookbook, editorial, fashion'),
+    'Thời trang': (
+      keyword: 'fashion',
+      description: 'Lookbook, editorial, fashion',
+    ),
     'Sản phẩm': (keyword: 'product', description: 'Ảnh sản phẩm, thương mại'),
     'Ẩm thực': (keyword: 'food', description: 'Món ăn, đồ uống, quán'),
     'Du lịch': (keyword: 'travel', description: 'Ảnh du lịch, phong cảnh'),
-    'Kiến trúc': (keyword: 'architecture', description: 'Không gian, nội thất, công trình'),
+    'Kiến trúc': (
+      keyword: 'architecture',
+      description: 'Không gian, nội thất, công trình',
+    ),
     'Đường phố': (keyword: 'street', description: 'Street, đời thường'),
   };
 }

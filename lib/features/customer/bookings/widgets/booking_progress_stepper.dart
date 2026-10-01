@@ -7,10 +7,7 @@ import '../models/booking_model.dart';
 class BookingProgressStepper extends StatelessWidget {
   final Booking booking;
 
-  const BookingProgressStepper({
-    super.key,
-    required this.booking,
-  });
+  const BookingProgressStepper({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +55,8 @@ class BookingProgressStepper extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Stepper Status Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -72,21 +69,28 @@ class BookingProgressStepper extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  statusTitle,
-                  style: AppTypography.labelMd(
-                    fontSize: 11.5,
-                    color: AppColors.ember,
+                Expanded(
+                  child: Text(
+                    statusTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelMd(
+                      fontSize: 11.5,
+                      color: AppColors.ember,
+                    ),
                   ),
                 ),
               ],
             ),
             if (proofInfo.isNotEmpty)
-              Text(
-                proofInfo,
-                style: AppTypography.bodySm(
-                  fontSize: 11.5,
-                  color: AppColors.steel,
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 12),
+                child: Text(
+                  proofInfo,
+                  style: AppTypography.bodySm(
+                    fontSize: 11.5,
+                    color: AppColors.steel,
+                  ),
                 ),
               ),
           ],
@@ -123,17 +127,45 @@ class BookingProgressStepper extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildStepLabel('Đã đặt', isActive: currentStep >= 0, isCurrent: currentStep == 0),
-            _buildStepLabel('Đã chụp', isActive: currentStep >= 1, isCurrent: currentStep == 1),
-            _buildStepLabel('Duyệt ảnh', isActive: currentStep >= 2, isCurrent: currentStep == 2),
-            _buildStepLabel('Nghiệm thu', isActive: currentStep >= 3, isCurrent: currentStep == 3),
+            Expanded(
+              child: _buildStepLabel(
+                'Đã đặt',
+                isActive: currentStep >= 0,
+                isCurrent: currentStep == 0,
+              ),
+            ),
+            Expanded(
+              child: _buildStepLabel(
+                'Đã chụp',
+                isActive: currentStep >= 1,
+                isCurrent: currentStep == 1,
+              ),
+            ),
+            Expanded(
+              child: _buildStepLabel(
+                'Duyệt ảnh',
+                isActive: currentStep >= 2,
+                isCurrent: currentStep == 2,
+              ),
+            ),
+            Expanded(
+              child: _buildStepLabel(
+                'Nghiệm thu',
+                isActive: currentStep >= 3,
+                isCurrent: currentStep == 3,
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildStepLabel(String text, {required bool isActive, required bool isCurrent}) {
+  Widget _buildStepLabel(
+    String text, {
+    required bool isActive,
+    required bool isCurrent,
+  }) {
     Color textColor;
     FontWeight fontWeight;
 
@@ -150,6 +182,9 @@ class BookingProgressStepper extends StatelessWidget {
 
     return Text(
       text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
       style: AppTypography.labelSm(
         fontSize: 11,
         color: textColor,

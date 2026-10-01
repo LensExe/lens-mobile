@@ -28,9 +28,15 @@ class _PhotographerCardHeroState extends State<PhotographerCardHero> {
 
   @override
   Widget build(BuildContext context) {
-    final images = PhotographerDisplayHelper.getGalleryImages(widget.photographer);
-    final priceStr = PhotographerDisplayHelper.formatPrice(widget.photographer.pricePerSession);
-    final subtitle = PhotographerDisplayHelper.getCategorySubtitle(widget.photographer);
+    final images = PhotographerDisplayHelper.getGalleryImages(
+      widget.photographer,
+    );
+    final priceStr = PhotographerDisplayHelper.formatPrice(
+      widget.photographer.pricePerSession,
+    );
+    final subtitle = PhotographerDisplayHelper.getCategorySubtitle(
+      widget.photographer,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -239,8 +245,8 @@ class _PhotographerCardHeroState extends State<PhotographerCardHero> {
                 const SizedBox(height: 16),
 
                 // Full Session Price & Dual Buttons
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,58 +262,68 @@ class _PhotographerCardHeroState extends State<PhotographerCardHero> {
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    // Profile button (Secondary Action per DESIGN.md)
-                    GestureDetector(
-                      onTap: widget.onTap,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 11,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.snow,
-                          borderRadius: BorderRadius.circular(
-                            AppTokens.pillRadius,
-                          ),
-                          border: Border.all(
-                            color: AppColors.pebble,
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Text(
-                          'Hồ sơ',
-                          style: AppTypography.titleMd(
-                            color: AppColors.obsidian,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Instant Book button (Primary Action per DESIGN.md)
-                    GestureDetector(
-                      onTap: widget.onTap,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 11,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.ember,
-                          borderRadius: BorderRadius.circular(
-                            AppTokens.pillRadius,
-                          ),
-                          boxShadow: const [AppTokens.surfaceShadow],
-                        ),
-                        child: Text(
-                          'Đặt lịch ngay',
-                          style: AppTypography.titleMd(
-                            color: Colors.white,
-                            fontSize: 13,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        // Profile button (Secondary Action per DESIGN.md)
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: widget.onTap,
+                            child: Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 11,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.snow,
+                                borderRadius: BorderRadius.circular(
+                                  AppTokens.pillRadius,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.pebble,
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: Text(
+                                'Hồ sơ',
+                                style: AppTypography.titleMd(
+                                  color: AppColors.obsidian,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        // Instant Book button (Primary Action per DESIGN.md)
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: widget.onTap,
+                            child: Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 11,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.ember,
+                                borderRadius: BorderRadius.circular(
+                                  AppTokens.pillRadius,
+                                ),
+                                boxShadow: const [AppTokens.surfaceShadow],
+                              ),
+                              child: Text(
+                                'Đặt lịch ngay',
+                                style: AppTypography.titleMd(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

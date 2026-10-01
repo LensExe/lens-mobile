@@ -36,7 +36,9 @@ class PortfolioTabView extends StatelessWidget {
             ),
     );
 
-    final regularItems = items.where((item) => item.id != featuredItem.id).toList();
+    final regularItems = items
+        .where((item) => item.id != featuredItem.id)
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -59,18 +61,27 @@ class PortfolioTabView extends StatelessWidget {
                   onTap: () => onStyleSelected(style),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFF5A00) : const Color(0xFFEEEEEF),
+                      color: isSelected
+                          ? const Color(0xFFFF5A00)
+                          : const Color(0xFFEEEEEF),
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Center(
                       child: Text(
                         style,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF5F5E60),
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF5F5E60),
                           fontSize: 11.5,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                       ),
                     ),
@@ -120,7 +131,8 @@ class PortfolioTabView extends StatelessWidget {
             CachedNetworkImage(
               imageUrl: item.imageUrl,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: const Color(0xFFE8E8E9)),
+              placeholder: (context, url) =>
+                  Container(color: const Color(0xFFE8E8E9)),
               errorWidget: (context, url, error) => Container(
                 color: const Color(0xFFE8E8E9),
                 child: const Icon(LucideIcons.image, color: Color(0xFF5F5E60)),
@@ -155,7 +167,10 @@ class PortfolioTabView extends StatelessWidget {
                       if (item.subtitle.isNotEmpty)
                         Flexible(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.88),
                               borderRadius: BorderRadius.circular(9999),
@@ -174,11 +189,17 @@ class PortfolioTabView extends StatelessWidget {
                         ),
                       if (item.cameraGear.isNotEmpty)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: Colors.white24, width: 0.5),
+                            border: Border.all(
+                              color: Colors.white24,
+                              width: 0.5,
+                            ),
                           ),
                           child: Text(
                             item.cameraGear,
@@ -243,10 +264,14 @@ class PortfolioTabView extends StatelessWidget {
                 CachedNetworkImage(
                   imageUrl: item.imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: const Color(0xFFE8E8E9)),
+                  placeholder: (context, url) =>
+                      Container(color: const Color(0xFFE8E8E9)),
                   errorWidget: (context, url, error) => Container(
                     color: const Color(0xFFE8E8E9),
-                    child: const Icon(LucideIcons.image, color: Color(0xFF5F5E60)),
+                    child: const Icon(
+                      LucideIcons.image,
+                      color: Color(0xFF5F5E60),
+                    ),
                   ),
                 ),
                 Container(

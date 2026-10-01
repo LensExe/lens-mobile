@@ -28,7 +28,11 @@ class ReviewItemWidget extends StatelessWidget {
   final Review review;
   final bool showDivider;
 
-  const ReviewItemWidget({super.key, required this.review, this.showDivider = true});
+  const ReviewItemWidget({
+    super.key,
+    required this.review,
+    this.showDivider = true,
+  });
 
   String _formatDate(String isoString) {
     try {
@@ -56,8 +60,13 @@ class ReviewItemWidget extends StatelessWidget {
                   : null,
               child: review.authorAvatar.isEmpty
                   ? Text(
-                      review.authorName.isNotEmpty ? review.authorName[0].toUpperCase() : '?',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.obsidian),
+                      review.authorName.isNotEmpty
+                          ? review.authorName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.obsidian,
+                      ),
                     )
                   : null,
             ),
@@ -74,7 +83,11 @@ class ReviewItemWidget extends StatelessWidget {
                       Expanded(
                         child: Text(
                           review.authorName,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.obsidian),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: AppColors.obsidian,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -82,7 +95,10 @@ class ReviewItemWidget extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         _formatDate(review.date),
-                        style: const TextStyle(color: AppColors.steel, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppColors.steel,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -91,11 +107,24 @@ class ReviewItemWidget extends StatelessWidget {
                   Row(
                     children: List.generate(5, (index) {
                       if (index < review.rating.floor()) {
-                        return const Icon(LucideIcons.star, color: AppColors.ember, size: 16);
-                      } else if (index < review.rating && review.rating % 1 != 0) {
-                        return const Icon(LucideIcons.starHalf, color: AppColors.ember, size: 16);
+                        return const Icon(
+                          LucideIcons.star,
+                          color: AppColors.ember,
+                          size: 16,
+                        );
+                      } else if (index < review.rating &&
+                          review.rating % 1 != 0) {
+                        return const Icon(
+                          LucideIcons.starHalf,
+                          color: AppColors.ember,
+                          size: 16,
+                        );
                       } else {
-                        return const Icon(LucideIcons.star, color: AppColors.pebble, size: 16);
+                        return const Icon(
+                          LucideIcons.star,
+                          color: AppColors.pebble,
+                          size: 16,
+                        );
                       }
                     }),
                   ),
@@ -119,8 +148,7 @@ class ReviewItemWidget extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(color: AppColors.mist, height: 1, thickness: 1),
           ),
-        if (!showDivider)
-          const SizedBox(height: 16),
+        if (!showDivider) const SizedBox(height: 16),
       ],
     );
   }

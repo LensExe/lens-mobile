@@ -16,6 +16,10 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>lens_app</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lens cần quyền truy cập thư viện ảnh để bạn chọn ảnh đại diện.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lens cần quyền lưu ảnh đã giao vào thư viện của bạn.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

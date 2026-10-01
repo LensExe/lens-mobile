@@ -8,6 +8,8 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../domain/models/models.dart';
 import '../../../providers/data_providers.dart';
+import '../bookings/controllers/customer_bookings_controller.dart';
+import '../photographer_detail/repositories/photographer_detail_repository_provider.dart';
 
 class CustomerChatDetailScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -22,15 +24,49 @@ class CustomerChatDetailScreen extends ConsumerStatefulWidget {
 class _CustomerChatDetailScreenState
     extends ConsumerState<CustomerChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
+  String? _threadId;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => ref
-          .read(conversationsProvider.notifier)
-          .markRead(widget.conversationId),
-    );
+    Future.microtask(_resolveThread);
+  }
+
+  Future<void> _resolveThread() async {
+    final user = ref.read(authUserProvider);
+    if (user == null || user.role != 'client') return;
+    try {
+      final current = ref.read(conversationsProvider);
+      final found = current.where(
+        (conversation) =>
+            conversation.id == widget.conversationId ||
+            conversation.otherPartyId == widget.conversationId,
+      );
+      late final Conversation conversation;
+      if (found.isNotEmpty) {
+        conversation = found.first;
+      } else {
+        final profile = await ref
+            .read(photographerDetailRepositoryProvider)
+            .getPhotographerProfile(widget.conversationId);
+        if (!mounted) return;
+        conversation = ref
+            .read(conversationsProvider.notifier)
+            .ensureForPhotographer(
+              photographerId: profile.id,
+              name: profile.name,
+              avatar: profile.avatarUrl,
+              clientId: user.id,
+            );
+      }
+      ref.read(conversationsProvider.notifier).markRead(conversation.id);
+      if (mounted) setState(() => _threadId = conversation.id);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadError = 'Không thể mở cuộc trò chuyện: $e');
+      }
+    }
   }
 
   @override
@@ -41,14 +77,14 @@ class _CustomerChatDetailScreenState
 
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _threadId == null) return;
 
     final user = ref.read(authUserProvider);
     if (user == null) return;
 
     final newMessage = Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      conversationId: widget.conversationId,
+      conversationId: _threadId!,
       senderId: user.id,
       senderRole: 'customer',
       text: text,
@@ -59,7 +95,7 @@ class _CustomerChatDetailScreenState
     ref
         .read(conversationsProvider.notifier)
         .updatePreview(
-          conversationId: widget.conversationId,
+          conversationId: _threadId!,
           message: text,
           updatedAt: newMessage.timestamp,
         );
@@ -67,8 +103,25 @@ class _CustomerChatDetailScreenState
     _messageController.clear();
   }
 
+  void _handleBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/customer_home/messages');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_loadError != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Tin nhắn')),
+        body: Center(child: Text(_loadError!)),
+      );
+    }
+    if (_threadId == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final conversations = ref.watch(conversationsProvider);
     if (conversations.isEmpty) {
       return Scaffold(
@@ -77,7 +130,7 @@ class _CustomerChatDetailScreenState
           backgroundColor: AppColors.canvas,
           leading: IconButton(
             icon: const Icon(LucideIcons.arrowLeft, color: AppColors.obsidian),
-            onPressed: () => context.pop(),
+            onPressed: () => _handleBack(context),
           ),
           title: Text(
             'Tin nhắn',
@@ -88,117 +141,174 @@ class _CustomerChatDetailScreenState
       );
     }
     final conversation = conversations.firstWhere(
-      (c) => c.id == widget.conversationId,
+      (c) => c.id == _threadId,
       orElse: () => conversations.first,
     );
 
     final allMessages = ref.watch(messagesProvider);
     final chatMessages =
-        allMessages
-            .where((m) => m.conversationId == widget.conversationId)
-            .toList()
-          ..sort(
-            (a, b) => b.timestamp.compareTo(a.timestamp),
-          );
+        allMessages.where((m) => m.conversationId == _threadId).toList()
+          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      appBar: AppBar(
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        context.go('/customer_home/messages');
+      },
+      child: Scaffold(
         backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Center(
-            child: InkWell(
-              onTap: () => context.pop(),
-              borderRadius: BorderRadius.circular(9999),
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppColors.snow,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.pebble),
-                  boxShadow: const [AppTokens.surfaceShadow],
-                ),
-                child: const Icon(
-                  LucideIcons.arrowLeft,
-                  size: 18,
-                  color: AppColors.obsidian,
+        appBar: AppBar(
+          backgroundColor: AppColors.canvas,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Center(
+              child: InkWell(
+                onTap: () => _handleBack(context),
+                borderRadius: BorderRadius.circular(9999),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.snow,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.pebble),
+                    boxShadow: const [AppTokens.surfaceShadow],
+                  ),
+                  child: const Icon(
+                    LucideIcons.arrowLeft,
+                    size: 18,
+                    color: AppColors.obsidian,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.pebble),
-                image: DecorationImage(
-                  image: NetworkImage(conversation.otherPartyAvatar),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  conversation.otherPartyName,
-                  style: AppTypography.titleMd(
-                    fontSize: 15,
-                    color: AppColors.obsidian,
+          title: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.pebble),
+                  image: DecorationImage(
+                    image: NetworkImage(conversation.otherPartyAvatar),
+                    fit: BoxFit.cover,
                   ),
                 ),
-                Row(
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.emerald,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      'Đang hoạt động',
-                      style: AppTypography.numeric(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.steel,
+                      conversation.otherPartyName,
+                      style: AppTypography.titleMd(
+                        fontSize: 15,
+                        color: AppColors.obsidian,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: conversation.isOnline
+                                ? AppColors.emerald
+                                : AppColors.steel,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          conversation.isOnline
+                              ? 'Đang hoạt động'
+                              : 'Ngoại tuyến',
+                          style: AppTypography.numeric(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.steel,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(
+                LucideIcons.info,
+                color: AppColors.obsidian,
+                size: 20,
+              ),
+              onPressed: () =>
+                  _showConversationInfoSheet(context, conversation),
             ),
+            const SizedBox(width: 8),
           ],
         ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                reverse: true,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                itemCount: chatMessages.length,
-                itemBuilder: (context, index) {
-                  final message = chatMessages[index];
-                  return _buildMessageBubble(message, conversation);
-                },
+        body: SafeArea(
+          child: Column(
+            children: [
+              if (conversation.aiAssistantEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.ember.withValues(alpha: 0.08),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.ember.withValues(alpha: 0.2),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.sparkles,
+                        size: 16,
+                        color: AppColors.ember,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Nhiếp ảnh gia đang bật Trợ lý AI tự động phản hồi 24/7.',
+                          style: AppTypography.bodySm(
+                            fontSize: 12,
+                            color: AppColors.obsidian,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: ListView.builder(
+                  reverse: true,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: chatMessages.length,
+                  itemBuilder: (context, index) {
+                    final message = chatMessages[index];
+                    return _buildMessageBubble(message, conversation);
+                  },
+                ),
               ),
-            ),
-            _buildInputArea(),
-          ],
+              _buildInputArea(),
+            ],
+          ),
         ),
       ),
     );
@@ -308,7 +418,9 @@ class _CustomerChatDetailScreenState
               decoration: BoxDecoration(
                 color: AppColors.fog,
                 borderRadius: BorderRadius.circular(9999),
-                border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+                border: Border.all(
+                  color: AppColors.pebble.withValues(alpha: 0.6),
+                ),
               ),
               child: TextField(
                 controller: _messageController,
@@ -337,15 +449,225 @@ class _CustomerChatDetailScreenState
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(
-                  LucideIcons.send,
-                  color: AppColors.snow,
-                  size: 18,
-                ),
+                child: Icon(LucideIcons.send, color: AppColors.snow, size: 18),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showConversationInfoSheet(
+    BuildContext context,
+    Conversation conversation,
+  ) {
+    final bookingsState = ref.read(customerBookingsControllerProvider);
+    final sharedBookings = bookingsState.allBookings
+        .where((b) => b.photographerId == conversation.otherPartyId)
+        .toList();
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.snow,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.pebble,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.pebble),
+                    image: DecorationImage(
+                      image: NetworkImage(conversation.otherPartyAvatar),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              conversation.otherPartyName,
+                              style: AppTypography.titleMd(
+                                fontSize: 16,
+                                color: AppColors.obsidian,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            LucideIcons.badgeCheck,
+                            size: 16,
+                            color: AppColors.lagoon,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Nhiếp ảnh gia chuyên nghiệp',
+                        style: AppTypography.bodySm(
+                          fontSize: 12,
+                          color: AppColors.steel,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push(
+                        '/customer_home/photographer/${conversation.otherPartyId}',
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                      side: const BorderSide(color: AppColors.pebble),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Xem hồ sơ',
+                      style: AppTypography.labelMd(color: AppColors.obsidian),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push(
+                        '/customer_home/photographer/${conversation.otherPartyId}/book',
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.ember,
+                      minimumSize: const Size.fromHeight(44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Đặt lịch mới',
+                      style: AppTypography.labelMd(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Lịch chụp chung (${sharedBookings.length})',
+              style: AppTypography.titleMd(
+                fontSize: 14,
+                color: AppColors.obsidian,
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (sharedBookings.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Chưa có lịch chụp nào với nhiếp ảnh gia này.',
+                  style: AppTypography.bodySm(color: AppColors.steel),
+                ),
+              )
+            else
+              ...sharedBookings
+                  .take(2)
+                  .map(
+                    (b) => InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.push('/customer_home/bookings/${b.id}');
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.fog,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.pebble.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.calendar,
+                              size: 16,
+                              color: AppColors.ember,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${b.style} · ${b.date}',
+                                    style: AppTypography.labelMd(
+                                      color: AppColors.obsidian,
+                                    ),
+                                  ),
+                                  Text(
+                                    AppTypography.formatCurrency(b.price),
+                                    style: AppTypography.numeric(
+                                      fontSize: 12,
+                                      color: AppColors.steel,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              LucideIcons.chevronRight,
+                              size: 16,
+                              color: AppColors.steel,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+          ],
+        ),
       ),
     );
   }

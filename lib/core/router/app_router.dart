@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lens_app/providers/data_providers.dart';
 import 'package:lens_app/features/splash/splash_screen.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
 import 'package:lens_app/features/auth/login_screen.dart';
@@ -27,9 +28,33 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final refresh = ValueNotifier<int>(0);
+  ref.listen(authUserProvider, (previous, next) => refresh.value++);
+  ref.onDispose(refresh.dispose);
+  final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+    refreshListenable: refresh,
     initialLocation: '/splash',
+    redirect: (context, state) {
+      final path = state.uri.path;
+      final user = ref.read(authUserProvider);
+      final publicRoute =
+          path == '/splash' ||
+          path == '/login' ||
+          path == '/signup' ||
+          path == '/gallery' ||
+          path == '/customer_home/discovery' ||
+          RegExp(r'^/customer_home/photographer/[^/]+$').hasMatch(path);
+      if (publicRoute) return null;
+      if (user == null) {
+        return Uri(
+          path: '/login',
+          queryParameters: {'redirect': state.uri.toString()},
+        ).toString();
+      }
+      if (user.role != 'client') return '/customer_home/discovery';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
@@ -39,10 +64,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/gallery',
         builder: (context, state) => const UiGalleryScreen(),
       ),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) =>
+            LoginScreen(redirect: state.uri.queryParameters['redirect']),
+      ),
       GoRoute(
         path: '/signup',
-        builder: (context, state) => const SignupScreen(),
+        builder: (context, state) =>
+            SignupScreen(redirect: state.uri.queryParameters['redirect']),
       ),
       GoRoute(
         path: '/customer_home',
@@ -99,8 +129,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/customer_home/photographer/:id/book',
-        builder: (context, state) =>
-            BookingScreen(id: state.pathParameters['id']!),
+        builder: (context, state) => BookingScreen(
+          id: state.pathParameters['id']!,
+          packageId: state.uri.queryParameters['package'],
+        ),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -135,4 +167,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(router.dispose);
+  return router;
 });

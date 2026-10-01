@@ -17,7 +17,8 @@ class PhotographerCardTriptych extends StatefulWidget {
   });
 
   @override
-  State<PhotographerCardTriptych> createState() => _PhotographerCardTriptychState();
+  State<PhotographerCardTriptych> createState() =>
+      _PhotographerCardTriptychState();
 }
 
 class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
@@ -25,9 +26,15 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
 
   @override
   Widget build(BuildContext context) {
-    final images = PhotographerDisplayHelper.getGalleryImages(widget.photographer);
-    final priceStr = PhotographerDisplayHelper.formatPrice(widget.photographer.pricePerSession);
-    final subtitle = PhotographerDisplayHelper.getCategorySubtitle(widget.photographer);
+    final images = PhotographerDisplayHelper.getGalleryImages(
+      widget.photographer,
+    );
+    final priceStr = PhotographerDisplayHelper.formatPrice(
+      widget.photographer.pricePerSession,
+    );
+    final subtitle = PhotographerDisplayHelper.getCategorySubtitle(
+      widget.photographer,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -66,8 +73,10 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                             imageUrl: images[0],
                             fit: BoxFit.cover,
                             height: double.infinity,
-                            placeholder: (context, url) => Container(color: AppColors.mist),
-                            errorWidget: (context, url, error) => Container(color: AppColors.mist),
+                            placeholder: (context, url) =>
+                                Container(color: AppColors.mist),
+                            errorWidget: (context, url, error) =>
+                                Container(color: AppColors.mist),
                           ),
                         ),
                       ),
@@ -80,8 +89,10 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                             imageUrl: images.length > 1 ? images[1] : images[0],
                             fit: BoxFit.cover,
                             height: double.infinity,
-                            placeholder: (context, url) => Container(color: AppColors.mist),
-                            errorWidget: (context, url, error) => Container(color: AppColors.mist),
+                            placeholder: (context, url) =>
+                                Container(color: AppColors.mist),
+                            errorWidget: (context, url, error) =>
+                                Container(color: AppColors.mist),
                           ),
                         ),
                       ),
@@ -94,10 +105,14 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                             fit: StackFit.expand,
                             children: [
                               CachedNetworkImage(
-                                imageUrl: images.length > 2 ? images[2] : images[0],
+                                imageUrl: images.length > 2
+                                    ? images[2]
+                                    : images[0],
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(color: AppColors.mist),
-                                errorWidget: (context, url, error) => Container(color: AppColors.mist),
+                                placeholder: (context, url) =>
+                                    Container(color: AppColors.mist),
+                                errorWidget: (context, url, error) =>
+                                    Container(color: AppColors.mist),
                               ),
                               Positioned(
                                 top: 8,
@@ -111,12 +126,18 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                                   child: Container(
                                     padding: const EdgeInsets.all(7),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.35),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.35,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
-                                      isFavorite ? Icons.favorite : LucideIcons.heart,
-                                      color: isFavorite ? const Color(0xFFFF4848) : Colors.white,
+                                      isFavorite
+                                          ? Icons.favorite
+                                          : LucideIcons.heart,
+                                      color: isFavorite
+                                          ? const Color(0xFFFF4848)
+                                          : Colors.white,
                                       size: 16,
                                     ),
                                   ),
@@ -156,7 +177,10 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(12),
@@ -164,7 +188,11 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, color: Color(0xFFFF5A00), size: 14),
+                          const Icon(
+                            Icons.star,
+                            color: Color(0xFFFF5A00),
+                            size: 14,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             widget.photographer.rating.toStringAsFixed(1),
@@ -200,7 +228,10 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(100),
@@ -208,7 +239,11 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.zap, color: Color(0xFFFF5A00), size: 14),
+                            Icon(
+                              LucideIcons.zap,
+                              color: Color(0xFFFF5A00),
+                              size: 14,
+                            ),
                             SizedBox(width: 5),
                             Text(
                               'Giao ảnh 48h',
@@ -223,7 +258,10 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(100),
@@ -231,7 +269,11 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.camera, color: Color(0xFF6B7280), size: 14),
+                            Icon(
+                              LucideIcons.camera,
+                              color: Color(0xFF6B7280),
+                              size: 14,
+                            ),
                             SizedBox(width: 5),
                             Text(
                               'Sony A7R V + Tilt-Shift',
@@ -280,7 +322,10 @@ class _PhotographerCardTriptychState extends State<PhotographerCardTriptych> {
                     GestureDetector(
                       onTap: widget.onTap,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF18181B), // Black / Obsidian
                           borderRadius: BorderRadius.circular(100),

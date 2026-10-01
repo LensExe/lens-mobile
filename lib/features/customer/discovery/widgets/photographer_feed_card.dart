@@ -23,10 +23,10 @@ class PhotographerFeedCard extends StatelessWidget {
     final int variant = (photographer.id == 'p1')
         ? 0
         : (photographer.id == 'p2')
-            ? 1
-            : (photographer.id == 'p3')
-                ? 2
-                : (index % 3);
+        ? 1
+        : (photographer.id == 'p3')
+        ? 2
+        : (index % 3);
 
     switch (variant) {
       case 0:
@@ -35,10 +35,7 @@ class PhotographerFeedCard extends StatelessWidget {
           onTap: onTap,
         );
       case 1:
-        return PhotographerCardHero(
-          photographer: photographer,
-          onTap: onTap,
-        );
+        return PhotographerCardHero(photographer: photographer, onTap: onTap);
       case 2:
       default:
         return PhotographerCardTriptych(

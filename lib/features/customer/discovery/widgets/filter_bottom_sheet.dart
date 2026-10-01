@@ -34,7 +34,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
   final List<String> _cities = [
     'Tất cả',
     'Hà Nội',
-    'Hồ Chí Minh',
+    'TP. Hồ Chí Minh',
     'Đà Nẵng',
     'Đà Lạt',
     'Cần Thơ',
@@ -103,8 +103,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                       spacing: 8,
                       runSpacing: 8,
                       children: _cities.map((city) {
-                        final isSelected =
-                            (_criteria.city ?? 'Tất cả') == city;
+                        final isSelected = (_criteria.city ?? 'Tất cả') == city;
                         return _buildChip(
                           label: city,
                           isSelected: isSelected,
@@ -134,15 +133,17 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                           isSelected: isSelected,
                           onTap: () {
                             setState(() {
-                              final currentStyles =
-                                  List<String>.from(_criteria.styles);
+                              final currentStyles = List<String>.from(
+                                _criteria.styles,
+                              );
                               if (isSelected) {
                                 currentStyles.remove(style);
                               } else {
                                 currentStyles.add(style);
                               }
-                              _criteria =
-                                  _criteria.copyWith(styles: currentStyles);
+                              _criteria = _criteria.copyWith(
+                                styles: currentStyles,
+                              );
                             });
                           },
                         );
@@ -163,10 +164,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                     const SizedBox(height: 24),
 
                     // Section 5: Đánh giá tối thiểu
-                    _buildSectionHeader(
-                      'Đánh giá tối thiểu',
-                      LucideIcons.star,
-                    ),
+                    _buildSectionHeader('Đánh giá tối thiểu', LucideIcons.star),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -363,11 +361,13 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
             onChanged: (RangeValues values) {
               setState(() {
                 _criteria = _criteria.copyWith(
-                  minPrice: values.start == _minPriceLimit &&
+                  minPrice:
+                      values.start == _minPriceLimit &&
                           values.end == _maxPriceLimit
                       ? null
                       : values.start,
-                  maxPrice: values.start == _minPriceLimit &&
+                  maxPrice:
+                      values.start == _minPriceLimit &&
                           values.end == _maxPriceLimit
                       ? null
                       : values.end,
@@ -422,9 +422,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
             },
           );
           if (date != null) {
-            setState(
-              () => _criteria = _criteria.copyWith(availableDate: date),
-            );
+            setState(() => _criteria = _criteria.copyWith(availableDate: date));
           }
         },
         borderRadius: BorderRadius.circular(AppTokens.inputFieldRadius),
@@ -462,16 +460,15 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
               Expanded(
                 child: Text(
                   hasDate
-                      ? DateFormat(
-                          'dd/MM/yyyy',
-                        ).format(_criteria.availableDate!)
+                      ? DateFormat('dd/MM/yyyy')
+                            .format(_criteria.availableDate!)
                       : 'Chọn ngày bạn muốn chụp...',
-                  style: AppTypography.bodyMd(
-                    color: hasDate ? AppColors.obsidian : AppColors.steel,
-                  ).copyWith(
-                    fontWeight:
-                        hasDate ? FontWeight.w600 : FontWeight.w400,
-                  ),
+                  style:
+                      AppTypography.bodyMd(
+                        color: hasDate ? AppColors.obsidian : AppColors.steel,
+                      ).copyWith(
+                        fontWeight: hasDate ? FontWeight.w600 : FontWeight.w400,
+                      ),
                 ),
               ),
               if (hasDate)
@@ -543,12 +540,15 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                 ],
                 Text(
                   label,
-                  style: AppTypography.labelMd(
-                    color: isSelected ? AppColors.snow : AppColors.graphite,
-                  ).copyWith(
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 13,
-                  ),
+                  style:
+                      AppTypography.labelMd(
+                        color: isSelected ? AppColors.snow : AppColors.graphite,
+                      ).copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 13,
+                      ),
                 ),
               ],
             ),
@@ -559,7 +559,8 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
   }
 
   Widget _buildBottomBar() {
-    final hasFilter = _criteria.city != null ||
+    final hasFilter =
+        _criteria.city != null ||
         _criteria.minPrice != null ||
         _criteria.maxPrice != null ||
         _criteria.styles.isNotEmpty ||
@@ -571,9 +572,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
         color: AppColors.snow,
-        border: Border(
-          top: BorderSide(color: AppColors.pebble, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.pebble, width: 1)),
         boxShadow: [AppTokens.modalShadow],
       ),
       child: SafeArea(
@@ -626,5 +625,3 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     return '$formattedMin – $formattedMax';
   }
 }
-
-

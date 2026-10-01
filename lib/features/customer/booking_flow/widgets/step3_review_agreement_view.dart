@@ -142,7 +142,9 @@ class Step3ReviewAgreementView extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.fog,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+              border: Border.all(
+                color: AppColors.pebble.withValues(alpha: 0.6),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,8 +181,7 @@ class Step3ReviewAgreementView extends StatelessWidget {
                       'Đặt cọc 30% (${AppTypography.formatCurrency(state.depositAmount)}) ngay sau bước này để bảo đảm lịch và gửi yêu cầu cho nhiếp ảnh gia.',
                 ),
                 _PolicyBullet(
-                  text:
-                      'Huỷ trước khi nhiếp ảnh gia duyệt, hoặc trước buổi chụp từ 7 ngày: hoàn tiền 100%. Nếu nhiếp ảnh gia từ chối: hoàn 100% tự động.',
+                  text: 'Huỷ trước khi nhiếp ảnh gia duyệt, hoặc trước buổi chụp từ 7 ngày: hoàn tiền 100%. Nếu nhiếp ảnh gia từ chối: hoàn 100% tự động.',
                 ),
                 _PolicyBullet(
                   text:
@@ -284,10 +285,7 @@ class _ReviewRow extends StatelessWidget {
           ),
           child: Text(
             'Sửa',
-            style: AppTypography.labelMd(
-              fontSize: 12,
-              color: AppColors.ember,
-            ),
+            style: AppTypography.labelMd(fontSize: 12, color: AppColors.ember),
           ),
         ),
       ],

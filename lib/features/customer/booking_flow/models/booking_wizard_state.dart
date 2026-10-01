@@ -91,10 +91,13 @@ class BookingWizardState {
 
   bool get isCityValid => standardCities.contains(city.trim());
 
-  bool get isStep1Valid =>
-      selectedPackageId != null &&
-      selectedTimeSlot != null &&
-      selectedTimeSlot!.isNotEmpty;
+  bool get isStep1Valid {
+    if (selectedPackageId == null || selectedTimeSlot == null) return false;
+    final key =
+        '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+    return availabilityMap[key]?.canStartAt(selectedTimeSlot!, durationHours) ??
+        false;
+  }
 
   bool get isStep2Valid => isNameValid && isPhoneValid && isCityValid;
 
@@ -106,6 +109,7 @@ class BookingWizardState {
     String? selectedPackageId,
     DateTime? selectedDate,
     String? selectedTimeSlot,
+    bool clearTimeSlot = false,
     Map<String, DayAvailability>? availabilityMap,
     String? contactName,
     String? contactPhone,
@@ -124,7 +128,9 @@ class BookingWizardState {
       profile: profile ?? this.profile,
       selectedPackageId: selectedPackageId ?? this.selectedPackageId,
       selectedDate: selectedDate ?? this.selectedDate,
-      selectedTimeSlot: selectedTimeSlot ?? this.selectedTimeSlot,
+      selectedTimeSlot: clearTimeSlot
+          ? null
+          : (selectedTimeSlot ?? this.selectedTimeSlot),
       availabilityMap: availabilityMap ?? this.availabilityMap,
       contactName: contactName ?? this.contactName,
       contactPhone: contactPhone ?? this.contactPhone,

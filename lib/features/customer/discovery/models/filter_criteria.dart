@@ -1,6 +1,6 @@
 import 'photographer_model.dart';
 
-enum SortOption { featured, rating, priceAsc, priceDesc }
+enum SortOption { featured, rating, priceAsc, priceDesc, reviewCount }
 
 class FilterCriteria {
   final String? city;

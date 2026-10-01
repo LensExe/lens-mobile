@@ -43,7 +43,10 @@ class ReviewsTabView extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.ember.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(9999),
@@ -51,7 +54,11 @@ class ReviewsTabView extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.star, size: 12, color: AppColors.ember),
+                        const Icon(
+                          LucideIcons.star,
+                          size: 12,
+                          color: AppColors.ember,
+                        ),
                         const SizedBox(width: 3),
                         Text(
                           '$rating',
@@ -69,7 +76,7 @@ class ReviewsTabView extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Xem tất cả ($reviewCount)',
+              '$reviewCount đánh giá',
               style: AppTypography.labelMd(
                 fontSize: 12,
                 color: AppColors.ember,
@@ -113,7 +120,11 @@ class ReviewsTabView extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: AppColors.fog,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.pebble.withValues(alpha: 0.6)),
+                                border: Border.all(
+                                  color: AppColors.pebble.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
                               ),
                               alignment: Alignment.center,
                               child: Text(
@@ -172,11 +183,15 @@ class ReviewsTabView extends StatelessWidget {
                     children: [
                       Row(
                         children: List.generate(5, (starIdx) {
-                          return const Padding(
+                          return Padding(
                             padding: EdgeInsets.only(right: 2),
                             child: Icon(
-                              LucideIcons.star,
-                              color: AppColors.ember,
+                              starIdx < rev.rating.round()
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              color: starIdx < rev.rating.round()
+                                  ? AppColors.ember
+                                  : AppColors.steel,
                               size: 13,
                             ),
                           );
@@ -184,11 +199,16 @@ class ReviewsTabView extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.fog,
                           borderRadius: BorderRadius.circular(9999),
-                          border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                          border: Border.all(
+                            color: AppColors.pebble.withValues(alpha: 0.5),
+                          ),
                         ),
                         child: Text(
                           rev.packageTag,

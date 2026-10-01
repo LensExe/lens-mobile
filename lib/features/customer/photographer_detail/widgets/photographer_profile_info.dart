@@ -10,10 +10,7 @@ import '../models/photographer_detail_model.dart';
 class PhotographerProfileInfo extends StatelessWidget {
   final PhotographerProfile profile;
 
-  const PhotographerProfileInfo({
-    super.key,
-    required this.profile,
-  });
+  const PhotographerProfileInfo({super.key, required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +39,8 @@ class PhotographerProfileInfo extends StatelessWidget {
                       child: CachedNetworkImage(
                         imageUrl: profile.avatarUrl,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(color: AppColors.fog),
+                        placeholder: (context, url) =>
+                            Container(color: AppColors.fog),
                         errorWidget: (context, url, error) => const Icon(
                           LucideIcons.user,
                           size: 36,
@@ -95,11 +93,16 @@ class PhotographerProfileInfo extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.fog,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                            border: Border.all(
+                              color: AppColors.pebble.withValues(alpha: 0.5),
+                            ),
                           ),
                           child: Text(
                             profile.rank,
@@ -117,7 +120,11 @@ class PhotographerProfileInfo extends StatelessWidget {
                     // City & Rating
                     Row(
                       children: [
-                        const Icon(LucideIcons.mapPin, size: 13, color: AppColors.steel),
+                        const Icon(
+                          LucideIcons.mapPin,
+                          size: 13,
+                          color: AppColors.steel,
+                        ),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -140,7 +147,11 @@ class PhotographerProfileInfo extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(LucideIcons.star, color: AppColors.ember, size: 13),
+                        const Icon(
+                          LucideIcons.star,
+                          color: AppColors.ember,
+                          size: 13,
+                        ),
                         const SizedBox(width: 3),
                         Text(
                           '${profile.rating}',
@@ -189,22 +200,28 @@ class PhotographerProfileInfo extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildMetricItem(
-                  '${profile.experienceYears}+ Năm',
-                  'Kinh nghiệm',
-                  LucideIcons.award,
+                Expanded(
+                  child: _buildMetricItem(
+                    '${profile.experienceYears}+ Năm',
+                    'Kinh nghiệm',
+                    LucideIcons.award,
+                  ),
                 ),
                 _buildDivider(),
-                _buildMetricItem(
-                  '${profile.completedShoots}+',
-                  'Buổi chụp xong',
-                  LucideIcons.camera,
+                Expanded(
+                  child: _buildMetricItem(
+                    '${profile.completedShoots}+',
+                    'Buổi chụp xong',
+                    LucideIcons.camera,
+                  ),
                 ),
                 _buildDivider(),
-                _buildMetricItem(
-                  '${profile.completionRate}%',
-                  'Nghiệm thu',
-                  LucideIcons.shieldCheck,
+                Expanded(
+                  child: _buildMetricItem(
+                    '${profile.completionRate}%',
+                    'Nghiệm thu',
+                    LucideIcons.shieldCheck,
+                  ),
                 ),
               ],
             ),
@@ -223,12 +240,16 @@ class PhotographerProfileInfo extends StatelessWidget {
           children: [
             Icon(icon, size: 14, color: AppColors.ember),
             const SizedBox(width: 4),
-            Text(
-              value,
-              style: AppTypography.numeric(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppColors.obsidian,
+            Flexible(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.numeric(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.obsidian,
+                ),
               ),
             ),
           ],
@@ -236,20 +257,15 @@ class PhotographerProfileInfo extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: AppTypography.labelSm(
-            fontSize: 11,
-            color: AppColors.steel,
-          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.labelSm(fontSize: 11, color: AppColors.steel),
         ),
       ],
     );
   }
 
   Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 28,
-      color: AppColors.pebble,
-    );
+    return Container(width: 1, height: 28, color: AppColors.pebble);
   }
 }

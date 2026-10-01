@@ -1,19 +1,115 @@
 import '../models/photographer_detail_model.dart';
 import 'photographer_detail_repository.dart';
+import '../../discovery/repositories/photographer_repository.dart';
+import '../../discovery/models/photographer_model.dart';
 
 class MockPhotographerDetailRepository implements PhotographerDetailRepository {
+  final PhotographerRepository directory;
+
+  MockPhotographerDetailRepository(this.directory);
+
   @override
-  Future<PhotographerProfile> getPhotographerProfile(String photographerId) async {
+  Future<PhotographerProfile> getPhotographerProfile(
+    String photographerId,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 150));
 
+    PhotographerProfile? featured;
     if (photographerId == 'p1' || photographerId == 'minh-ha') {
-      return _buildMinhHaProfile();
+      featured = _buildMinhHaProfile();
     } else if (photographerId == 'p3') {
-      return _buildKhaiNguyenProfile();
+      featured = _buildKhaiNguyenProfile();
+    } else if (photographerId == 'p2') {
+      featured = _buildElenaRostovaProfile(photographerId);
     }
+    final matches = (await directory.getPhotographers()).where(
+      (item) =>
+          item.id == (photographerId == 'minh-ha' ? 'p1' : photographerId),
+    );
+    if (matches.isEmpty) throw StateError('Không tìm thấy nhiếp ảnh gia.');
+    final directoryItem = matches.first;
+    return (featured ?? _buildDirectoryProfile(directoryItem)).copyWith(
+      rating: directoryItem.rating,
+      reviewCount: directoryItem.reviewCount,
+    );
+  }
 
-    // Default rich profile (Elena Rostova or fallback)
-    return _buildElenaRostovaProfile(photographerId);
+  PhotographerProfile _buildDirectoryProfile(PhotographerModel photographer) {
+    final base = photographer.pricePerSession.round();
+    final years = switch (photographer.experience) {
+      Experience.under1Year => 0,
+      Experience.from1To3Years => 1,
+      Experience.from3To5Years => 3,
+      Experience.over5Years => 5,
+    };
+    return PhotographerProfile(
+      id: photographer.id,
+      name: photographer.name,
+      avatarUrl: photographer.avatarUrl,
+      coverImageUrl: photographer.coverImageUrl,
+      city: photographer.city,
+      rank: photographer.isFeatured ? 'PRO' : 'Mới',
+      rating: photographer.rating,
+      reviewCount: photographer.reviewCount,
+      startingPrice: base,
+      bio: '',
+      experienceYears: years,
+      completedShoots: 0,
+      completionRate: 0,
+      isVerified: photographer.isVerified,
+      isInsured: false,
+      verificationBadge: photographer.isVerified ? 'Đã xác minh' : '',
+      styles: ['Tất cả', ...photographer.styles],
+      portfolio: [
+        PortfolioItem(
+          id: 'cover-${photographer.id}',
+          imageUrl: photographer.coverImageUrl,
+          title: photographer.name,
+          style: photographer.styles.first,
+          subtitle: '',
+          cameraGear: '',
+        ),
+      ],
+      packages: [
+        ProfilePackage(
+          id: 'basic',
+          name: 'Gói cơ bản',
+          subtitle: 'Buổi chụp gọn nhẹ, phù hợp chân dung cá nhân.',
+          price: base,
+          duration: '1 giờ',
+          deliverables: const ['15 ảnh'],
+          photoCount: 15,
+          deliveryDays: 5,
+        ),
+        ProfilePackage(
+          id: 'standard',
+          name: 'Gói tiêu chuẩn',
+          subtitle: 'Đủ thời gian đổi 2 bộ trang phục và bối cảnh.',
+          price: ((base * 1.8 / 10000).round() * 10000),
+          duration: '2 giờ',
+          deliverables: const ['35 ảnh'],
+          photoCount: 35,
+          deliveryDays: 7,
+        ),
+        ProfilePackage(
+          id: 'premium',
+          name: 'Gói cao cấp',
+          subtitle: 'Nửa ngày chụp, nhiều bối cảnh, kèm album in.',
+          price: base * 3,
+          duration: '4 giờ',
+          deliverables: const ['70 ảnh'],
+          photoCount: 70,
+          deliveryDays: 10,
+        ),
+      ],
+      reviews: const [],
+      gearInfo: const StudioGearInfo(
+        cameraBodies: [],
+        lightingModifiers: [],
+        studioAddress: '',
+        insuranceNotice: '',
+      ),
+    );
   }
 
   PhotographerProfile _buildElenaRostovaProfile(String id) {
@@ -34,7 +130,14 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
       isVerified: true,
       isInsured: true,
       verificationBadge: 'Studio Đã Xác Minh & Bảo Hiểm',
-      styles: ['Tất cả', 'Thời trang', 'Phim 35mm', 'Chân dung', 'Lookbook', 'Nghệ thuật'],
+      styles: [
+        'Tất cả',
+        'Thời trang',
+        'Phim 35mm',
+        'Chân dung',
+        'Lookbook',
+        'Nghệ thuật',
+      ],
       portfolio: const [
         PortfolioItem(
           id: 'port_1',
@@ -93,6 +196,8 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           subtitle: 'Lý tưởng cho nhà thiết kế, người mẫu & chụp lookbook thương mại cao cấp.',
           price: 4500000,
           duration: '3 Giờ',
+          photoCount: 35,
+          deliveryDays: 2,
           isMostSelected: true,
           highlightBadge: 'Được chọn nhiều nhất',
           deliverables: [
@@ -106,9 +211,12 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
         ProfilePackage(
           id: 'pkg_portrait',
           name: 'Cinematic Portrait Session',
-          subtitle: 'Buổi chụp chân dung nghệ thuật mang màu sắc điện ảnh cá nhân.',
+          subtitle:
+              'Buổi chụp chân dung nghệ thuật mang màu sắc điện ảnh cá nhân.',
           price: 2800000,
           duration: '1.5 Giờ',
+          photoCount: 15,
+          deliveryDays: 3,
           highlightBadge: 'Phổ biến',
           deliverables: [
             '15 ảnh chỉnh sửa tông màu điện ảnh chuyên sâu',
@@ -123,6 +231,7 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           subtitle: 'Chiến dịch thương hiệu trọn gói nửa ngày với bản quyền thương mại.',
           price: 8500000,
           duration: '5 Giờ',
+          photoCount: 70,
           highlightBadge: 'Sản xuất chuyên nghiệp',
           deliverables: [
             '70 ảnh Master Retouch với toàn quyền thương mại',
@@ -141,8 +250,7 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           rating: 5.0,
           timeAgo: '2 ngày trước',
           packageTag: 'Editorial Lookbook',
-          content:
-              '"Elena làm việc cực kỳ có gu và chuyên nghiệp! Cách bạn hướng dẫn người mẫu tự nhiên, kiểm soát ánh sáng gắt giữa trưa một cách điêu luyện và bàn giao toàn bộ kho ảnh hoàn thiện chỉ trong 48h khiến cả ekip kinh ngạc."',
+          content: '"Elena làm việc cực kỳ có gu và chuyên nghiệp! Cách bạn hướng dẫn người mẫu tự nhiên, kiểm soát ánh sáng gắt giữa trưa một cách điêu luyện và bàn giao toàn bộ kho ảnh hoàn thiện chỉ trong 48h khiến cả ekip kinh ngạc."',
         ),
         ClientReview(
           id: 'rev_2',
@@ -152,8 +260,7 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           rating: 5.0,
           timeAgo: '1 tuần trước',
           packageTag: 'Campaign & Brand',
-          content:
-              '"Chất lượng ảnh xuất sắc vượt ngoài mong đợi. Màu ảnh sâu và sang trọng, đúng tinh thần tối giản mà thương hiệu của chúng tôi theo đuổi. Chắc chắn sẽ tiếp tục hợp tác các bộ sưu tập tiếp theo."',
+          content: '"Chất lượng ảnh xuất sắc vượt ngoài mong đợi. Màu ảnh sâu và sang trọng, đúng tinh thần tối giản mà thương hiệu của chúng tôi theo đuổi. Chắc chắn sẽ tiếp tục hợp tác các bộ sưu tập tiếp theo."',
         ),
         ClientReview(
           id: 'rev_3',
@@ -163,8 +270,7 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           rating: 4.9,
           timeAgo: '3 tuần trước',
           packageTag: 'Cinematic Portrait',
-          content:
-              '"Buổi chụp rất thoải mái, Elena tạo không khí cực kỳ ấm cúng giúp mình giải tỏa mọi áp lực trước ống kính. Góc máy của Elena tôn lên trọn vẹn đường nét khuôn mặt."',
+          content: '"Buổi chụp rất thoải mái, Elena tạo không khí cực kỳ ấm cúng giúp mình giải tỏa mọi áp lực trước ống kính. Góc máy của Elena tôn lên trọn vẹn đường nét khuôn mặt."',
         ),
       ],
       gearInfo: const StudioGearInfo(
@@ -180,8 +286,7 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           'Nanlite Forza 500B Bi-color hỗ trợ đèn quay liên tục',
         ],
         studioAddress: 'Studio Cyclorama 4B, 15 Lê Lợi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-        insuranceNotice:
-            'Được bảo chứng bởi LENS Care: Thiết bị & địa điểm được bảo hiểm trách nhiệm dân sự lên tới 500.000.000 ₫ cho mỗi buổi chụp.',
+        insuranceNotice: 'Được bảo chứng bởi LENS Care: Thiết bị & địa điểm được bảo hiểm trách nhiệm dân sự lên tới 500.000.000 ₫ cho mỗi buổi chụp.',
       ),
     );
   }
@@ -231,6 +336,8 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           subtitle: 'Phù hợp cho shop thời trang, thương hiệu nội địa ra mắt BST mới.',
           price: 3500000,
           duration: '3 Giờ',
+          photoCount: 40,
+          deliveryDays: 2,
           isMostSelected: true,
           highlightBadge: 'Bán chạy nhất',
           deliverables: [
@@ -250,13 +357,15 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
           rating: 5.0,
           timeAgo: '4 ngày trước',
           packageTag: 'Lookbook Studio',
-          content:
-              '"Làm việc với Minh Hà Studio 3 mùa liên tiếp rồi và chưa bao giờ thất vọng. Tác phong đúng giờ, chuẩn bị ánh sáng chu đáo."',
+          content: '"Làm việc với Minh Hà Studio 3 mùa liên tiếp rồi và chưa bao giờ thất vọng. Tác phong đúng giờ, chuẩn bị ánh sáng chu đáo."',
         ),
       ],
       gearInfo: const StudioGearInfo(
         cameraBodies: ['Sony A1 (50MP 30fps)', 'Canon EOS R5C'],
-        lightingModifiers: ['Godox AD600 Pro x4', 'Softbox Aputure Light Dome 150'],
+        lightingModifiers: [
+          'Godox AD600 Pro x4',
+          'Softbox Aputure Light Dome 150',
+        ],
         studioAddress: '15 Lê Lợi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh',
         insuranceNotice: 'Bảo hiểm LENS Care toàn diện 500.000.000 ₫.',
       ),
@@ -282,7 +391,38 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
       isInsured: true,
       styles: ['Tất cả', 'Kiến trúc', 'Nội thất', 'Đường phố'],
       portfolio: const [],
-      packages: const [],
+      packages: const [
+        ProfilePackage(
+          id: 'basic',
+          name: 'Gói cơ bản',
+          subtitle: 'Buổi chụp gọn nhẹ, phù hợp chân dung cá nhân.',
+          price: 3200000,
+          duration: '1 giờ',
+          deliverables: ['15 ảnh'],
+          photoCount: 15,
+          deliveryDays: 5,
+        ),
+        ProfilePackage(
+          id: 'standard',
+          name: 'Gói tiêu chuẩn',
+          subtitle: 'Đủ thời gian đổi 2 bộ trang phục và bối cảnh.',
+          price: 5760000,
+          duration: '2 giờ',
+          deliverables: ['35 ảnh'],
+          photoCount: 35,
+          deliveryDays: 7,
+        ),
+        ProfilePackage(
+          id: 'premium',
+          name: 'Gói cao cấp',
+          subtitle: 'Nửa ngày chụp, nhiều bối cảnh, kèm album in.',
+          price: 9600000,
+          duration: '4 giờ',
+          deliverables: ['70 ảnh'],
+          photoCount: 70,
+          deliveryDays: 10,
+        ),
+      ],
       reviews: const [],
       gearInfo: const StudioGearInfo(
         cameraBodies: ['Nikon Z9', 'Nikon PC-E 19mm Tilt-Shift'],

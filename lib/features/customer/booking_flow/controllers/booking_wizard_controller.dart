@@ -1,17 +1,18 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../providers/data_providers.dart';
 import '../../bookings/controllers/customer_bookings_controller.dart';
 import '../../bookings/models/booking_model.dart';
 import '../../bookings/repositories/booking_repository.dart';
+import '../../bookings/repositories/customer_booking_repository_provider.dart';
 import '../../photographer_detail/repositories/photographer_detail_repository.dart';
-import '../../photographer_detail/controllers/photographer_detail_controller.dart';
+import '../../photographer_detail/repositories/photographer_detail_repository_provider.dart';
 import '../models/booking_wizard_state.dart';
 import '../models/day_availability.dart';
 
 class BookingWizardController extends Notifier<BookingWizardState> {
+  int _availabilityRequest = 0;
   @override
   BookingWizardState build() {
     final now = DateTime.now();
@@ -21,15 +22,18 @@ class BookingWizardController extends Notifier<BookingWizardState> {
       now.day,
     ).add(const Duration(days: 2));
 
+    ref.watch(authUserProvider.select((user) => user?.id));
+    final user = ref.read(authUserProvider);
+
     return BookingWizardState(
       selectedDate: initialDate,
-      contactName: 'Trần Khách Hàng',
-      contactPhone: '0901234567',
-      city: 'TP. Hồ Chí Minh',
-      addressDetail: 'Studio 4B, 15 Lê Lợi, Phường Bến Nghé, Quận 1',
-      note: 'Chụp lookbook thời trang cho bộ sưu tập Thu Đông, cần tư vấn thêm về concept ánh sáng.',
-      saveAsDefault: false,
-      isAutofilled: true,
+      contactName: user?.name ?? '',
+      contactPhone: user?.phone ?? '',
+      city: user?.city ?? '',
+      addressDetail: user?.address ?? '',
+      note: '',
+      saveAsDefault: user?.saveAsDefault ?? false,
+      isAutofilled: user != null,
       availabilityMap: _generateAvailability(initialDate),
     );
   }
@@ -40,33 +44,25 @@ class BookingWizardController extends Notifier<BookingWizardState> {
   BookingRepository get _bookingRepo =>
       ref.read(customerBookingRepositoryProvider);
 
-  Future<void> init(String photographerId) async {
-    await _loadProfile(photographerId);
+  Future<void> init(String photographerId, {String? packageId}) async {
+    await _loadProfile(photographerId, packageId: packageId);
   }
 
-  Future<void> _loadProfile(String photographerId) async {
+  Future<void> _loadProfile(String photographerId, {String? packageId}) async {
     try {
       final profile = await _profileRepo.getPhotographerProfile(photographerId);
 
-      String? defaultPkgId;
-      if (profile.packages.isNotEmpty) {
-        final popularPkg = profile.packages.firstWhere(
-          (p) =>
-              p.isMostSelected ||
-              p.highlightBadge.contains('Phổ biến') ||
-              p.highlightBadge.contains('nhiều nhất'),
-          orElse: () => profile.packages.first,
-        );
-        defaultPkgId = popularPkg.id;
-      }
-
       state = state.copyWith(
         profile: profile,
-        selectedPackageId: defaultPkgId,
-        selectedTimeSlot: '14:00',
+        selectedPackageId: profile.packages.any((pkg) => pkg.id == packageId)
+            ? packageId
+            : null,
       );
-    } catch (_) {
-      // Fallback
+      await _refreshAvailability(profile.id);
+    } catch (e) {
+      state = state.copyWith(
+        errorMessage: 'Không thể tải hồ sơ nhiếp ảnh gia: $e',
+      );
     }
   }
 
@@ -97,21 +93,66 @@ class BookingWizardController extends Notifier<BookingWizardState> {
     return map;
   }
 
+  Future<void> _refreshAvailability(String photographerId) async {
+    final request = ++_availabilityRequest;
+    final map = _generateAvailability(state.selectedDate);
+    final bookings = await _bookingRepo.getBookings();
+    if (request != _availabilityRequest) return;
+    for (final booking in bookings) {
+      if (booking.photographerId != photographerId ||
+          booking.status == BookingStatus.cancelled ||
+          booking.timeSlot == null) {
+        continue;
+      }
+      final day = map[booking.date];
+      if (day == null) continue;
+      final parts = booking.timeSlot!.split(' - ');
+      final start = _slotMinutes(parts.first);
+      final end = parts.length == 2
+          ? _slotMinutes(parts.last)
+          : start +
+                ((booking.packageSnapshot?.durationHours ?? 1) * 60).round();
+      map[booking.date] = DayAvailability(
+        date: day.date,
+        isBookable: day.isBookable,
+        slots: [
+          for (final slot in day.slots)
+            TimeSlotAvailability(
+              time: slot.time,
+              status:
+                  _slotMinutes(slot.time) >= start &&
+                      _slotMinutes(slot.time) < end
+                  ? 'booked'
+                  : slot.status,
+            ),
+        ],
+      );
+    }
+    state = state.copyWith(availabilityMap: map);
+  }
+
+  static int _slotMinutes(String time) {
+    final pieces = time.split(':');
+    return int.parse(pieces[0]) * 60 + int.parse(pieces[1]);
+  }
+
   void selectPackage(String packageId) {
     if (state.selectedPackageId == packageId) return;
-    state = state.copyWith(
-      selectedPackageId: packageId,
-      selectedTimeSlot: null,
-    );
+    state = state.copyWith(selectedPackageId: packageId, clearTimeSlot: true);
   }
 
   void selectDate(DateTime date) {
     final dateOnly = DateTime(date.year, date.month, date.day);
-    state = state.copyWith(selectedDate: dateOnly, selectedTimeSlot: null);
+    state = state.copyWith(selectedDate: dateOnly, clearTimeSlot: true);
+    if (state.profile != null) _refreshAvailability(state.profile!.id);
   }
 
   void selectTimeSlot(String timeSlot) {
-    state = state.copyWith(selectedTimeSlot: timeSlot);
+    final key = DateFormat('yyyy-MM-dd').format(state.selectedDate);
+    if (state.availabilityMap[key]?.canStartAt(timeSlot, state.durationHours) ==
+        true) {
+      state = state.copyWith(selectedTimeSlot: timeSlot);
+    }
   }
 
   void updateContactName(String name) {
@@ -185,7 +226,16 @@ class BookingWizardController extends Notifier<BookingWizardState> {
     try {
       final profile = state.profile;
       final pkg = state.selectedPackage;
-      final bookingId = 'bk-${Random().nextInt(89999) + 10000}';
+      final currentUser = ref.read(authUserProvider);
+      if (currentUser == null ||
+          currentUser.role != 'client' ||
+          profile == null ||
+          pkg == null) {
+        throw StateError(
+          'Vui lòng đăng nhập với tài khoản khách hàng và chọn gói chụp.',
+        );
+      }
+      final bookingId = 'bk-${DateTime.now().microsecondsSinceEpoch}';
       final dateStr = DateFormat('yyyy-MM-dd').format(state.selectedDate);
       final startTime = state.selectedTimeSlot ?? '14:00';
       final endTime = _calculateEndTime(startTime, state.durationHours);
@@ -193,14 +243,15 @@ class BookingWizardController extends Notifier<BookingWizardState> {
 
       final newBooking = Booking(
         id: bookingId,
-        clientId: 'u-khachhang',
+        clientId: currentUser.id,
         clientName: state.contactName.trim(),
-        photographerId: profile?.id ?? 'p2',
-        photographerName: profile?.name ?? 'Elena Rostova',
-        photographerAvatar: profile?.avatarUrl ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80',
-        style: profile != null && profile.styles.length > 1
-            ? profile.styles[1]
-            : 'Thời trang',
+        photographerId: profile.id,
+        photographerName: profile.name,
+        photographerAvatar: profile.avatarUrl,
+        style: profile.styles.firstWhere(
+          (style) => style != 'Tất cả',
+          orElse: () => '',
+        ),
         date: dateStr,
         timeSlot: fullTimeSlot,
         location: state.addressDetail.trim().isNotEmpty
@@ -210,10 +261,18 @@ class BookingWizardController extends Notifier<BookingWizardState> {
         status: BookingStatus.awaiting_deposit,
         packageId: state.selectedPackageId,
         packageSnapshot: PackageTerms(
-          name: pkg?.name ?? 'Gói chụp tiêu chuẩn',
-          photoCount: pkg != null ? 35 : 20,
+          name: pkg.name,
+          photoCount:
+              pkg.photoCount ??
+              int.tryParse(
+                RegExp(r'\d+')
+                        .firstMatch(pkg.deliverables.join(' '))
+                        ?.group(0) ??
+                    '',
+              ) ??
+              0,
           durationHours: state.durationHours,
-          deliveryDays: 3,
+          deliveryDays: pkg.deliveryDays ?? 3,
         ),
         contactPhone: state.contactPhone.trim(),
         note: state.note.trim().isNotEmpty ? state.note.trim() : null,
@@ -221,12 +280,24 @@ class BookingWizardController extends Notifier<BookingWizardState> {
         depositDeadline: DateTime.now()
             .add(const Duration(minutes: 30))
             .toIso8601String(),
-        rating: profile?.rating ?? 4.98,
-        reviewCount: profile?.reviewCount ?? 64,
+        rating: profile.rating,
+        reviewCount: profile.reviewCount,
         createdTimeAgo: 'Vừa xong',
       );
 
       await _bookingRepo.createBooking(newBooking);
+
+      if (state.saveAsDefault) {
+        await ref
+            .read(authUserProvider.notifier)
+            .updateProfile(
+              name: state.contactName.trim(),
+              phone: state.contactPhone.trim(),
+              city: state.city.trim(),
+              address: state.addressDetail.trim(),
+              saveAsDefault: true,
+            );
+      }
 
       ref.read(customerBookingsControllerProvider.notifier).loadBookings();
 
@@ -234,9 +305,17 @@ class BookingWizardController extends Notifier<BookingWizardState> {
 
       return newBooking;
     } catch (e) {
+      final conflict = e.toString().contains('Khung giờ này không còn trống');
+      if (conflict && state.profile != null) {
+        await _refreshAvailability(state.profile!.id);
+      }
       state = state.copyWith(
         isSubmitting: false,
-        errorMessage: 'Có lỗi xảy ra: $e',
+        currentStep: conflict ? 0 : state.currentStep,
+        clearTimeSlot: conflict,
+        errorMessage: conflict
+            ? 'Khung giờ này không còn trống. Vui lòng chọn khung giờ khác.'
+            : 'Không thể tạo lịch đặt: $e',
       );
       return null;
     }

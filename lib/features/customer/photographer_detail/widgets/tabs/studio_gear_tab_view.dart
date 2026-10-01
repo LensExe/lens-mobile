@@ -9,10 +9,7 @@ import '../../models/photographer_detail_model.dart';
 class StudioGearTabView extends StatelessWidget {
   final StudioGearInfo gearInfo;
 
-  const StudioGearTabView({
-    super.key,
-    required this.gearInfo,
-  });
+  const StudioGearTabView({super.key, required this.gearInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +69,9 @@ class StudioGearTabView extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.fog,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: AppColors.pebble.withValues(alpha: 0.5),
+                      ),
                     ),
                     child: const Center(
                       child: Icon(
@@ -174,13 +173,7 @@ class StudioGearTabView extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
           ),
-          child: Center(
-            child: Icon(
-              icon,
-              size: 17,
-              color: AppColors.obsidian,
-            ),
-          ),
+          child: Center(child: Icon(icon, size: 17, color: AppColors.obsidian)),
         ),
         const SizedBox(width: 12),
         Expanded(

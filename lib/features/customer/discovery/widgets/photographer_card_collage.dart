@@ -17,7 +17,8 @@ class PhotographerCardCollage extends StatefulWidget {
   });
 
   @override
-  State<PhotographerCardCollage> createState() => _PhotographerCardCollageState();
+  State<PhotographerCardCollage> createState() =>
+      _PhotographerCardCollageState();
 }
 
 class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
@@ -25,9 +26,15 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
 
   @override
   Widget build(BuildContext context) {
-    final images = PhotographerDisplayHelper.getGalleryImages(widget.photographer);
-    final priceStr = PhotographerDisplayHelper.formatPrice(widget.photographer.pricePerSession);
-    final subtitle = PhotographerDisplayHelper.getCategorySubtitle(widget.photographer);
+    final images = PhotographerDisplayHelper.getGalleryImages(
+      widget.photographer,
+    );
+    final priceStr = PhotographerDisplayHelper.formatPrice(
+      widget.photographer.pricePerSession,
+    );
+    final subtitle = PhotographerDisplayHelper.getCategorySubtitle(
+      widget.photographer,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -69,10 +76,14 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                               CachedNetworkImage(
                                 imageUrl: images[0],
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(color: AppColors.mist),
+                                placeholder: (context, url) =>
+                                    Container(color: AppColors.mist),
                                 errorWidget: (context, url, error) => Container(
                                   color: AppColors.mist,
-                                  child: const Icon(LucideIcons.imageOff, color: AppColors.steel),
+                                  child: const Icon(
+                                    LucideIcons.imageOff,
+                                    color: AppColors.steel,
+                                  ),
                                 ),
                               ),
                               // Rating pill overlay
@@ -80,7 +91,10 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                                 top: 12,
                                 left: 12,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.black.withValues(alpha: 0.55),
                                     borderRadius: BorderRadius.circular(100),
@@ -88,7 +102,11 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.star, color: Colors.white, size: 14),
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         '${widget.photographer.rating} (${widget.photographer.reviewCount})',
@@ -115,12 +133,18 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.35),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.35,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
-                                      isFavorite ? Icons.favorite : LucideIcons.heart,
-                                      color: isFavorite ? const Color(0xFFFF4848) : Colors.white,
+                                      isFavorite
+                                          ? Icons.favorite
+                                          : LucideIcons.heart,
+                                      color: isFavorite
+                                          ? const Color(0xFFFF4848)
+                                          : Colors.white,
                                       size: 18,
                                     ),
                                   ),
@@ -141,11 +165,15 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
                                 child: CachedNetworkImage(
-                                  imageUrl: images.length > 1 ? images[1] : images[0],
+                                  imageUrl: images.length > 1
+                                      ? images[1]
+                                      : images[0],
                                   fit: BoxFit.cover,
                                   width: double.infinity,
-                                  placeholder: (context, url) => Container(color: AppColors.mist),
-                                  errorWidget: (context, url, error) => Container(color: AppColors.mist),
+                                  placeholder: (context, url) =>
+                                      Container(color: AppColors.mist),
+                                  errorWidget: (context, url, error) =>
+                                      Container(color: AppColors.mist),
                                 ),
                               ),
                             ),
@@ -158,13 +186,19 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                                   fit: StackFit.expand,
                                   children: [
                                     CachedNetworkImage(
-                                      imageUrl: images.length > 2 ? images[2] : images[0],
+                                      imageUrl: images.length > 2
+                                          ? images[2]
+                                          : images[0],
                                       fit: BoxFit.cover,
-                                      placeholder: (context, url) => Container(color: AppColors.mist),
-                                      errorWidget: (context, url, error) => Container(color: AppColors.mist),
+                                      placeholder: (context, url) =>
+                                          Container(color: AppColors.mist),
+                                      errorWidget: (context, url, error) =>
+                                          Container(color: AppColors.mist),
                                     ),
                                     Container(
-                                      color: Colors.black.withValues(alpha: 0.38),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.38,
+                                      ),
                                       child: const Center(
                                         child: Text(
                                           '+14',
@@ -219,7 +253,10 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFEE8DE),
                                   borderRadius: BorderRadius.circular(6),
@@ -281,7 +318,11 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                 // Next slot and View Portfolio Action Row
                 Row(
                   children: [
-                    const Icon(LucideIcons.clock, size: 16, color: Color(0xFF6B7280)),
+                    const Icon(
+                      LucideIcons.clock,
+                      size: 16,
+                      color: Color(0xFF6B7280),
+                    ),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -298,13 +339,17 @@ class _PhotographerCardCollageState extends State<PhotographerCardCollage> {
                     GestureDetector(
                       onTap: widget.onTap,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF5A00),
                           borderRadius: BorderRadius.circular(100),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF5A00).withValues(alpha: 0.38),
+                              color: const Color(0xFFFF5A00)
+                                  .withValues(alpha: 0.38),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),

@@ -39,7 +39,11 @@ class PackagesTabView extends StatelessWidget {
             ),
             Row(
               children: [
-                const Icon(LucideIcons.shieldCheck, size: 14, color: AppColors.emerald),
+                const Icon(
+                  LucideIcons.shieldCheck,
+                  size: 14,
+                  color: AppColors.emerald,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'Bảo hiểm Escrow',
@@ -83,7 +87,10 @@ class PackagesTabView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: pkg.isMostSelected
                                 ? AppColors.ember
@@ -94,16 +101,23 @@ class PackagesTabView extends StatelessWidget {
                             pkg.highlightBadge,
                             style: AppTypography.labelSm(
                               fontSize: 11,
-                              color: pkg.isMostSelected ? Colors.white : AppColors.ember,
+                              color: pkg.isMostSelected
+                                  ? Colors.white
+                                  : AppColors.ember,
                             ).copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.fog,
                             borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                            border: Border.all(
+                              color: AppColors.pebble.withValues(alpha: 0.5),
+                            ),
                           ),
                           child: Text(
                             pkg.duration,
@@ -174,11 +188,16 @@ class PackagesTabView extends StatelessWidget {
 
                   // Deliverables Checklist
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.fog,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: AppColors.pebble.withValues(alpha: 0.5),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,12 +243,16 @@ class PackagesTabView extends StatelessWidget {
                           child: Container(
                             height: 48,
                             decoration: BoxDecoration(
-                              color: pkg.isMostSelected ? AppColors.ember : AppColors.obsidian,
+                              color: pkg.isMostSelected
+                                  ? AppColors.ember
+                                  : AppColors.obsidian,
                               borderRadius: BorderRadius.circular(9999),
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              pkg.isMostSelected ? 'Chọn gói này & Đặt lịch' : 'Đặt gói này',
+                              pkg.isMostSelected
+                                  ? 'Chọn gói này & Đặt lịch'
+                                  : 'Đặt gói này',
                               style: AppTypography.labelMd(
                                 fontSize: 14,
                                 color: AppColors.snow,

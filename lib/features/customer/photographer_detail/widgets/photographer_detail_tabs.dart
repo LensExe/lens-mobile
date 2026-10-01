@@ -30,7 +30,9 @@ class PhotographerDetailTabs extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.pageHorizontal,
+        ),
         itemCount: tabs.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -50,7 +52,9 @@ class PhotographerDetailTabs extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9999),
                 border: isSelected
                     ? null
-                    : Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
+                    : Border.all(
+                        color: AppColors.pebble.withValues(alpha: 0.5),
+                      ),
               ),
               child: Text(
                 title,

@@ -19,6 +19,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.pump();
 
-    expect(find.text('Chào mừng trở lại'), findsOneWidget);
+    expect(find.text('Tìm nhiếp ảnh gia của bạn'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 600));
   });
 }

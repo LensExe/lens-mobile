@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
+
+import '../../../../providers/data_providers.dart';
 
 import '../controllers/photographer_detail_controller.dart';
 import '../models/photographer_detail_model.dart';
@@ -11,6 +14,7 @@ import '../widgets/tabs/about_tab_view.dart';
 import '../widgets/tabs/portfolio_tab_view.dart';
 import '../widgets/tabs/reviews_tab_view.dart';
 import '../widgets/photographer_bottom_bar.dart';
+import '../widgets/portfolio_lightbox.dart';
 
 class PhotographerDetailScreen extends ConsumerStatefulWidget {
   final String id;
@@ -51,11 +55,29 @@ class _PhotographerDetailScreenState
     final state = ref.watch(photographerDetailControllerProvider);
     final controller = ref.read(photographerDetailControllerProvider.notifier);
 
-    if (state.isLoading || state.profile == null) {
+    if (state.isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF9F9FA),
         body: Center(
           child: CircularProgressIndicator(color: Color(0xFFFF5A00)),
+        ),
+      );
+    }
+
+    if (state.profile == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Hồ sơ nhiếp ảnh gia')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(state.errorMessage ?? 'Không tìm thấy hồ sơ.'),
+              TextButton(
+                onPressed: () => controller.loadProfile(widget.id),
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -79,7 +101,13 @@ class _PhotographerDetailScreenState
                     profile: profile,
                     isBookmarked: state.isBookmarked,
                     onBack: () => context.pop(),
-                    onShare: () {
+                    onShare: () async {
+                      await Clipboard.setData(
+                        ClipboardData(
+                          text: '/customer_home/photographer/${profile.id}',
+                        ),
+                      );
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -124,7 +152,10 @@ class _PhotographerDetailScreenState
                 context.push('/customer_home/messages/${profile.id}');
               },
               onBook: () {
-                context.push('/customer_home/photographer/${profile.id}/book');
+                final selected = state.selectedPackage;
+                context.push(
+                  '/customer_home/photographer/${profile.id}/book${selected == null ? '' : '?package=${Uri.encodeComponent(selected.id)}'}',
+                );
               },
             ),
           ),
@@ -147,7 +178,7 @@ class _PhotographerDetailScreenState
           items: state.filteredPortfolio,
           onStyleSelected: (style) => controller.selectPortfolioStyle(style),
           onItemTap: (item) {
-            _showImagePreview(context, item);
+            _showImagePreview(context, item, state.filteredPortfolio, profile);
           },
         );
       case 1:
@@ -161,10 +192,30 @@ class _PhotographerDetailScreenState
               _bookPackage(context, controller, profile, pkg),
         );
       case 2:
+        final myReviews = ref.watch(customerReviewsProvider).value ?? [];
+        final customerName =
+            ref.read(authUserProvider)?.name ?? 'Khách hàng LENS';
+        final visibleReviews = [
+          for (final review in myReviews.where(
+            (review) => review.photographerId == profile.id,
+          ))
+            ClientReview(
+              id: review.bookingId,
+              clientName: customerName,
+              clientRole: 'Khách hàng LENS',
+              clientInitials: 'KH',
+              rating: review.rating,
+              timeAgo:
+                  '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
+              packageTag: review.style,
+              content: review.comment,
+            ),
+          ...profile.reviews,
+        ];
         return ReviewsTabView(
           rating: profile.rating,
           reviewCount: profile.reviewCount,
-          reviews: profile.reviews,
+          reviews: visibleReviews,
         );
       default:
         return const SizedBox.shrink();
@@ -178,59 +229,24 @@ class _PhotographerDetailScreenState
     ProfilePackage package,
   ) {
     controller.selectPackage(package);
-    context.push('/customer_home/photographer/${profile.id}/book');
+    context.push(
+      '/customer_home/photographer/${profile.id}/book?package=${Uri.encodeComponent(package.id)}',
+    );
   }
 
-  void _showImagePreview(BuildContext context, PortfolioItem item) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  item.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 200,
-                    color: Colors.black45,
-                    child: const Center(
-                      child: Text(
-                        'Không thể tải ảnh',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: Text(
-                  '${item.title} • ${item.cameraGear}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  void _showImagePreview(
+    BuildContext context,
+    PortfolioItem item,
+    List<PortfolioItem> allItems,
+    PhotographerProfile profile,
+  ) {
+    final index = allItems.indexWhere((i) => i.id == item.id);
+    PortfolioLightbox.show(
+      context,
+      items: allItems,
+      initialIndex: index >= 0 ? index : 0,
+      photographerId: profile.id,
+      photographerName: profile.name,
     );
   }
 }

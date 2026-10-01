@@ -2,18 +2,19 @@
 
 enum BookingStatus {
   awaiting_deposit, // Chờ đặt cọc (30%)
-  pending,          // Đã cọc, chờ NAG xác nhận
-  confirmed,        // NAG đã nhận, chờ thanh toán nốt (70%)
-  held,             // Đã thanh toán 100%, sàn giữ tiền (escrow) chờ chụp & giao ảnh
-  released,         // Khách đã nghiệm thu nhận ảnh -> hoàn tất, giải ngân cho NAG
-  cancelled,        // Đã huỷ lịch
+  pending, // Đã cọc, chờ NAG xác nhận
+  confirmed, // NAG đã nhận, chờ thanh toán nốt (70%)
+  held, // Đã thanh toán 100%, sàn giữ tiền (escrow) chờ chụp & giao ảnh
+  released, // Khách đã nghiệm thu nhận ảnh -> hoàn tất, giải ngân cho NAG
+  cancelled, // Đã huỷ lịch
 }
 
 class PackageTerms {
   final String name;
-  final int photoCount;       // Số ảnh cam kết (dùng để chặn nghiệm thu nếu chưa đủ ảnh)
-  final double durationHours;  // Thời lượng buổi chụp (giờ)
-  final int deliveryDays;     // Hạn giao ảnh (số ngày sau ngày chụp)
+  final int
+  photoCount; // Số ảnh cam kết (dùng để chặn nghiệm thu nếu chưa đủ ảnh)
+  final double durationHours; // Thời lượng buổi chụp (giờ)
+  final int deliveryDays; // Hạn giao ảnh (số ngày sau ngày chụp)
 
   const PackageTerms({
     required this.name,
@@ -52,13 +53,14 @@ class BookingCollaborator {
     required this.status,
   });
 
-  factory BookingCollaborator.fromJson(Map<String, dynamic> json) => BookingCollaborator(
-    photographerId: json['photographerId'] as String,
-    photographerName: json['photographerName'] as String,
-    photographerAvatar: json['photographerAvatar'] as String,
-    sharePct: json['sharePct'] as int,
-    status: json['status'] as String,
-  );
+  factory BookingCollaborator.fromJson(Map<String, dynamic> json) =>
+      BookingCollaborator(
+        photographerId: json['photographerId'] as String,
+        photographerName: json['photographerName'] as String,
+        photographerAvatar: json['photographerAvatar'] as String,
+        sharePct: json['sharePct'] as int,
+        status: json['status'] as String,
+      );
 
   Map<String, dynamic> toJson() => {
     'photographerId': photographerId,
@@ -70,33 +72,34 @@ class BookingCollaborator {
 }
 
 class Booking {
-  final String id;                  // vd: "bk-tkh-1"
-  final String clientId;            // "u-khachhang"
-  final String clientName;          // "Trần Khách Hàng"
-  final String photographerId;      // "p2"
-  final String photographerName;    // "Trần Quốc Bảo"
+  final String id; // vd: "bk-tkh-1"
+  final String clientId; // "u-khachhang"
+  final String clientName; // "Trần Khách Hàng"
+  final String photographerId; // "p2"
+  final String photographerName; // "Trần Quốc Bảo"
   final String? photographerAvatar;
-  final String style;               // "Cưới", "Chân dung",...
-  final String date;                // ISO "yyyy-MM-dd"
-  final String? timeSlot;           // "14:00"
-  final String location;            // "Hồ Gươm, Hà Nội"
-  final int price;                  // Tổng giá tiền (VND)
+  final String style; // "Cưới", "Chân dung",...
+  final String date; // ISO "yyyy-MM-dd"
+  final String? timeSlot; // "14:00"
+  final String location; // "Hồ Gươm, Hà Nội"
+  final int price; // Tổng giá tiền (VND)
   final BookingStatus status;
-  final String? packageId;          // "basic", "standard", "premium"
+  final String? packageId; // "basic", "standard", "premium"
   final PackageTerms? packageSnapshot;
   final String? contactPhone;
   final String? note;
-  final int depositAmount;          // Tiền cọc = price * 0.3
-  final String? depositPaidAt;      // ISO datetime
-  final String? depositDeadline;    // ISO datetime (sau 30p nếu chưa cọc thì huỷ)
-  final int? coinsRedeemed;         // Lens Xu đã dùng khấu trừ tiền mặt
-  final int? coinsEarned;           // Lens Xu hoàn lại khi hoàn tất (cashback)
+  final int depositAmount; // Tiền cọc = price * 0.3
+  final String? depositPaidAt; // ISO datetime
+  final String? depositDeadline; // ISO datetime (sau 30p nếu chưa cọc thì huỷ)
+  final int? coinsRedeemed; // Lens Xu đã dùng khấu trừ tiền mặt
+  final int? coinsEarned; // Lens Xu hoàn lại khi hoàn tất (cashback)
   final List<BookingCollaborator>? collaborators;
 
   // Thuộc tính phụ trợ phục vụ hiển thị
   final double rating;
   final int reviewCount;
   final int uploadedProofsCount;
+  final List<String> deliveryPhotoUrls;
   final String? createdTimeAgo;
 
   const Booking({
@@ -125,8 +128,12 @@ class Booking {
     this.rating = 4.95,
     this.reviewCount = 50,
     this.uploadedProofsCount = 0,
+    this.deliveryPhotoUrls = const [],
     this.createdTimeAgo = 'Vừa xong',
+    this.isStorageLocked = false,
   });
+
+  final bool isStorageLocked;
 
   /// Tính số tiền còn lại phải thanh toán sau khi cọc (70%)
   int get remainingAmount => price - depositAmount;
@@ -160,7 +167,9 @@ class Booking {
     double? rating,
     int? reviewCount,
     int? uploadedProofsCount,
+    List<String>? deliveryPhotoUrls,
     String? createdTimeAgo,
+    bool? isStorageLocked,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -188,7 +197,9 @@ class Booking {
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
       uploadedProofsCount: uploadedProofsCount ?? this.uploadedProofsCount,
+      deliveryPhotoUrls: deliveryPhotoUrls ?? this.deliveryPhotoUrls,
       createdTimeAgo: createdTimeAgo ?? this.createdTimeAgo,
+      isStorageLocked: isStorageLocked ?? this.isStorageLocked,
     );
   }
 }
