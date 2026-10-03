@@ -156,34 +156,30 @@ class _PhotographersDiscoveryScreenState
     final isGuest = ref.watch(authUserProvider) == null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+                padding: const EdgeInsets.fromLTRB(
+                  AppTokens.pageHorizontal,
+                  20,
+                  AppTokens.pageHorizontal,
+                  4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Tìm nhiếp ảnh gia của bạn',
-                      style: TextStyle(
-                        fontSize: 28,
-                        height: 1.12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.7,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                    const SizedBox(height: 7),
                     Text(
-                      'Khám phá portfolio, so sánh phong cách và đặt lịch an toàn cùng nhiếp ảnh gia phù hợp.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF6B7280),
-                        height: 1.45,
-                      ),
+                      'Tìm nhiếp ảnh gia của bạn',
+                      style: AppTypography.headlineLg(fontSize: 28),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Tìm cảm hứng qua những bộ ảnh và phong cách khác nhau.',
+                      style: AppTypography.bodyMd(color: AppColors.steel),
                     ),
                   ],
                 ),
@@ -287,11 +283,7 @@ class _PhotographersDiscoveryScreenState
                                       size: 18,
                                     ),
                                   )
-                                : const Icon(
-                                    LucideIcons.audioWaveform,
-                                    color: AppColors.steel,
-                                    size: 19,
-                                  ),
+                                : null,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
@@ -409,8 +401,8 @@ class _PhotographersDiscoveryScreenState
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFF1E2022)
-                                : const Color(0xFFF3F4F6),
+                                ? AppColors.obsidian
+                                : AppColors.fog,
                             borderRadius: BorderRadius.circular(100),
                           ),
                           child: Row(
@@ -421,7 +413,7 @@ class _PhotographersDiscoveryScreenState
                                   width: 6,
                                   height: 6,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFFFF5A00),
+                                    color: AppColors.ember,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -431,8 +423,8 @@ class _PhotographersDiscoveryScreenState
                                 style,
                                 style: TextStyle(
                                   color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF374151),
+                                      ? AppColors.snow
+                                      : AppColors.graphite,
                                   fontSize: 13,
                                   fontWeight: isSelected
                                       ? FontWeight.w700
@@ -637,64 +629,9 @@ class _PhotographersDiscoveryScreenState
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final photographer = state.photographers[index];
 
-                    // Before the second photographer (index 1), display "Curated Portfolios" header
-                    final bool showSectionHeader = (index == 1);
-
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (showSectionHeader) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 14),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Bộ sưu tập tuyển chọn',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w900,
-                                          color: Color(0xFF111827),
-                                          letterSpacing: -0.4,
-                                        ),
-                                      ),
-                                      SizedBox(height: 3),
-                                      Text(
-                                        'Những nhiếp ảnh gia tiêu biểu có lịch rảnh',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF6B7280),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () {
-                                    _searchController.clear();
-                                    controller.clearFilters();
-                                    _syncUrl();
-                                  },
-                                  child: const Text(
-                                    'Xem tất cả',
-                                    style: TextStyle(
-                                      color: Color(0xFFFF5A00),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                         PhotographerFeedCard(
                           photographer: photographer,
                           index: index,

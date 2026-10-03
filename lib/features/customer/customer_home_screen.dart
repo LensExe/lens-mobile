@@ -125,9 +125,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     AppTokens.pageHorizontal,
                     index == visible.length - 1 ? 4 : 0,
                   ),
-                  child: _OverviewBookingCard(
-                    booking: visible[index],
-                  ),
+                  child: _OverviewBookingCard(booking: visible[index]),
                 ),
               ),
             SliverToBoxAdapter(
@@ -179,7 +177,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tổng quan studio',
+                  'Không gian của bạn',
                   style: AppTypography.headlineMd(color: AppColors.obsidian),
                 ),
               ],
@@ -219,102 +217,52 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     List<Booking> completed,
   ) {
     final metrics = [
-      _MetricData(
-        LucideIcons.calendarCheck,
-        'Tổng buổi chụp',
-        bookings.length,
-        AppColors.fog,
-        AppColors.obsidian,
-      ),
-      _MetricData(
-        LucideIcons.walletCards,
-        'Cần thanh toán',
-        needsPayment.length,
-        AppColors.ember.withValues(alpha: .12),
-        AppColors.ember,
-      ),
-      _MetricData(
-        LucideIcons.clock4,
-        'Chờ xác nhận',
-        pending.length,
-        AppColors.lagoon.withValues(alpha: .12),
-        AppColors.lagoon,
-      ),
-      _MetricData(
-        LucideIcons.checkCircle2,
-        'Đã hoàn thành',
-        completed.length,
-        AppColors.emerald.withValues(alpha: .12),
-        AppColors.emerald,
-      ),
+      _MetricData('Buổi chụp', bookings.length),
+      _MetricData('Cần thanh toán', needsPayment.length),
+      _MetricData('Chờ xác nhận', pending.length),
+      _MetricData('Hoàn thành', completed.length),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        18,
+        20,
         AppTokens.pageHorizontal,
         0,
       ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: metrics.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.45,
-        ),
-        itemBuilder: (context, index) {
-          final metric = metrics[index];
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.snow,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.pebble),
-              boxShadow: const [AppTokens.surfaceShadow],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: metric.background,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        metric.icon,
-                        size: 17,
-                        color: metric.iconColor,
-                      ),
+      child: Row(
+        children: [
+          for (var index = 0; index < metrics.length; index++) ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '${metrics[index].value}',
+                    style: AppTypography.numeric(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
                     ),
-                    Text(
-                      '${metric.value}',
-                      style: AppTypography.numeric(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.obsidian,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  metric.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelSm(color: AppColors.steel),
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    metrics[index].label,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelSm(color: AppColors.steel),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
+            if (index < metrics.length - 1)
+              Container(
+                width: 1,
+                height: 30,
+                color: AppColors.pebble,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -777,18 +725,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 }
 
 class _MetricData {
-  final IconData icon;
   final String label;
   final int value;
-  final Color background;
-  final Color iconColor;
-  const _MetricData(
-    this.icon,
-    this.label,
-    this.value,
-    this.background,
-    this.iconColor,
-  );
+  const _MetricData(this.label, this.value);
 }
 
 class _TodoItem extends StatelessWidget {

@@ -84,82 +84,97 @@ class _PhotographerDetailScreenState
 
     final profile = state.profile!;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FA),
-      body: Stack(
-        children: [
-          // Scrollable Content
-          Positioned.fill(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 96),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Cover Image & Badges
-                  PhotographerDetailHeader(
-                    profile: profile,
-                    isBookmarked: state.isBookmarked,
-                    onBack: () => context.pop(),
-                    onShare: () async {
-                      await Clipboard.setData(
-                        ClipboardData(
-                          text: '/customer_home/photographer/${profile.id}',
-                        ),
-                      );
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Đã sao chép liên kết hồ sơ của ${profile.name}',
+    void handleBack() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/customer_home/discovery');
+      }
+    }
+
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        context.go('/customer_home/discovery');
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF9F9FA),
+        body: Stack(
+          children: [
+            // Scrollable Content
+            Positioned.fill(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 96),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. Cover Image & Badges
+                    PhotographerDetailHeader(
+                      profile: profile,
+                      isBookmarked: state.isBookmarked,
+                      onBack: handleBack,
+                      onShare: () async {
+                        await Clipboard.setData(
+                          ClipboardData(
+                            text: '/customer_home/photographer/${profile.id}',
                           ),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    onToggleBookmark: () => controller.toggleBookmark(),
-                  ),
-                  const SizedBox(height: 12),
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Đã sao chép liên kết hồ sơ của ${profile.name}',
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      onToggleBookmark: () => controller.toggleBookmark(),
+                    ),
+                    const SizedBox(height: 12),
 
-                  // 2. Profile Info & Trust Metrics
-                  PhotographerProfileInfo(profile: profile),
-                  const SizedBox(height: 20),
+                    // 2. Profile Info & Trust Metrics
+                    PhotographerProfileInfo(profile: profile),
+                    const SizedBox(height: 20),
 
-                  // 3. Tab Bar
-                  PhotographerDetailTabs(
-                    profile: profile,
-                    selectedIndex: state.selectedTabIndex,
-                    onTabSelected: (index) => controller.selectTab(index),
-                  ),
-                  const SizedBox(height: 16),
+                    // 3. Tab Bar
+                    PhotographerDetailTabs(
+                      profile: profile,
+                      selectedIndex: state.selectedTabIndex,
+                      onTabSelected: (index) => controller.selectTab(index),
+                    ),
+                    const SizedBox(height: 16),
 
-                  // 4. Tab Content View
-                  _buildTabContent(context, state, controller, profile),
-                ],
+                    // 4. Tab Content View
+                    _buildTabContent(context, state, controller, profile),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Sticky Bottom Booking Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: PhotographerBottomBar(
-              selectedPackage: state.selectedPackage,
-              startingPrice: profile.startingPrice,
-              onMessage: () {
-                context.push('/customer_home/messages/${profile.id}');
-              },
-              onBook: () {
-                final selected = state.selectedPackage;
-                context.push(
-                  '/customer_home/photographer/${profile.id}/book${selected == null ? '' : '?package=${Uri.encodeComponent(selected.id)}'}',
-                );
-              },
+            // Sticky Bottom Booking Bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: PhotographerBottomBar(
+                selectedPackage: state.selectedPackage,
+                startingPrice: profile.startingPrice,
+                onMessage: () {
+                  context.push('/customer_home/messages/${profile.id}');
+                },
+                onBook: () {
+                  final selected = state.selectedPackage;
+                  context.push(
+                    '/customer_home/photographer/${profile.id}/book${selected == null ? '' : '?package=${Uri.encodeComponent(selected.id)}'}',
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

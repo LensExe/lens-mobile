@@ -7,6 +7,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../models/photographer_detail_model.dart';
 
+/// Compact identity block that leaves the portfolio as the main event.
 class PhotographerProfileInfo extends StatelessWidget {
   final PhotographerProfile profile;
 
@@ -14,160 +15,87 @@ class PhotographerProfileInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final styles = profile.styles.where((style) => style != 'Tất cả').toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Avatar & Identity Row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar with active verified badge
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.snow, width: 3),
-                      boxShadow: const [AppTokens.surfaceShadow],
-                    ),
-                    child: ClipOval(
-                      child: CachedNetworkImage(
-                        imageUrl: profile.avatarUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            Container(color: AppColors.fog),
-                        errorWidget: (context, url, error) => const Icon(
-                          LucideIcons.user,
-                          size: 36,
-                          color: AppColors.steel,
-                        ),
+                  ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: profile.avatarUrl,
+                      width: 62,
+                      height: 62,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const ColoredBox(color: AppColors.fog),
+                      errorWidget: (context, url, error) => const SizedBox(
+                        width: 62,
+                        height: 62,
+                        child: Icon(LucideIcons.user, color: AppColors.steel),
                       ),
                     ),
                   ),
-                  Positioned(
-                    right: 0,
-                    bottom: 2,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: AppColors.emerald,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.snow, width: 2),
-                      ),
-                      child: const Center(
-                        child: Icon(
+                  if (profile.isVerified)
+                    Positioned(
+                      right: -1,
+                      bottom: -1,
+                      child: Container(
+                        width: 21,
+                        height: 21,
+                        decoration: BoxDecoration(
+                          color: AppColors.emerald,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.canvas, width: 2),
+                        ),
+                        child: const Icon(
                           LucideIcons.check,
-                          color: Colors.white,
-                          size: 13,
+                          color: AppColors.snow,
+                          size: 12,
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
-              const SizedBox(width: 16),
-
-              // Name, Rank & City
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            profile.name,
-                            style: AppTypography.headlineSm(
-                              fontSize: 20,
-                              color: AppColors.obsidian,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.fog,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.pebble.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          child: Text(
-                            profile.rank,
-                            style: AppTypography.numeric(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.steel,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      profile.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.headlineMd(fontSize: 21),
                     ),
-                    const SizedBox(height: 4),
-
-                    // City & Rating
-                    Row(
+                    const SizedBox(height: 5),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Icon(
-                          LucideIcons.mapPin,
-                          size: 13,
-                          color: AppColors.steel,
+                        Text(
+                          profile.city,
+                          style: AppTypography.bodySm(color: AppColors.steel),
                         ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            profile.city,
-                            style: AppTypography.bodySm(
-                              fontSize: 12.5,
-                              color: AppColors.steel,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 3,
-                          height: 3,
-                          decoration: const BoxDecoration(
-                            color: AppColors.steel,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
                         const Icon(
                           LucideIcons.star,
-                          color: AppColors.ember,
                           size: 13,
+                          color: AppColors.ember,
                         ),
-                        const SizedBox(width: 3),
                         Text(
-                          '${profile.rating}',
-                          style: AppTypography.numeric(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.obsidian,
-                          ),
+                          profile.rating.toStringAsFixed(1),
+                          style: AppTypography.numeric(fontSize: 12),
                         ),
-                        const SizedBox(width: 3),
                         Text(
                           '(${profile.reviewCount})',
-                          style: AppTypography.bodySm(
-                            fontSize: 11.5,
-                            color: AppColors.steel,
-                          ),
+                          style: AppTypography.bodySm(color: AppColors.steel),
                         ),
                       ],
                     ),
@@ -176,96 +104,45 @@ class PhotographerProfileInfo extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // 2. Bio Summary
-          Text(
-            profile.bio,
-            style: AppTypography.bodySm(
-              fontSize: 13.5,
-              color: AppColors.graphite,
-            ).copyWith(height: 1.5),
-          ),
-          const SizedBox(height: 16),
-
-          // 3. Trust Metrics Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: AppColors.snow,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.pebble),
-              boxShadow: const [AppTokens.surfaceShadow],
+          if (styles.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: styles
+                  .map(
+                    (style) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.fog,
+                        borderRadius: BorderRadius.circular(
+                          AppTokens.pillRadius,
+                        ),
+                      ),
+                      child: Text(
+                        style,
+                        style: AppTypography.labelSm(color: AppColors.graphite),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Expanded(
-                  child: _buildMetricItem(
-                    '${profile.experienceYears}+ Năm',
-                    'Kinh nghiệm',
-                    LucideIcons.award,
-                  ),
-                ),
-                _buildDivider(),
-                Expanded(
-                  child: _buildMetricItem(
-                    '${profile.completedShoots}+',
-                    'Buổi chụp xong',
-                    LucideIcons.camera,
-                  ),
-                ),
-                _buildDivider(),
-                Expanded(
-                  child: _buildMetricItem(
-                    '${profile.completionRate}%',
-                    'Nghiệm thu',
-                    LucideIcons.shieldCheck,
-                  ),
-                ),
-              ],
+          ],
+          if (profile.bio.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              profile.bio,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodyMd(color: AppColors.graphite)
+                  .copyWith(height: 1.5),
             ),
-          ),
+          ],
         ],
       ),
     );
-  }
-
-  Widget _buildMetricItem(String value, String label, IconData icon) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: AppColors.ember),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.numeric(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.obsidian,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.labelSm(fontSize: 11, color: AppColors.steel),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(width: 1, height: 28, color: AppColors.pebble);
   }
 }

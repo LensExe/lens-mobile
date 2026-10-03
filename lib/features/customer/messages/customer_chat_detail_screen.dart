@@ -9,6 +9,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../domain/models/models.dart';
 import '../../../providers/data_providers.dart';
 import '../bookings/controllers/customer_bookings_controller.dart';
+import '../bookings/models/booking_model.dart' as booking_models;
+import '../bookings/widgets/booking_status_pill.dart';
 import '../photographer_detail/repositories/photographer_detail_repository_provider.dart';
 
 class CustomerChatDetailScreen extends ConsumerStatefulWidget {
@@ -149,6 +151,13 @@ class _CustomerChatDetailScreenState
     final chatMessages =
         allMessages.where((m) => m.conversationId == _threadId).toList()
           ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final bookings = ref.watch(customerBookingsControllerProvider).allBookings;
+    final matchingBookings = bookings
+        .where((booking) => booking.id == conversation.bookingId)
+        .toList();
+    final linkedBooking = matchingBookings.isEmpty
+        ? null
+        : matchingBookings.first;
 
     return PopScope(
       canPop: context.canPop(),
@@ -292,6 +301,13 @@ class _CustomerChatDetailScreenState
                         ),
                       ),
                     ],
+                  ),
+                ),
+              if (linkedBooking != null)
+                _BookingContextBanner(
+                  booking: linkedBooking,
+                  onTap: () => context.push(
+                    '/customer_home/bookings/${linkedBooking.id}',
                   ),
                 ),
               Expanded(
@@ -667,6 +683,80 @@ class _CustomerChatDetailScreenState
                     ),
                   ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BookingContextBanner extends StatelessWidget {
+  final booking_models.Booking booking;
+  final VoidCallback onTap;
+
+  const _BookingContextBanner({required this.booking, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final packageName = booking.packageSnapshot?.name;
+    final secondaryLine = packageName == null || packageName.isEmpty
+        ? AppTypography.formatCurrency(booking.price)
+        : packageName;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Material(
+        color: AppColors.snow,
+        borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+              border: Border.all(color: AppColors.pebble),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.fog,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.calendarDays,
+                    size: 17,
+                    color: AppColors.obsidian,
+                  ),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${booking.style} · ${booking.date}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.labelMd(),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        secondaryLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySm(color: AppColors.steel),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                BookingStatusPill(status: booking.status, compact: true),
+              ],
+            ),
+          ),
         ),
       ),
     );

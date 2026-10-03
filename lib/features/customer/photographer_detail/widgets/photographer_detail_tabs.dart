@@ -20,8 +20,8 @@ class PhotographerDetailTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      'Tác phẩm (${profile.portfolio.length})',
-      'Giới thiệu & Gói',
+      'Tác phẩm',
+      'Gói chụp & giới thiệu',
       'Đánh giá (${profile.reviewCount})',
     ];
 

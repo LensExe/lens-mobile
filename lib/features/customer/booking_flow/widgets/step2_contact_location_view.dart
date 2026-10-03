@@ -158,13 +158,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
           // Section 1: Thông tin liên hệ
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.snow,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.pebble),
-              boxShadow: const [AppTokens.surfaceShadow],
-            ),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -173,10 +167,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
                   children: [
                     Text(
                       '1. Thông tin liên hệ',
-                      style: AppTypography.titleMd(
-                        fontSize: 16,
-                        color: AppColors.obsidian,
-                      ),
+                      style: AppTypography.headlineSm(fontSize: 18),
                     ),
                     if (widget.state.isAutofilled)
                       Container(
@@ -324,27 +315,18 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 26),
 
           // Section 2: Địa điểm chụp
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.snow,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.pebble),
-              boxShadow: const [AppTokens.surfaceShadow],
-            ),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '2. Địa điểm chụp',
-                  style: AppTypography.titleMd(
-                    fontSize: 16,
-                    color: AppColors.obsidian,
-                  ),
+                  style: AppTypography.headlineSm(fontSize: 18),
                 ),
                 const SizedBox(height: 16),
 
@@ -479,27 +461,18 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 26),
 
           // Section 3: Ghi chú cho NAG
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.snow,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.pebble),
-              boxShadow: const [AppTokens.surfaceShadow],
-            ),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '3. Ghi chú cho nhiếp ảnh gia',
-                  style: AppTypography.titleMd(
-                    fontSize: 16,
-                    color: AppColors.obsidian,
-                  ),
+                  style: AppTypography.headlineSm(fontSize: 18),
                 ),
                 const SizedBox(height: 4),
                 Text(

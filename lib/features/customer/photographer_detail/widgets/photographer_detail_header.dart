@@ -27,7 +27,7 @@ class PhotographerDetailHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 260,
+      height: 296,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
@@ -146,7 +146,7 @@ class PhotographerDetailHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      profile.verificationBadge,
+                      'Đã xác minh',
                       style: AppTypography.labelSm(color: Colors.white),
                     ),
                   ],

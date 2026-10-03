@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -13,145 +14,139 @@ class PhotographerSummaryBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = profile;
-    final name = p?.name ?? 'Elena Rostova';
-    final avatar =
-        p?.avatarUrl ??
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80';
-    final rank = p?.rank ?? 'PRO GOLD';
-    final city = p?.city ?? 'TP. Hồ Chí Minh';
-    final rating = p?.rating.toStringAsFixed(2) ?? '4.98';
-    final reviewCount = p?.reviewCount ?? 124;
+    final photographer = profile;
+    if (photographer == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.snow,
+          borderRadius: BorderRadius.circular(AppTokens.largeCardRadius),
+          border: Border.all(color: AppColors.pebble),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: AppColors.fog,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.camera, color: AppColors.steel),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Đang tải hồ sơ', style: AppTypography.titleMd()),
+                  const SizedBox(height: 7),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+                    child: const LinearProgressIndicator(
+                      minHeight: 3,
+                      backgroundColor: AppColors.fog,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.ember,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final styles = photographer.styles
+        .where((style) => style != 'Tất cả')
+        .take(2)
+        .join(' · ');
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.snow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTokens.largeCardRadius),
         border: Border.all(color: AppColors.pebble),
-        boxShadow: const [AppTokens.surfaceShadow],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar with badge
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.pebble),
-                  image: DecorationImage(
-                    image: NetworkImage(avatar),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+          ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: photographer.avatarUrl,
+              width: 54,
+              height: 54,
+              fit: BoxFit.cover,
+              placeholder: (context, url) =>
+                  const ColoredBox(color: AppColors.fog),
+              errorWidget: (context, url, error) => const SizedBox(
+                width: 54,
+                height: 54,
+                child: Icon(LucideIcons.camera, color: AppColors.steel),
               ),
-              Positioned(
-                right: -2,
-                bottom: -2,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: AppColors.emerald,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.snow, width: 2),
-                  ),
-                  child: const Icon(
-                    LucideIcons.check,
-                    size: 11,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(width: 14),
-          // Info column
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        name,
-                        style: AppTypography.titleMd(
-                          fontSize: 16,
-                          color: AppColors.obsidian,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.ember.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(9999),
-                      ),
-                      child: Text(
-                        rank,
-                        style: AppTypography.numeric(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ember,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
                 Text(
-                  'Nhiếp ảnh gia chuyên nghiệp • $city',
-                  style: AppTypography.bodySm(
-                    fontSize: 12,
-                    color: AppColors.steel,
-                  ),
+                  photographer.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleMd(fontSize: 16),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      LucideIcons.star,
-                      size: 12,
-                      color: AppColors.ember,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      rating,
-                      style: AppTypography.numeric(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.obsidian,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '($reviewCount đánh giá)',
-                      style: AppTypography.bodySm(
-                        fontSize: 11,
-                        color: AppColors.steel,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 3),
+                Text(
+                  [
+                    photographer.city,
+                    styles,
+                  ].where((value) => value.isNotEmpty).join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySm(color: AppColors.steel),
                 ),
+                if (photographer.reviewCount > 0) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.star,
+                        size: 13,
+                        color: AppColors.ember,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        photographer.rating.toStringAsFixed(1),
+                        style: AppTypography.numeric(fontSize: 11),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${photographer.reviewCount})',
+                        style: AppTypography.bodySm(
+                          color: AppColors.steel,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
+          if (photographer.isVerified) ...[
+            const SizedBox(width: 8),
+            const Icon(
+              LucideIcons.badgeCheck,
+              size: 19,
+              color: AppColors.lagoon,
+            ),
+          ],
         ],
       ),
     );

@@ -44,30 +44,19 @@ class Step1PackageScheduleView extends StatelessWidget {
         children: [
           // Photographer banner
           PhotographerSummaryBanner(profile: profile),
-          const SizedBox(height: 22),
+          const SizedBox(height: 28),
 
           // Section 1: Packages
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '1. Chọn Gói Chụp',
-                style: AppTypography.headlineSm(
-                  fontSize: 17,
-                  color: AppColors.obsidian,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Có thể tuỳ biến gói',
-                style: AppTypography.labelSm(
-                  fontSize: 12,
-                  color: AppColors.ember,
-                ),
+                '1. Chọn gói chụp',
+                style: AppTypography.headlineSm(fontSize: 19),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (packages.isEmpty)
             const Center(
               child: Padding(

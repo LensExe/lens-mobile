@@ -145,22 +145,6 @@ class BookingCard extends StatelessWidget {
                                       ),
                               ),
                             ),
-                            Positioned(
-                              right: -1,
-                              bottom: -1,
-                              child: Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: AppColors.ember,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.snow,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                         const SizedBox(width: 12),
@@ -169,44 +153,14 @@ class BookingCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      booking.photographerName,
-                                      style: AppTypography.titleMd(
-                                        fontSize: 15,
-                                        color: AppColors.obsidian,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.fog,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: AppColors.pebble.withValues(
-                                          alpha: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'PRO',
-                                      style: AppTypography.numeric(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.steel,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                booking.photographerName,
+                                style: AppTypography.titleMd(
+                                  fontSize: 15,
+                                  color: AppColors.obsidian,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 2),
                               Row(
@@ -266,14 +220,7 @@ class BookingCard extends StatelessWidget {
                     // 3. Session Details Box
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.fog,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.pebble.withValues(alpha: 0.5),
-                        ),
-                      ),
+                      padding: EdgeInsets.zero,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -132,7 +133,7 @@ class _CustomerConversationsScreenState
           Expanded(
             child: visible.isEmpty
                 ? _buildEmptyState(filtered: conversations.isNotEmpty)
-                : ListView.builder(
+                : ListView.separated(
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(
                       AppTokens.pageHorizontal,
@@ -141,21 +142,20 @@ class _CustomerConversationsScreenState
                       32,
                     ),
                     itemCount: visible.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, color: AppColors.pebble),
                     itemBuilder: (context, index) {
                       final conversation = visible[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _ConversationCard(
-                          conversation: conversation,
-                          onTap: () {
-                            ref
-                                .read(conversationsProvider.notifier)
-                                .markRead(conversation.id);
-                            context.push(
-                              '/customer_home/messages/${conversation.id}',
-                            );
-                          },
-                        ),
+                      return _ConversationCard(
+                        conversation: conversation,
+                        onTap: () {
+                          ref
+                              .read(conversationsProvider.notifier)
+                              .markRead(conversation.id);
+                          context.push(
+                            '/customer_home/messages/${conversation.id}',
+                          );
+                        },
                       );
                     },
                   ),
@@ -215,27 +215,22 @@ class _ConversationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.snow,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.pebble),
-          boxShadow: const [AppTokens.surfaceShadow],
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.pebble),
-                image: DecorationImage(
-                  image: NetworkImage(conversation.otherPartyAvatar),
-                  fit: BoxFit.cover,
+            ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: conversation.otherPartyAvatar,
+                width: 52,
+                height: 52,
+                fit: BoxFit.cover,
+                placeholder: (context, url) =>
+                    const ColoredBox(color: AppColors.fog),
+                errorWidget: (context, url, error) => const ColoredBox(
+                  color: AppColors.fog,
+                  child: Icon(LucideIcons.userRound, color: AppColors.steel),
                 ),
               ),
             ),

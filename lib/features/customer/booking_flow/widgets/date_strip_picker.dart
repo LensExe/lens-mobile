@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/day_availability.dart';
 
 class DateStripPicker extends StatefulWidget {
@@ -37,17 +38,17 @@ class _DateStripPickerState extends State<DateStripPicker> {
   String _formatDayOfWeek(DateTime date) {
     switch (date.weekday) {
       case DateTime.monday:
-        return 'Th 2';
+        return 'T2';
       case DateTime.tuesday:
-        return 'Th 3';
+        return 'T3';
       case DateTime.wednesday:
-        return 'Th 4';
+        return 'T4';
       case DateTime.thursday:
-        return 'Th 5';
+        return 'T5';
       case DateTime.friday:
-        return 'Th 6';
+        return 'T6';
       case DateTime.saturday:
-        return 'Th 7';
+        return 'T7';
       case DateTime.sunday:
         return 'CN';
       default:
@@ -79,99 +80,57 @@ class _DateStripPickerState extends State<DateStripPicker> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-
-    // Tạo 14 ngày bắt đầu từ hôm nay hoặc ngày mai
-    final List<DateTime> days = List.generate(
-      21,
-      (index) => today.add(Duration(days: index)),
-    );
-
+    final days = List.generate(21, (index) => today.add(Duration(days: index)));
     final monthLabel =
         'Tháng ${_displayedMonth.month}, ${_displayedMonth.year}';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0C000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: "2. Chọn Ngày Chụp" & Month label & Chevron buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '2. Chọn Ngày Chụp',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Color(0xFF1A1C1D),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      monthLabel,
-                      style: const TextStyle(
-                        color: Color(0xFF5F5E60),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MonthNavButton(
-                    icon: LucideIcons.chevronLeft,
-                    onTap: _prevMonth,
-                  ),
-                  const SizedBox(width: 8),
-                  _MonthNavButton(
-                    icon: LucideIcons.chevronRight,
-                    onTap: _nextMonth,
-                  ),
+                  Text('2. Chọn ngày chụp', style: AppTypography.headlineSm()),
+                  const SizedBox(height: 3),
+                  Text(monthLabel, style: AppTypography.bodySm()),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Horizontal Date Strip
-          SingleChildScrollView(
+            ),
+            _MonthNavButton(icon: LucideIcons.chevronLeft, onTap: _prevMonth),
+            const SizedBox(width: 8),
+            _MonthNavButton(icon: LucideIcons.chevronRight, onTap: _nextMonth),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 78,
+          child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: days.map((date) {
-                final isSelected =
-                    widget.selectedDate.year == date.year &&
-                    widget.selectedDate.month == date.month &&
-                    widget.selectedDate.day == date.day;
-                final isPast = date.isBefore(today);
-                final dateKey = DateFormat('yyyy-MM-dd').format(date);
-                final dayAvail = widget.availabilityMap[dateKey];
-                final hasSlots =
-                    dayAvail != null && dayAvail.slots.any((s) => s.isFree);
+            physics: const BouncingScrollPhysics(),
+            itemCount: days.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final date = days[index];
+              final isSelected =
+                  widget.selectedDate.year == date.year &&
+                  widget.selectedDate.month == date.month &&
+                  widget.selectedDate.day == date.day;
+              final isPast = date.isBefore(today);
+              final dateKey = DateFormat('yyyy-MM-dd').format(date);
+              final dayAvailability = widget.availabilityMap[dateKey];
+              final hasSlots =
+                  dayAvailability != null &&
+                  dayAvailability.slots.any((slot) => slot.isFree);
 
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+              return Semantics(
+                button: true,
+                selected: isSelected,
+                label: '${_formatDayOfWeek(date)} ${date.day}',
+                child: Opacity(
+                  opacity: isPast ? .4 : 1,
                   child: InkWell(
                     onTap: isPast
                         ? null
@@ -185,90 +144,65 @@ class _DateStripPickerState extends State<DateStripPicker> {
                               );
                             });
                           },
-                    borderRadius: BorderRadius.circular(48),
-                    child: Opacity(
-                      opacity: isPast ? 0.35 : 1.0,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 52,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(17),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 56,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.obsidian : AppColors.snow,
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(
                           color: isSelected
-                              ? AppColors.ember
-                              : (hasSlots
-                                    ? const Color(0xFFF7F7F8)
-                                    : const Color(0xFFF1F1F2)),
-                          borderRadius: BorderRadius.circular(48),
-                          boxShadow: isSelected
-                              ? const [
-                                  BoxShadow(
-                                    color: Color(0x33EE5A00),
-                                    blurRadius: 6,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.ember
-                                : (hasSlots
-                                      ? const Color(0xFFE8E8E9)
-                                      : Colors.transparent),
-                            width: 1,
+                              ? AppColors.obsidian
+                              : AppColors.pebble,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _formatDayOfWeek(date),
+                            style: AppTypography.labelSm(
+                              color: isSelected
+                                  ? AppColors.snow
+                                  : AppColors.steel,
+                              fontSize: 10,
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _formatDayOfWeek(date),
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF5F5E60),
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                              ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${date.day}',
+                            style: AppTypography.numeric(
+                              color: isSelected
+                                  ? AppColors.snow
+                                  : AppColors.obsidian,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              date.day.toString(),
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF1A1C1D),
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.2,
-                              ),
+                          ),
+                          const SizedBox(height: 5),
+                          Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.snow
+                                  : hasSlots
+                                  ? AppColors.ember
+                                  : AppColors.pebble,
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(height: 6),
-                            // Dot indicator
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.white
-                                    : (hasSlots
-                                          ? AppColors.ember
-                                          : const Color(0xFFD4D4D8)),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -281,25 +215,21 @@ class _MonthNavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE8E8E9)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0C000000),
-              blurRadius: 2,
-              offset: Offset(0, 1),
-            ),
-          ],
+    return Material(
+      color: AppColors.snow,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.pebble),
+          ),
+          child: Icon(icon, size: 17, color: AppColors.obsidian),
         ),
-        child: Icon(icon, size: 16, color: const Color(0xFF1A1C1D)),
       ),
     );
   }

@@ -18,11 +18,11 @@ class BookingStepperHeader extends StatelessWidget {
   String get _stepTitle {
     switch (currentStep) {
       case 0:
-        return 'Gói chụp & Lịch trình';
+        return 'Gói chụp & lịch trình';
       case 1:
-        return 'Liên hệ & Địa điểm';
+        return 'Liên hệ & địa điểm';
       case 2:
-        return 'Xem lại & Cam kết';
+        return 'Xem lại & cam kết';
       default:
         return 'Đặt lịch chụp';
     }
@@ -30,81 +30,83 @@ class BookingStepperHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final stepNumber = currentStep + 1;
     return Container(
-      color: AppColors.snow,
+      color: AppColors.canvas,
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        10,
+        8,
         AppTokens.pageHorizontal,
-        14,
+        16,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              InkWell(
-                onTap: onBack,
-                borderRadius: BorderRadius.circular(9999),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.snow,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.pebble),
-                    boxShadow: const [AppTokens.surfaceShadow],
-                  ),
-                  child: const Icon(
-                    LucideIcons.arrowLeft,
-                    size: 18,
-                    color: AppColors.obsidian,
+              Material(
+                color: AppColors.snow,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: onBack,
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.pebble),
+                    ),
+                    child: const Icon(
+                      LucideIcons.arrowLeft,
+                      size: 19,
+                      color: AppColors.obsidian,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'BƯỚC ${currentStep + 1} / 3',
-                      style: AppTypography.numeric(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ember,
+                      'ĐẶT LỊCH · BƯỚC $stepNumber',
+                      style: AppTypography.labelSm(
+                        color: AppColors.steel,
+                        fontSize: 10,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       _stepTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.titleMd(
-                        fontSize: 15,
-                        color: AppColors.obsidian,
-                      ),
+                      style: AppTypography.headlineSm(fontSize: 18),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 12),
+              Text(
+                '${stepNumber.toString().padLeft(2, '0')} / 03',
+                style: AppTypography.numeric(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.steel,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: List.generate(3, (index) {
-              final isActive = index <= currentStep;
-              return Expanded(
-                child: Container(
-                  height: 4,
-                  margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
-                  decoration: BoxDecoration(
-                    color: isActive ? AppColors.ember : AppColors.fog,
-                    borderRadius: BorderRadius.circular(9999),
-                  ),
-                ),
-              );
-            }),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+            child: LinearProgressIndicator(
+              minHeight: 4,
+              value: stepNumber / 3,
+              backgroundColor: AppColors.fog,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.ember),
+            ),
           ),
         ],
       ),

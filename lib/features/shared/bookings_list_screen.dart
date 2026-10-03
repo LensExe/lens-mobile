@@ -271,9 +271,11 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
             // 3. 4 Summary Metrics Cards (Flow 9)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppTokens.pageHorizontal,
-                  vertical: 4,
+                padding: const EdgeInsets.fromLTRB(
+                  AppTokens.pageHorizontal,
+                  4,
+                  AppTokens.pageHorizontal,
+                  8,
                 ),
                 child: Row(
                   children: [
@@ -281,38 +283,34 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
                       child: _MetricCard(
                         title: 'Tổng lịch',
                         value: '$totalCount',
-                        icon: LucideIcons.calendar,
-                        color: AppColors.obsidian,
+                        selected: state.selectedTab == 'Tất cả',
                         onTap: () => controller.selectTab('Tất cả'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    _metricDivider,
                     Expanded(
                       child: _MetricCard(
                         title: 'Chờ thợ nhận',
                         value: '$pendingCount',
-                        icon: LucideIcons.clock3,
-                        color: AppColors.warning,
+                        selected: state.selectedTab == 'Chờ xác nhận',
                         onTap: () => controller.selectTab('Chờ xác nhận'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    _metricDivider,
                     Expanded(
                       child: _MetricCard(
                         title: 'Cần xử lý',
                         value: '$needsActionCount',
-                        icon: LucideIcons.alertCircle,
-                        color: AppColors.ember,
+                        selected: state.selectedTab == 'Cần thanh toán',
                         onTap: () => controller.selectTab('Cần thanh toán'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    _metricDivider,
                     Expanded(
                       child: _MetricCard(
                         title: 'Hoàn thành',
                         value: '$completedCount',
-                        icon: LucideIcons.checkCircle2,
-                        color: AppColors.emerald,
+                        selected: state.selectedTab == 'Đã hoàn tất',
                         onTap: () => controller.selectTab('Đã hoàn tất'),
                       ),
                     ),
@@ -464,15 +462,13 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
 class _MetricCard extends StatelessWidget {
   final String title;
   final String value;
-  final IconData icon;
-  final Color color;
+  final bool selected;
   final VoidCallback onTap;
 
   const _MetricCard({
     required this.title,
     required this.value,
-    required this.icon,
-    required this.color,
+    required this.selected,
     required this.onTap,
   });
 
@@ -480,36 +476,26 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.snow,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.pebble),
-          boxShadow: const [AppTokens.surfaceShadow],
-        ),
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 72,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(height: 6),
             Text(
               value,
               style: AppTypography.numeric(
-                fontSize: 16,
+                fontSize: 21,
                 fontWeight: FontWeight.w700,
-                color: AppColors.obsidian,
+                color: selected ? AppColors.ember : AppColors.obsidian,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               title,
-              style: AppTypography.labelSm(
-                fontSize: 10,
-                color: AppColors.steel,
-              ),
-              maxLines: 1,
+              style: AppTypography.labelSm(color: AppColors.steel),
+              maxLines: 2,
+              textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -518,3 +504,8 @@ class _MetricCard extends StatelessWidget {
     );
   }
 }
+
+const _metricDivider = Padding(
+  padding: EdgeInsets.symmetric(horizontal: 2),
+  child: SizedBox(height: 28, child: VerticalDivider(color: AppColors.pebble)),
+);
