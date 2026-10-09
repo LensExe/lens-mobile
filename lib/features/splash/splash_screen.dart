@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/lens_logo.dart';
 import '../../providers/data_providers.dart';
 
 // import for AppColors if needed, though they hardcoded colors
@@ -37,17 +39,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFF000000),
+      backgroundColor: AppColors.mist,
       body: Center(
-        child: Text(
-          'LENS',
-          style: TextStyle(
-            color: Color(0xFFFFFFFF),
-            fontSize: 48,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 4.0,
-          ),
-        ),
+        child: LensLogo(width: 240, height: 142, semanticLabel: 'Logo Lens'),
       ),
     );
   }

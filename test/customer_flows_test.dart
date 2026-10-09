@@ -16,6 +16,7 @@ import 'package:lens_app/features/customer/booking_flow/controllers/booking_wiza
 import 'package:lens_app/features/customer/bookings/repositories/mock_booking_repository.dart';
 import 'package:lens_app/features/customer/bookings/widgets/cancel_booking_dialog.dart';
 import 'package:lens_app/features/customer/discovery/models/filter_criteria.dart';
+import 'package:lens_app/features/customer/discovery/controllers/discovery_controller.dart';
 import 'package:lens_app/features/customer/discovery/repositories/mock_photographer_repository.dart';
 
 String _dateAfter(int days) {
@@ -394,6 +395,65 @@ void main() {
       container.read(bookingWizardControllerProvider).selectedPackageId,
       'pkg_mh_1',
     );
+    for (final size in [
+      const Size(320, 740),
+      const Size(390, 844),
+      const Size(430, 932),
+    ]) {
+      tester.view.physicalSize = size;
+      router.go('/customer_home/discovery');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+      expect(tester.takeException(), isNull, reason: 'Explore at $size');
+    }
+
+    await tester.enterText(find.byType(TextField).first, 'Ngọc Diệp Studio');
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(
+      container.read(discoveryControllerProvider).criteria.searchQuery,
+      'Ngọc Diệp Studio',
+    );
+    expect(tester.takeException(), isNull, reason: 'Explore search');
+
+    await tester.tap(find.byTooltip('Xóa tìm kiếm'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.bySemanticsLabel('Mở bộ lọc'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bộ lọc'), findsOneWidget);
+    await tester.tap(find.text('Hà Nội').last);
+    await tester.tap(find.text('Áp dụng bộ lọc'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(container.read(discoveryControllerProvider).criteria.city, 'Hà Nội');
+
+    await tester.tap(find.bySemanticsLabel('Sắp xếp theo Nổi bật'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Giá thấp đến cao'));
+    await tester.tap(find.text('Áp dụng'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(
+      container.read(discoveryControllerProvider).sortOption,
+      SortOption.priceAsc,
+    );
+
+    expect(
+      container
+          .read(discoveryControllerProvider)
+          .photographers
+          .map((photographer) => photographer.id),
+      contains('p11'),
+    );
+    final kimNganCard = find.byKey(const ValueKey('p11'));
+    await tester.ensureVisible(kimNganCard);
+    await tester.pump();
+    await tester.tapAt(tester.getTopLeft(kimNganCard) + const Offset(24, 24));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+    expect(router.canPop(), isTrue);
+    expect(tester.takeException(), isNull, reason: 'Explore detail navigation');
     await tester.pump(const Duration(seconds: 2));
   });
 }

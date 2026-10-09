@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/lens_text_field.dart';
+import '../../core/widgets/lens_logo.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../providers/data_providers.dart';
 
@@ -103,7 +104,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _LogoMark(),
+                    const Center(
+                      child: LensLogo(
+                        width: 180,
+                        height: 106,
+                        semanticLabel: 'Logo Lens',
+                      ),
+                    ),
                     const SizedBox(height: 22),
                     Text(
                       'Chào mừng trở lại',
@@ -390,28 +397,5 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
-  }
-}
-
-class _LogoMark extends StatelessWidget {
-  const _LogoMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          color: AppColors.obsidian,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: const Icon(
-          LucideIcons.aperture,
-          color: AppColors.snow,
-          size: 30,
-        ),
-      ),
-    );
   }
 }

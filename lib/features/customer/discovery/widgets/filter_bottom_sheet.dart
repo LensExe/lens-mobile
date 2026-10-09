@@ -79,7 +79,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppColors.snow,
+            color: AppColors.canvas,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppTokens.largeCardRadius),
             ),
@@ -243,14 +243,25 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
 
         // Header Title and Close Action
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 16, 14),
+          padding: const EdgeInsets.fromLTRB(22, 0, 16, 16),
           child: Row(
             children: [
-              Text(
-                'Bộ lọc tìm kiếm',
-                style: AppTypography.headlineSm(fontSize: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bộ lọc',
+                      style: AppTypography.headlineSm(fontSize: 21),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Tinh chỉnh lựa chọn nhiếp ảnh gia',
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               InkWell(
                 onTap: () => Navigator.of(context).pop(),
                 borderRadius: BorderRadius.circular(AppTokens.pillRadius),
@@ -508,23 +519,22 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.obsidian : AppColors.snow,
-        borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+        color: isSelected ? AppColors.obsidian : AppColors.fog,
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color: isSelected ? AppColors.obsidian : AppColors.pebble,
+          color: isSelected ? AppColors.obsidian : Colors.transparent,
           width: 1.0,
         ),
-        boxShadow: isSelected ? null : const [AppTokens.surfaceShadow],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+          borderRadius: BorderRadius.circular(13),
           child: Container(
-            height: AppTokens.filterChipHeight,
+            height: 44,
             padding: EdgeInsets.symmetric(
-              horizontal: leadingIcon != null ? 12 : 16,
+              horizontal: leadingIcon != null ? 11 : 14,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -534,7 +544,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   Icon(
                     leadingIcon,
                     size: 13,
-                    color: isSelected ? AppColors.warning : AppColors.steel,
+                    color: isSelected ? AppColors.ember : AppColors.steel,
                   ),
                   const SizedBox(width: 5),
                 ],

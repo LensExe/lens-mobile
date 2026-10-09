@@ -47,7 +47,7 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.snow,
+        color: AppColors.canvas,
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppTokens.largeCardRadius),
         ),
@@ -107,95 +107,83 @@ class _SortBottomSheetState extends State<SortBottomSheet> {
 
             // Options List
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
               child: Column(
                 children: _sortOptions.map((item) {
                   final isSelected = item.option == _selectedOption;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedOption = item.option;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(
-                          AppTokens.cardRadius,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          curve: Curves.easeInOut,
-                          height: 54,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.ember.withValues(alpha: 0.04)
-                                : AppColors.snow,
-                            borderRadius: BorderRadius.circular(
-                              AppTokens.cardRadius,
-                            ),
-                            border: Border.all(
+                  return Column(
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () =>
+                              setState(() => _selectedOption = item.option),
+                          borderRadius: BorderRadius.circular(14),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            height: 56,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.ember
-                                  : AppColors.pebble,
-                              width: isSelected ? 1.5 : 1.0,
+                                  ? AppColors.snow
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            boxShadow: isSelected
-                                ? const [AppTokens.surfaceShadow]
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item.label,
-                                  style:
-                                      AppTypography.bodyMd(
-                                        color: isSelected
-                                            ? AppColors.obsidian
-                                            : AppColors.obsidian,
-                                      ).copyWith(
-                                        fontWeight: isSelected
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                              // Custom Radio Indicator
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isSelected
-                                      ? AppColors.ember
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppColors.ember
-                                        : AppColors.ash,
-                                    width: isSelected ? 2.0 : 1.5,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item.label,
+                                    style:
+                                        AppTypography.bodyMd(
+                                          color: AppColors.obsidian,
+                                        ).copyWith(
+                                          fontWeight: isSelected
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                        ),
                                   ),
                                 ),
-                                child: isSelected
-                                    ? const Center(
-                                        child: Icon(
-                                          LucideIcons.check,
-                                          size: 13,
-                                          color: AppColors.snow,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                            ],
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  width: 21,
+                                  height: 21,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isSelected
+                                        ? AppColors.obsidian
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.obsidian
+                                          : AppColors.ash,
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  child: isSelected
+                                      ? const Center(
+                                          child: Icon(
+                                            LucideIcons.check,
+                                            size: 12,
+                                            color: AppColors.snow,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      if (item != _sortOptions.last)
+                        const Divider(
+                          height: 1,
+                          indent: 14,
+                          endIndent: 14,
+                          color: AppColors.pebble,
+                        ),
+                    ],
                   );
                 }).toList(),
               ),
