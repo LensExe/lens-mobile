@@ -7,8 +7,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/utils/vietnam_time.dart';
 import '../../core/widgets/glass_container.dart';
 import '../../core/widgets/lens_page.dart';
+import '../../core/widgets/lens_tab_app_bar.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../features/customer/bookings/controllers/customer_bookings_controller.dart';
 import '../../features/customer/bookings/models/booking_model.dart';
@@ -81,6 +83,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final firstName = (user?.name ?? 'bạn').split(' ').first;
 
     return LensPage(
+      appBar: LensTabAppBar(
+        title: 'Không gian của bạn',
+        subtitle: '${_greeting()}, $firstName',
+        trailing: _buildProfileButton(context, firstName),
+      ),
       body: RefreshIndicator(
         color: AppColors.ember,
         onRefresh: () => ref
@@ -91,7 +98,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context, firstName)),
             SliverToBoxAdapter(
               child: _buildMetrics(
                 context,
@@ -157,64 +163,30 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String firstName) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppTokens.pageHorizontal,
-        18,
-        AppTokens.pageHorizontal,
-        6,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '${_greeting()}, $firstName',
-                      style: AppTypography.bodySm(color: AppColors.steel),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      '✦',
-                      style: TextStyle(color: AppColors.ember, fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Không gian của bạn',
-                  style: AppTypography.headlineMd(color: AppColors.obsidian),
-                ),
-              ],
-            ),
+  Widget _buildProfileButton(BuildContext context, String firstName) {
+    return Semantics(
+      button: true,
+      label: 'Mở tài khoản',
+      child: InkWell(
+        onTap: () => context.go('/customer_home/more'),
+        borderRadius: BorderRadius.circular(9999),
+        child: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.pebble),
+            boxShadow: const [AppTokens.surfaceShadow],
+            color: AppColors.snow,
           ),
-          InkWell(
-            onTap: () => context.go('/customer_home/more'),
-            borderRadius: BorderRadius.circular(9999),
-            child: Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.pebble),
-                boxShadow: const [AppTokens.surfaceShadow],
-                color: AppColors.snow,
-              ),
-              child: Text(
-                firstName.isNotEmpty
-                    ? firstName.substring(0, 1).toUpperCase()
-                    : 'L',
-                style: AppTypography.titleMd(color: AppColors.obsidian),
-              ),
-            ),
+          child: Text(
+            firstName.isNotEmpty
+                ? firstName.substring(0, 1).toUpperCase()
+                : 'L',
+            style: AppTypography.titleMd(color: AppColors.obsidian),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -759,7 +731,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       ].contains(booking.status) &&
       booking.date.compareTo(_todayIso()) >= 0;
 
-  String _todayIso() => DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String _todayIso() => DateFormat('yyyy-MM-dd').format(VietnamTime.today());
 
   String _formatDate(String value) {
     final parts = value.split('-');
@@ -767,7 +739,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   String _greeting() {
-    final hour = DateTime.now().hour;
+    final hour = VietnamTime.now().hour;
     if (hour < 12) return 'Chào buổi sáng';
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';
@@ -1211,6 +1183,10 @@ class _RecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = photographer.coverImageUrl.isNotEmpty
+        ? photographer.coverImageUrl
+        : photographer.avatarUrl;
+
     return SizedBox(
       width: 180,
       child: InkWell(
@@ -1222,10 +1198,12 @@ class _RecommendationCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTokens.cardRadius),
             color: AppColors.slate,
             border: Border.all(color: AppColors.pebble),
-            image: DecorationImage(
-              image: NetworkImage(photographer.coverImageUrl),
-              fit: BoxFit.cover,
-            ),
+            image: imageUrl.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(imageUrl),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
           child: Container(
             padding: const EdgeInsets.all(12),

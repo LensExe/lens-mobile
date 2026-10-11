@@ -122,11 +122,17 @@ class SessionInterceptor extends Interceptor {
   bool _isPublicAuthRoute(RequestOptions request) {
     final path = request.uri.path;
     return const [
-      'login',
-      'register',
-      'refresh',
-      'logout',
-    ].any((route) => path.endsWith('/auth/$route'));
+      '/auth/login',
+      '/auth/register',
+      '/auth/refresh',
+      '/auth/logout',
+      '/auth/forgot-password/send-otp',
+      '/auth/forgot-password/verify',
+      '/auth/forgot-password/reset',
+      '/keycloak/google/login',
+      '/keycloak/google/callback',
+      '/keycloak/google/exchange',
+    ].any(path.endsWith);
   }
 
   String? _accessTokenFrom(RequestOptions request) {

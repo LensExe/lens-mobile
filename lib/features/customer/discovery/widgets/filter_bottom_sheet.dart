@@ -23,6 +23,16 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
+  static const _styles = [
+    'Chân dung',
+    'Cưới',
+    'Thời trang',
+    'Sự kiện',
+    'Gia đình',
+    'Ngoại cảnh & Biển',
+    'Hàn Quốc',
+    'Vintage & Phim',
+  ];
   static const _cities = [
     'Hà Nội',
     'TP. Hồ Chí Minh',
@@ -31,6 +41,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     'Cần Thơ',
     'Hải Phòng',
   ];
+  late String? _style = widget.initialCriteria.style;
   late String? _city = widget.initialCriteria.city;
   late double? _minRating = widget.initialCriteria.minRating;
 
@@ -40,6 +51,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         city: _city,
         minRating: _minRating,
         searchQuery: widget.initialCriteria.searchQuery,
+        style: _style,
       ),
     );
     Navigator.of(context).pop();
@@ -47,9 +59,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) => DraggableScrollableSheet(
-    initialChildSize: 0.58,
-    minChildSize: 0.42,
-    maxChildSize: 0.8,
+    initialChildSize: 0.70,
+    minChildSize: 0.45,
+    maxChildSize: 0.92,
     expand: false,
     builder: (context, controller) => Container(
       decoration: const BoxDecoration(
@@ -84,6 +96,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               controller: controller,
               padding: const EdgeInsets.all(20),
               children: [
+                Text('Phong cách chụp', style: AppTypography.titleMd(fontSize: 15)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip(
+                      'Tất cả',
+                      _style == null,
+                      () => setState(() => _style = null),
+                    ),
+                    for (final style in _styles)
+                      _chip(
+                        style,
+                        _style == style,
+                        () => setState(() => _style = style),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 Text('Khu vực', style: AppTypography.titleMd(fontSize: 15)),
                 const SizedBox(height: 10),
                 Wrap(
@@ -118,20 +150,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       () => setState(() => _minRating = null),
                     ),
                     _chip(
+                      '4.0★ trở lên',
+                      _minRating == 4.0,
+                      () => setState(() => _minRating = 4.0),
+                    ),
+                    _chip(
                       '4.5★ trở lên',
                       _minRating == 4.5,
                       () => setState(() => _minRating = 4.5),
-                    ),
-                    _chip(
-                      '4.8★ trở lên',
-                      _minRating == 4.8,
-                      () => setState(() => _minRating = 4.8),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Kết quả chỉ lọc theo khu vực, từ khóa và điểm đánh giá mà Backend hỗ trợ.',
+                  'Kết quả hiển thị được cập nhật theo phong cách, khu vực và đánh giá.',
                   style: AppTypography.bodySm(color: AppColors.steel),
                 ),
               ],

@@ -8,6 +8,7 @@ import 'dart:async';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/lens_tab_app_bar.dart';
 import '../../../../providers/data_providers.dart';
 import '../controllers/discovery_controller.dart';
 import '../models/photographer_model.dart';
@@ -80,6 +81,9 @@ class _PhotographersDiscoveryScreenState
     if (criteria.city?.isNotEmpty == true && criteria.city != 'Tất cả') {
       params['city'] = criteria.city!;
     }
+    if (criteria.style?.isNotEmpty == true && criteria.style != 'Tất cả') {
+      params['style'] = criteria.style!;
+    }
     if (criteria.minRating != null) {
       params['rating'] = criteria.minRating!.toString();
     }
@@ -119,11 +123,14 @@ class _PhotographersDiscoveryScreenState
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
+      appBar: const LensTabAppBar(
+        title: 'Khám phá',
+        subtitle: 'Tìm phong cách hình ảnh bạn yêu thích.',
+      ),
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _buildPageHeading()),
             if (isGuest) SliverToBoxAdapter(child: _buildGuestPrompt(context)),
             SliverToBoxAdapter(child: _buildSearchAndFilters(state)),
             SliverToBoxAdapter(child: _buildResultsToolbar(state)),
@@ -163,34 +170,6 @@ class _PhotographersDiscoveryScreenState
             const SliverToBoxAdapter(child: SizedBox(height: 36)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPageHeading() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppTokens.pageHorizontal,
-        20,
-        AppTokens.pageHorizontal,
-        8,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'LENS  /  KHÁM PHÁ',
-            style: AppTypography.labelSm(color: AppColors.steel)
-                .copyWith(letterSpacing: 1.3, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text('Khám phá', style: AppTypography.headlineLg(fontSize: 34)),
-          const SizedBox(height: 4),
-          Text(
-            'Tìm phong cách hình ảnh bạn yêu thích.',
-            style: AppTypography.bodyMd(color: AppColors.steel),
-          ),
-        ],
       ),
     );
   }

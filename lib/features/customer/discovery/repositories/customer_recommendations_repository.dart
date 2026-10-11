@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/photographer_model.dart';
+import '../utils/photographer_cover_resolver.dart';
 import 'api_photographer_repository.dart';
 
 class CustomerRecommendationsRepository {
@@ -24,9 +25,15 @@ class CustomerRecommendationsRepository {
           'Backend trả về danh sách gợi ý không hợp lệ.',
         );
       }
-      return items
+      final basePhotographers = items
           .map((item) => photographerFromApi(_map(item)))
           .toList(growable: false);
+
+      return await Future.wait(
+        basePhotographers.map(
+          (p) => PhotographerCoverResolver.resolveWithCover(_dio, p),
+        ),
+      );
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }

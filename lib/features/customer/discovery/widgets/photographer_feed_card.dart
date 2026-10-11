@@ -66,6 +66,10 @@ class _PhotographerFeedCardState extends State<PhotographerFeedCard> {
         ? null
         : photographer.styles.first;
 
+    final imageUrl = photographer.coverImageUrl.isNotEmpty
+        ? photographer.coverImageUrl
+        : photographer.avatarUrl;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Material(
@@ -75,9 +79,9 @@ class _PhotographerFeedCardState extends State<PhotographerFeedCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (photographer.coverImageUrl.isNotEmpty)
+              if (imageUrl.isNotEmpty)
                 CachedNetworkImage(
-                  imageUrl: photographer.coverImageUrl,
+                  imageUrl: imageUrl,
                   fit: BoxFit.cover,
                   fadeInDuration: const Duration(milliseconds: 280),
                   placeholder: (context, url) => const ColoredBox(
@@ -90,16 +94,35 @@ class _PhotographerFeedCardState extends State<PhotographerFeedCard> {
                       ),
                     ),
                   ),
-                  errorWidget: (context, url, error) => const ColoredBox(
-                    color: AppColors.fog,
-                    child: Center(
-                      child: Icon(
-                        LucideIcons.imageOff,
-                        color: AppColors.steel,
-                        size: 26,
+                  errorWidget: (context, url, error) {
+                    if (imageUrl != photographer.avatarUrl &&
+                        photographer.avatarUrl.isNotEmpty) {
+                      return CachedNetworkImage(
+                        imageUrl: photographer.avatarUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => const ColoredBox(
+                          color: AppColors.fog,
+                          child: Center(
+                            child: Icon(
+                              LucideIcons.imageOff,
+                              color: AppColors.steel,
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return const ColoredBox(
+                      color: AppColors.fog,
+                      child: Center(
+                        child: Icon(
+                          LucideIcons.imageOff,
+                          color: AppColors.steel,
+                          size: 26,
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 )
               else
                 const ColoredBox(

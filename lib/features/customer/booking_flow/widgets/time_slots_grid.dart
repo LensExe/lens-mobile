@@ -32,7 +32,12 @@ class TimeSlotsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slots = dayAvailability?.slots ?? [];
+    final slots = (dayAvailability?.slots ?? [])
+        .where(
+          (slot) =>
+              dayAvailability?.canStartAt(slot.time, durationHours) ?? false,
+        )
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,32 +97,22 @@ class TimeSlotsGrid extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: slots.map((slot) {
-                  final isBooked = !slot.isFree;
-                  final canStart =
-                      !isBooked &&
-                      (dayAvailability?.canStartAt(slot.time, durationHours) ??
-                          false);
                   final isSelected = selectedTimeSlot == slot.time;
-                  final isEnabled = canStart && !isBooked;
-                  final statusLabel = isBooked
-                      ? 'Đã đặt'
-                      : !canStart
-                      ? 'Không đủ giờ'
-                      : isSelected
+                  final statusLabel = isSelected
                       ? 'Đến ${_calculateEndTime(slot.time, durationHours)}'
-                      : '';
+                      : 'Khung giờ còn trống';
 
                   return SizedBox(
                     width: itemWidth,
                     child: Semantics(
                       button: true,
-                      enabled: isEnabled,
+                      enabled: true,
                       selected: isSelected,
                       label: statusLabel.isEmpty
                           ? slot.time
                           : '${slot.time}, $statusLabel',
                       child: InkWell(
-                        onTap: isEnabled ? () => onSelectSlot(slot.time) : null,
+                        onTap: () => onSelectSlot(slot.time),
                         borderRadius: BorderRadius.circular(16),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 160),
@@ -129,14 +124,14 @@ class TimeSlotsGrid extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.obsidian
-                                : isEnabled
+                                : slot.isFree
                                 ? AppColors.snow
                                 : AppColors.fog,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.obsidian
-                                  : isEnabled
+                                  : slot.isFree
                                   ? AppColors.pebble
                                   : AppColors.fog,
                             ),
@@ -160,7 +155,7 @@ class TimeSlotsGrid extends StatelessWidget {
                                     style: AppTypography.numeric(
                                       color: isSelected
                                           ? AppColors.snow
-                                          : isEnabled
+                                          : slot.isFree
                                           ? AppColors.obsidian
                                           : AppColors.ash,
                                       fontSize: 14,

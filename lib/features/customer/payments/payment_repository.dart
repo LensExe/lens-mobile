@@ -15,6 +15,7 @@ class PaymentIntent {
     required this.amount,
     required this.currency,
     this.type,
+    this.paymentGateway,
     this.checkoutUrl,
     this.qrCode,
     this.checkoutExpiresAt,
@@ -25,6 +26,7 @@ class PaymentIntent {
   final int amount;
   final String currency;
   final String? type;
+  final String? paymentGateway;
   final String? checkoutUrl;
   final String? qrCode;
   final String? checkoutExpiresAt;
@@ -35,6 +37,7 @@ class PaymentIntent {
     amount: _int(json['amount']),
     currency: json['currency']?.toString() ?? 'VND',
     type: _nullableString(json['type']),
+    paymentGateway: _nullableString(json['payment_gateway']),
     checkoutUrl: _nullableString(json['checkout_url']),
     qrCode: _nullableString(json['qr_code']),
     checkoutExpiresAt: _nullableString(json['checkout_expires_at']),
@@ -64,7 +67,7 @@ class BookingPaymentRepository {
           'payment_method': method.name,
         },
       );
-      return PaymentIntent.fromJson(_map(response.data));
+      return PaymentIntent.fromJson(_responseMap(response.data));
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -73,7 +76,7 @@ class BookingPaymentRepository {
   Future<PaymentHistory> getBookingHistory(String bookingId) async {
     try {
       final response = await _dio.get<dynamic>('bookings/$bookingId/payments');
-      final data = _map(response.data);
+      final data = _responseMap(response.data);
       final raw = data['items'];
       if (raw is! List) {
         throw const ApiException(
@@ -91,7 +94,7 @@ class BookingPaymentRepository {
   Future<PaymentIntent> getPayment(String paymentId) async {
     try {
       final response = await _dio.get<dynamic>('payments/$paymentId');
-      return PaymentIntent.fromJson(_map(response.data));
+      return PaymentIntent.fromJson(_responseMap(response.data));
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -100,7 +103,7 @@ class BookingPaymentRepository {
   Future<PaymentIntent> getPaymentQr(String paymentId) async {
     try {
       final response = await _dio.get<dynamic>('payments/$paymentId/qr');
-      return PaymentIntent.fromJson(_map(response.data));
+      return PaymentIntent.fromJson(_responseMap(response.data));
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -124,6 +127,19 @@ Map<String, dynamic> _map(Object? value) {
   throw const ApiException(
     'Backend trả về dữ liệu thanh toán không đúng cấu trúc.',
   );
+}
+
+Map<String, dynamic> _responseMap(Object? value) {
+  var payload = _map(value);
+  while (payload.containsKey('success') && payload.containsKey('data')) {
+    if (payload['success'] != true) {
+      throw ApiException(
+        'Backend không xác nhận yêu cầu thanh toán thành công.',
+      );
+    }
+    payload = _map(payload['data']);
+  }
+  return payload;
 }
 
 String _requiredString(Object? value, String field) {

@@ -72,6 +72,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _startGoogleLogin() async {
+    if (_isSubmitting) return;
+    try {
+      await ref.read(authFlowRepositoryProvider).getGoogleAuthorizationUrl();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Google trên ứng dụng LENS'),
+          content: const Text(
+            'Backend đã cấp URL đăng nhập, nhưng chỉ có một callback frontend dùng chung. Cần callback/deep link để trả handoff code về đúng ứng dụng trước khi Mobile có thể nhận phiên đăng nhập.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Đã hiểu'),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (mounted) _showMessage(error.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,8 +244,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () => _showMessage(
-                                'Vui lòng liên hệ tổng đài Lens Care để được hỗ trợ.',
+                              onPressed: () => context.push(
+                                Uri(
+                                  path: '/forgot-password',
+                                  queryParameters:
+                                      _emailController.text.trim().isEmpty
+                                      ? null
+                                      : {'email': _emailController.text.trim()},
+                                ).toString(),
                               ),
                               child: const Text('Quên mật khẩu?'),
                             ),
@@ -230,6 +261,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             text: 'Đăng nhập',
                             onPressed: _submit,
                             isLoading: _isSubmitting,
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            onPressed: _isSubmitting ? null : _startGoogleLogin,
+                            icon: const Icon(Icons.g_mobiledata, size: 24),
+                            label: const Text('Tiếp tục với Google'),
                           ),
                         ],
                       ),

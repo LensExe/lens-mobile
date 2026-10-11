@@ -4,18 +4,21 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/vietnam_time.dart';
 import '../models/day_availability.dart';
 
 class DateStripPicker extends StatefulWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final Map<String, DayAvailability> availabilityMap;
+  final double durationHours;
 
   const DateStripPicker({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
     required this.availabilityMap,
+    required this.durationHours,
   });
 
   @override
@@ -28,11 +31,24 @@ class _DateStripPickerState extends State<DateStripPicker> {
   @override
   void initState() {
     super.initState();
-    _displayedMonth = DateTime(
+    _displayedMonth = DateTime.utc(
       widget.selectedDate.year,
       widget.selectedDate.month,
       1,
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant DateStripPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate.year != widget.selectedDate.year ||
+        oldWidget.selectedDate.month != widget.selectedDate.month) {
+      _displayedMonth = DateTime.utc(
+        widget.selectedDate.year,
+        widget.selectedDate.month,
+        1,
+      );
+    }
   }
 
   String _formatDayOfWeek(DateTime date) {
@@ -58,7 +74,7 @@ class _DateStripPickerState extends State<DateStripPicker> {
 
   void _prevMonth() {
     setState(() {
-      _displayedMonth = DateTime(
+      _displayedMonth = DateTime.utc(
         _displayedMonth.year,
         _displayedMonth.month - 1,
         1,
@@ -68,7 +84,7 @@ class _DateStripPickerState extends State<DateStripPicker> {
 
   void _nextMonth() {
     setState(() {
-      _displayedMonth = DateTime(
+      _displayedMonth = DateTime.utc(
         _displayedMonth.year,
         _displayedMonth.month + 1,
         1,
@@ -76,11 +92,64 @@ class _DateStripPickerState extends State<DateStripPicker> {
     });
   }
 
+  List<DateTime> _availableDates() {
+    final parsed = <DateTime>[];
+    for (final key in widget.availabilityMap.keys) {
+      try {
+        parsed.add(VietnamTime.parseDateKey(key));
+      } on FormatException {
+        continue;
+      }
+    }
+    parsed.sort();
+    if (parsed.isNotEmpty) return parsed;
+    final today = VietnamTime.today();
+    return List.generate(31, (index) => today.add(Duration(days: index)));
+  }
+
+  List<DateTime> _visibleDates(List<DateTime> availableDates) {
+    if (availableDates.isEmpty) return const [];
+    final monthStart = DateTime.utc(
+      _displayedMonth.year,
+      _displayedMonth.month,
+      1,
+    );
+    final monthEnd = DateTime.utc(
+      _displayedMonth.year,
+      _displayedMonth.month + 1,
+      0,
+    );
+    final start = monthStart.isBefore(availableDates.first)
+        ? availableDates.first
+        : monthStart;
+    final end = monthEnd.isAfter(availableDates.last)
+        ? availableDates.last
+        : monthEnd;
+    if (start.isAfter(end)) return const [];
+    return List.generate(
+      end.difference(start).inDays + 1,
+      (index) => start.add(Duration(days: index)),
+    );
+  }
+
+  bool _monthHasDates(int year, int month, List<DateTime> availableDates) =>
+      availableDates.any((date) => date.year == year && date.month == month);
+
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final days = List.generate(21, (index) => today.add(Duration(days: index)));
+    final today = VietnamTime.today();
+    final availableDates = _availableDates();
+    final days = _visibleDates(availableDates);
+    final previousMonth = DateTime.utc(
+      _displayedMonth.year,
+      _displayedMonth.month - 1,
+      1,
+    );
+    final nextMonth = DateTime.utc(
+      _displayedMonth.year,
+      _displayedMonth.month + 1,
+      1,
+    );
     final monthLabel =
         'Tháng ${_displayedMonth.month}, ${_displayedMonth.year}';
 
@@ -99,9 +168,25 @@ class _DateStripPickerState extends State<DateStripPicker> {
                 ],
               ),
             ),
-            _MonthNavButton(icon: LucideIcons.chevronLeft, onTap: _prevMonth),
+            _MonthNavButton(
+              icon: LucideIcons.chevronLeft,
+              enabled: _monthHasDates(
+                previousMonth.year,
+                previousMonth.month,
+                availableDates,
+              ),
+              onTap: _prevMonth,
+            ),
             const SizedBox(width: 8),
-            _MonthNavButton(icon: LucideIcons.chevronRight, onTap: _nextMonth),
+            _MonthNavButton(
+              icon: LucideIcons.chevronRight,
+              enabled: _monthHasDates(
+                nextMonth.year,
+                nextMonth.month,
+                availableDates,
+              ),
+              onTap: _nextMonth,
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -123,7 +208,12 @@ class _DateStripPickerState extends State<DateStripPicker> {
               final dayAvailability = widget.availabilityMap[dateKey];
               final hasSlots =
                   dayAvailability != null &&
-                  dayAvailability.slots.any((slot) => slot.isFree);
+                  dayAvailability.slots.any(
+                    (slot) => dayAvailability.canStartAt(
+                      slot.time,
+                      widget.durationHours,
+                    ),
+                  );
 
               return Semantics(
                 button: true,
@@ -137,7 +227,7 @@ class _DateStripPickerState extends State<DateStripPicker> {
                         : () {
                             widget.onDateSelected(date);
                             setState(() {
-                              _displayedMonth = DateTime(
+                              _displayedMonth = DateTime.utc(
                                 date.year,
                                 date.month,
                                 1,
@@ -210,16 +300,21 @@ class _DateStripPickerState extends State<DateStripPicker> {
 class _MonthNavButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
+  final bool enabled;
 
-  const _MonthNavButton({required this.icon, required this.onTap});
+  const _MonthNavButton({
+    required this.icon,
+    required this.onTap,
+    required this.enabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.snow,
+      color: enabled ? AppColors.snow : AppColors.fog,
       shape: const CircleBorder(),
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         customBorder: const CircleBorder(),
         child: Container(
           width: 40,
@@ -228,7 +323,11 @@ class _MonthNavButton extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.pebble),
           ),
-          child: Icon(icon, size: 17, color: AppColors.obsidian),
+          child: Icon(
+            icon,
+            size: 17,
+            color: enabled ? AppColors.obsidian : AppColors.ash,
+          ),
         ),
       ),
     );

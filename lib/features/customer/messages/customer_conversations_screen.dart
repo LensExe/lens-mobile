@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/lens_tab_app_bar.dart';
 
 class CustomerConversationsScreen extends StatelessWidget {
   const CustomerConversationsScreen({super.key});
@@ -12,16 +13,7 @@ class CustomerConversationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          'Tin nhắn',
-          style: AppTypography.headlineMd(color: AppColors.obsidian),
-        ),
-        centerTitle: false,
-      ),
+      appBar: const LensTabAppBar(title: 'Tin nhắn'),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppTokens.pageHorizontal),

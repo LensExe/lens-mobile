@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/lens_page.dart';
+import '../../core/widgets/lens_tab_app_bar.dart';
 import '../../core/widgets/customer_avatar.dart';
 import '../../providers/data_providers.dart';
 
@@ -28,14 +29,9 @@ class MoreTabScreen extends ConsumerWidget {
 
     return LensPage(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          'Tài khoản & Thiết lập',
-          style: AppTypography.headlineSm(fontSize: 20),
-        ),
+      appBar: const LensTabAppBar(
+        title: 'Tài khoản & Thiết lập',
+        subtitle: 'Hồ sơ, bảo mật và tuỳ chọn',
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(

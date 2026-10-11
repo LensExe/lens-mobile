@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/network/api_config.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/widgets/lens_text_field.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../providers/data_providers.dart';
@@ -23,10 +24,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  String _selectedRole = 'client'; // 'client' | 'photographer'
   bool _obscurePassword = true;
   bool _isSubmitting = false;
-  String? _errorMessage;
 
   @override
   void dispose() {
@@ -37,9 +36,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() => _errorMessage = null);
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     setState(() => _isSubmitting = true);
     try {
       await ref
@@ -48,22 +47,47 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            role: _selectedRole,
+            role: 'client',
           );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Tạo tài khoản thành công! Chào mừng bạn đến với Lens.',
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(
+                  LucideIcons.checkCircle2,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Tạo tài khoản thành công! Chào mừng bạn đến với Lens.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.emerald,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            duration: const Duration(seconds: 3),
           ),
-          backgroundColor: AppColors.emerald,
-        ),
-      );
+        );
+
       final redirect = widget.redirect;
       context.go(
-        _selectedRole == 'client' &&
-                redirect != null &&
+        redirect != null &&
                 redirect.startsWith('/customer_home/') &&
                 !redirect.startsWith('//')
             ? redirect
@@ -71,14 +95,115 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      _showErrorMessage(_extractErrorMessage(e));
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  String _extractErrorMessage(Object exception) {
+    if (exception is ApiException) {
+      final msg = exception.message;
+      final code = exception.statusCode;
+
+      if (code == 409 ||
+          msg.contains('409') ||
+          msg.contains('Keycloak request failed with status 401') ||
+          msg.toLowerCase().contains('already exists') ||
+          msg.toLowerCase().contains('user exists') ||
+          msg.toLowerCase().contains('đã tồn tại')) {
+        return 'Email này đã được sử dụng. Vui lòng đăng nhập hoặc sử dụng email khác.';
+      }
+
+      if (code == 400 ||
+          code == 422 ||
+          msg.contains('Keycloak request failed with status 400') ||
+          msg.toLowerCase().contains('invalid')) {
+        return 'Thông tin đăng ký không hợp lệ. Vui lòng kiểm tra lại.';
+      }
+
+      if (msg.contains('Keycloak') ||
+          (code != null && code >= 500)) {
+        return 'Hệ thống đang bảo trì hoặc gặp sự cố tạm thời. Vui lòng thử lại sau.';
+      }
+
+      if (msg.contains('Không thể kết nối')) {
+        return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.';
+      }
+
+      if (msg.contains('Exception') ||
+          msg.contains('DioException') ||
+          msg.contains('HTTP ') ||
+          msg.contains('status code')) {
+        return 'Đăng ký không thành công. Vui lòng thử lại sau.';
+      }
+
+      return msg;
+    }
+
+    if (exception is ApiConfigurationException) {
+      return 'Lỗi cấu hình hệ thống: Địa chỉ máy chủ không hợp lệ.';
+    }
+
+    final message = exception
+        .toString()
+        .replaceFirst('Bad state: ', '')
+        .replaceFirst('Exception: ', '');
+
+    if (message.contains('API_BASE_URL')) {
+      return 'Chưa cấu hình địa chỉ máy chủ (API_BASE_URL).';
+    }
+    if (message.contains('SocketException') ||
+        message.contains('Connection refused') ||
+        message.contains('Network is unreachable') ||
+        message.contains('Failed host lookup')) {
+      return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.';
+    }
+    if (message.contains('ProviderException') ||
+        message.contains('stack trace')) {
+      return 'Không thể kết nối đến hệ thống máy chủ. Vui lòng thử lại sau.';
+    }
+
+    return 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin và thử lại.';
+  }
+
+  void _showErrorMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(
+                LucideIcons.alertCircle,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.crimson,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 4),
+        ),
+      );
   }
 
   @override
@@ -139,81 +264,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         'Đăng ký tài khoản miễn phí để tìm kiếm và đặt lịch nhiếp ảnh gia.',
                         style: TextStyle(color: AppColors.steel, fontSize: 13),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
 
-                      // API Error Banner (e.g. 409 Email đã tồn tại)
-                      if (_errorMessage != null) ...[
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.crimson.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.crimson.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                LucideIcons.alertCircle,
-                                size: 18,
-                                color: AppColors.crimson,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: AppTypography.bodySm(
-                                    color: AppColors.crimson,
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                      ],
-
-                      // Step 1: Role Selection Radio
-                      const Text(
-                        'Mục đích của bạn là gì?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _RoleCard(
-                              icon: LucideIcons.user,
-                              title: 'Thuê thợ ảnh',
-                              subtitle: 'Tôi là Khách hàng',
-                              isSelected: _selectedRole == 'client',
-                              onTap: () =>
-                                  setState(() => _selectedRole = 'client'),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _RoleCard(
-                              icon: LucideIcons.camera,
-                              title: 'Nhận lịch chụp',
-                              subtitle: 'Tôi là Nhiếp ảnh gia',
-                              isSelected: _selectedRole == 'photographer',
-                              onTap: () => setState(
-                                () => _selectedRole = 'photographer',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-
-                      // Step 2: Name
+                      // Name
                       const Text(
                         'Họ và tên',
                         style: TextStyle(fontWeight: FontWeight.w600),
@@ -285,7 +338,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Step 3: Primary CTA Button
+                      // Primary CTA Button
                       PrimaryButton(
                         text: 'Tạo tài khoản',
                         onPressed: _submit,
@@ -329,71 +382,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _RoleCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.ember.withValues(alpha: 0.06)
-              : AppColors.fog,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.ember
-                : AppColors.pebble.withValues(alpha: 0.6),
-            width: isSelected ? 1.8 : 1.0,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? AppColors.ember : AppColors.steel,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: AppTypography.titleMd(
-                fontSize: 12.5,
-                color: isSelected ? AppColors.ember : AppColors.obsidian,
-              ).copyWith(fontWeight: FontWeight.w700),
-            ),
-            Text(
-              subtitle,
-              style: AppTypography.labelSm(
-                fontSize: 10,
-                color: AppColors.steel,
-              ),
-            ),
-          ],
         ),
       ),
     );

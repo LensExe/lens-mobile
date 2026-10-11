@@ -6,6 +6,8 @@ import 'package:lens_app/features/splash/splash_screen.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
 import 'package:lens_app/features/auth/login_screen.dart';
 import 'package:lens_app/features/auth/signup_screen.dart';
+import 'package:lens_app/features/auth/forgot_password_screen.dart';
+import 'package:lens_app/features/auth/email_verification_screen.dart';
 import 'package:lens_app/features/customer/customer_home_screen.dart';
 import 'package:lens_app/features/customer/discovery/screens/photographers_discovery_screen.dart';
 import 'package:lens_app/features/customer/photographer_detail/screens/photographer_detail_screen.dart';
@@ -42,6 +44,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           path == '/splash' ||
           path == '/login' ||
           path == '/signup' ||
+          path == '/forgot-password' ||
           path == '/gallery' ||
           path == '/customer_home/discovery' ||
           RegExp(r'^/customer_home/photographer/[^/]+$').hasMatch(path);
@@ -73,6 +76,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/signup',
         builder: (context, state) =>
             SignupScreen(redirect: state.uri.queryParameters['redirect']),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => ForgotPasswordScreen(
+          initialEmail: state.uri.queryParameters['email'],
+        ),
       ),
       GoRoute(
         path: '/customer_home',
@@ -121,6 +130,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/customer_home/settings/account',
         builder: (context, state) =>
             const SettingsScreen(section: SettingsSection.account),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/email-verification',
+        builder: (context, state) => const EmailVerificationScreen(),
       ),
       GoRoute(
         path: '/customer_home/settings/notifications',

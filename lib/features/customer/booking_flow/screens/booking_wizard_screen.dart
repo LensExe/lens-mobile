@@ -179,12 +179,15 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
     } else if (state.currentStep == 2) {
       isCtaEnabled =
           _confirmArmed && state.agreedToTerms && !state.isSubmitting;
-      ctaText = 'Xác nhận & đặt cọc 30%';
+      ctaText = 'Tiếp tục thanh toán cọc';
     }
+
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Top Stepper Header
@@ -221,30 +224,28 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
                 ],
               ),
             ),
-
-            // Bottom CTA Bar
-            Container(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                12,
-                16,
-                MediaQuery.of(context).padding.bottom + 12,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: AppColors.pebble, width: 1.0),
-                ),
-                boxShadow: [AppTokens.surfaceShadow],
-              ),
-              child: PrimaryButton(
-                text: ctaText,
-                isLoading: state.isSubmitting,
-                onPressed: isCtaEnabled ? _onNext : null,
-                height: AppTokens.primaryButtonHeight, // 52px
-              ),
-            ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          bottomInset > 0 ? bottomInset + 4 : 16,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: AppColors.pebble, width: 1.0),
+          ),
+          boxShadow: [AppTokens.surfaceShadow],
+        ),
+        child: PrimaryButton(
+          text: ctaText,
+          isLoading: state.isSubmitting,
+          onPressed: isCtaEnabled ? _onNext : null,
+          height: AppTokens.primaryButtonHeight, // 52px
         ),
       ),
     );

@@ -311,6 +311,16 @@ class MockPhotographerRepository implements PhotographerRepository {
             .where((p) => p.rating >= criteria.minRating!)
             .toList();
       }
+
+      // Filter by Style
+      if (criteria.style != null && criteria.style != 'Tất cả') {
+        final target = foldVietnamese(criteria.style!.toLowerCase());
+        filteredList = filteredList
+            .where((p) => p.styles.any(
+                  (s) => foldVietnamese(s.toLowerCase()).contains(target),
+                ))
+            .toList();
+      }
     }
 
     return filteredList;

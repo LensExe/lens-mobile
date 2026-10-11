@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/utils/vietnam_time.dart';
 import '../models/booking_model.dart';
 import 'booking_repository.dart';
 
@@ -22,7 +23,7 @@ class ApiBookingRepository implements BookingRepository {
           'bookings',
           queryParameters: {'limit': limit, 'offset': offset},
         );
-        final page = _map(response.data);
+        final page = _responseMap(response.data);
         final rawItems = page['items'];
         if (rawItems is! List) {
           throw const ApiException(
@@ -46,7 +47,7 @@ class ApiBookingRepository implements BookingRepository {
       await Future.wait(
         photographerIds.map((id) async {
           try {
-            profiles[id] = _map(
+            profiles[id] = _responseMap(
               (await _dio.get<dynamic>('photographers/$id')).data,
             );
           } on DioException {
@@ -66,7 +67,7 @@ class ApiBookingRepository implements BookingRepository {
   Future<Booking?> getBookingById(String id) async {
     try {
       final response = await _dio.get<dynamic>('bookings/$id');
-      return _booking(_map(response.data), null);
+      return _booking(_responseMap(response.data), null);
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
       throw ApiException.fromDio(error);
@@ -86,7 +87,7 @@ class ApiBookingRepository implements BookingRepository {
           'to': _isoWithOffset(input.to),
         },
       );
-      return _booking(_map(response.data), {
+      return _booking(_responseMap(response.data), {
         'fullname': input.photographerName,
         'avatar_url': input.photographerAvatar,
       });
@@ -105,7 +106,7 @@ class ApiBookingRepository implements BookingRepository {
         'bookings/$bookingId/cancel',
         data: {'reason': reason.trim()},
       );
-      return _booking(_map(response.data), null);
+      return _booking(_responseMap(response.data), null);
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -117,7 +118,7 @@ class ApiBookingRepository implements BookingRepository {
       final response = await _dio.post<dynamic>(
         'bookings/$bookingId/confirm-receipt',
       );
-      return _booking(_map(response.data), null);
+      return _booking(_responseMap(response.data), null);
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -166,8 +167,12 @@ class ApiBookingRepository implements BookingRepository {
 }
 
 Booking _booking(Map<String, dynamic> json, Map<String, dynamic>? profile) {
-  final start = DateTime.parse(_requiredString(json['from'], 'from')).toLocal();
-  final end = DateTime.parse(_requiredString(json['to'], 'to')).toLocal();
+  final start = VietnamTime.fromInstant(
+    DateTime.parse(_requiredString(json['from'], 'from')),
+  );
+  final end = VietnamTime.fromInstant(
+    DateTime.parse(_requiredString(json['to'], 'to')),
+  );
   final status = switch (_requiredString(json['status'], 'status')) {
     'pending' => BookingStatus.pending,
     'accepted' => BookingStatus.accepted,
@@ -214,23 +219,16 @@ DateTime _dateTimeFromBooking(Booking booking, {required bool start}) {
   final hour = int.parse(time[0]);
   final minute = int.parse(time[1]);
   if (!start && timeParts.length == 1) {
-    return DateTime(date.year, date.month, date.day, hour, minute).add(
+    return DateTime.utc(date.year, date.month, date.day, hour, minute).add(
       Duration(
         minutes: ((booking.packageSnapshot?.durationHours ?? 1) * 60).round(),
       ),
     );
   }
-  return DateTime(date.year, date.month, date.day, hour, minute);
+  return DateTime.utc(date.year, date.month, date.day, hour, minute);
 }
 
-String _isoWithOffset(DateTime value) {
-  final local = value.toLocal();
-  final offset = local.timeZoneOffset;
-  final sign = offset.isNegative ? '-' : '+';
-  final hours = offset.inHours.abs().toString().padLeft(2, '0');
-  final minutes = (offset.inMinutes.abs() % 60).toString().padLeft(2, '0');
-  return '${DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(local)}$sign$hours:$minutes';
-}
+String _isoWithOffset(DateTime value) => VietnamTime.toApiIso(value);
 
 Map<String, dynamic> _map(Object? value) {
   if (value is Map<String, dynamic>) return value;
@@ -238,6 +236,21 @@ Map<String, dynamic> _map(Object? value) {
   throw const ApiException(
     'Backend trả về dữ liệu booking không đúng cấu trúc.',
   );
+}
+
+Map<String, dynamic> _responseMap(Object? value) {
+  var payload = _map(value);
+  while (payload.containsKey('success') && payload.containsKey('data')) {
+    if (payload['success'] != true) {
+      throw ApiException(
+        _string(payload['message']).isEmpty
+            ? 'Backend không xác nhận yêu cầu booking thành công.'
+            : _string(payload['message']),
+      );
+    }
+    payload = _map(payload['data']);
+  }
+  return payload;
 }
 
 String _requiredString(Object? value, String field) {

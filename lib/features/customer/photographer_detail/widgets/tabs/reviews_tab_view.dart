@@ -20,9 +20,11 @@ class ReviewsTabView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppTokens.pageHorizontal),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         // 1. Header with overall rating score
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -248,7 +250,8 @@ class ReviewsTabView extends StatelessWidget {
               );
             },
           ),
-      ],
+        ],
+      ),
     );
   }
 }

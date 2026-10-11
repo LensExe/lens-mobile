@@ -1,13 +1,8 @@
 class TimeSlotAvailability {
-  const TimeSlotAvailability({
-    required this.time,
-    required this.status,
-    required this.availableUntil,
-  });
+  const TimeSlotAvailability({required this.time, required this.status});
 
   final String time;
   final String status;
-  final DateTime availableUntil;
 
   bool get isFree => status == 'free';
 }
@@ -23,23 +18,31 @@ class DayAvailability {
     required this.slots,
   });
 
-  /// Availability API returns continuous ranges, not a slot interval.
-  /// This accepts only a Backend range boundary, without inventing a grid.
+  /// Availability API returns continuous ranges. The public booking flow
+  /// exposes 30-minute starts between 07:00 and 23:30, only when every
+  /// half-hour cell needed by the package is free.
   bool canStartAt(String startTime, double durationHours) {
-    if (!isBookable) return false;
-    final matching = slots.where(
-      (slot) => slot.time == startTime && slot.isFree,
-    );
-    if (matching.isEmpty) return false;
-    final slot = matching.first;
-    final startsAt = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      int.parse(startTime.split(':')[0]),
-      int.parse(startTime.split(':')[1]),
-    );
-    return slot.availableUntil.difference(startsAt).inMinutes >=
-        (durationHours * 60).ceil();
+    if (!isBookable || durationHours <= 0) return false;
+    final parts = startTime.split(':');
+    if (parts.length != 2) return false;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null || minute % 30 != 0) return false;
+    final startMinutes = hour * 60 + minute;
+    if (startMinutes < 7 * 60 || startMinutes >= 24 * 60) return false;
+
+    final requiredSlots = (durationHours * 2).ceil();
+    if (startMinutes + requiredSlots * 30 > 24 * 60) return false;
+    final freeTimes = slots
+        .where((slot) => slot.isFree)
+        .map((slot) => slot.time)
+        .toSet();
+    return List.generate(
+      requiredSlots,
+      (index) => _timeAt(startMinutes + index * 30),
+    ).every(freeTimes.contains);
   }
+
+  static String _timeAt(int minutes) =>
+      '${(minutes ~/ 60).toString().padLeft(2, '0')}:${(minutes % 60).toString().padLeft(2, '0')}';
 }

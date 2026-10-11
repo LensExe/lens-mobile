@@ -49,6 +49,7 @@ class DiscoveryState {
     int count = 0;
     if (criteria.city != null && criteria.city != 'Tất cả') count++;
     if (criteria.minRating != null) count++;
+    if (criteria.style != null && criteria.style != 'Tất cả') count++;
     return count;
   }
 }
@@ -78,6 +79,7 @@ class DiscoveryController extends Notifier<DiscoveryState> {
         topRated:
             state.criteria.searchQuery?.trim().isNotEmpty != true &&
             state.criteria.city?.trim().isNotEmpty != true &&
+            state.criteria.style?.trim().isNotEmpty != true &&
             state.criteria.minRating == null,
       );
 
@@ -138,6 +140,7 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     final criteria = FilterCriteria(
       searchQuery: query['q'],
       city: query['city'],
+      style: query['style'],
       minRating: double.tryParse(query['rating'] ?? ''),
     );
     state = state.copyWith(

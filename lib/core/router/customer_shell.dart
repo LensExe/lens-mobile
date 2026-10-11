@@ -131,11 +131,17 @@ class _CustomerNavItem extends StatelessWidget {
                     width: 36,
                     height: 27,
                     decoration: BoxDecoration(
-                      color: selected ? AppColors.fog : Colors.transparent,
+                      color: selected
+                          ? AppColors.ember.withValues(alpha: 0.12)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppTokens.pillRadius),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(destination.icon, size: 19, color: iconColor),
+                    child: Icon(
+                      destination.icon,
+                      size: 19,
+                      color: selected ? AppColors.ember : iconColor,
+                    ),
                   ),
                   if (unreadCount > 0)
                     Positioned(

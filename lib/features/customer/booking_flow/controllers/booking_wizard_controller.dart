@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/vietnam_time.dart';
 import '../../../../providers/data_providers.dart';
 import '../../bookings/controllers/customer_bookings_controller.dart';
 import '../../bookings/models/booking_model.dart';
@@ -14,12 +15,7 @@ class BookingWizardController extends Notifier<BookingWizardState> {
   int _availabilityRequest = 0;
   @override
   BookingWizardState build() {
-    final now = DateTime.now();
-    final initialDate = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).add(const Duration(days: 2));
+    final initialDate = VietnamTime.today().add(const Duration(days: 2));
 
     ref.watch(authUserProvider.select((user) => user?.id));
     final user = ref.read(authUserProvider);
@@ -50,6 +46,7 @@ class BookingWizardController extends Notifier<BookingWizardState> {
 
       state = state.copyWith(
         profile: profile,
+        city: profile.city.isNotEmpty ? profile.city : state.city,
         selectedPackageId: profile.packages.any((pkg) => pkg.id == packageId)
             ? packageId
             : null,
@@ -65,9 +62,9 @@ class BookingWizardController extends Notifier<BookingWizardState> {
   Future<void> _refreshAvailability(String photographerId) async {
     final request = ++_availabilityRequest;
     try {
-      final now = DateTime.now();
-      final from = DateTime(now.year, now.month, now.day);
-      final to = from.add(const Duration(days: 30));
+      final from = VietnamTime.today();
+      const bookingWindowDays = 31;
+      final to = from.add(const Duration(days: bookingWindowDays));
       final ranges = await _profileRepo.getAvailability(
         photographerId: photographerId,
         from: from,
@@ -76,27 +73,35 @@ class BookingWizardController extends Notifier<BookingWizardState> {
       if (request != _availabilityRequest) return;
 
       final map = <String, DayAvailability>{};
-      for (var index = 0; index < 30; index++) {
-        final date = from.add(Duration(days: index));
-        final dayStart = DateTime(date.year, date.month, date.day);
-        final dayEnd = dayStart.add(const Duration(days: 1));
-        final slots = <TimeSlotAvailability>[];
-        for (final range in ranges) {
-          final rangeStart = range.from.toLocal();
-          final rangeEnd = range.to.toLocal();
-          final startsAt = rangeStart.isAfter(dayStart) ? rangeStart : dayStart;
-          final endsAt = rangeEnd.isBefore(dayEnd) ? rangeEnd : dayEnd;
-          if (!endsAt.isAfter(startsAt)) continue;
-          slots.add(
-            TimeSlotAvailability(
-              time: DateFormat('HH:mm').format(startsAt),
-              status: 'free',
-              availableUntil: endsAt,
-            ),
+      final slotsByDate = <String, Set<String>>{};
+      for (final range in ranges) {
+        final rangeStart = range.from.toUtc().millisecondsSinceEpoch;
+        final rangeEnd = range.to.toUtc().millisecondsSinceEpoch;
+        if (rangeStart >= rangeEnd) continue;
+        for (
+          var cursor = VietnamTime.nextHalfHour(rangeStart);
+          cursor + VietnamTime.halfHourMilliseconds <= rangeEnd;
+          cursor += VietnamTime.halfHourMilliseconds
+        ) {
+          final vietnamTime = VietnamTime.fromInstant(
+            DateTime.fromMillisecondsSinceEpoch(cursor, isUtc: true),
           );
+          final minutes = vietnamTime.hour * 60 + vietnamTime.minute;
+          if (minutes < 7 * 60 || minutes >= 24 * 60) continue;
+          final dateKey = DateFormat('yyyy-MM-dd').format(vietnamTime);
+          final time = DateFormat('HH:mm').format(vietnamTime);
+          slotsByDate.putIfAbsent(dateKey, () => <String>{}).add(time);
         }
+      }
+
+      for (var index = 0; index < bookingWindowDays; index++) {
+        final date = from.add(Duration(days: index));
+        final dateKey = DateFormat('yyyy-MM-dd').format(date);
+        final slots = (slotsByDate[dateKey] ?? const <String>{})
+            .map((time) => TimeSlotAvailability(time: time, status: 'free'))
+            .toList();
         slots.sort((a, b) => a.time.compareTo(b.time));
-        map[DateFormat('yyyy-MM-dd').format(date)] = DayAvailability(
+        map[dateKey] = DayAvailability(
           date: date,
           isBookable: slots.isNotEmpty,
           slots: slots,
@@ -119,7 +124,7 @@ class BookingWizardController extends Notifier<BookingWizardState> {
   }
 
   void selectDate(DateTime date) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
+    final dateOnly = DateTime.utc(date.year, date.month, date.day);
     state = state.copyWith(selectedDate: dateOnly, clearTimeSlot: true);
     if (state.profile != null) _refreshAvailability(state.profile!.id);
   }
@@ -186,7 +191,7 @@ class BookingWizardController extends Notifier<BookingWizardState> {
   }
 
   Future<Booking?> submitBooking() async {
-    if (!state.isStep3Valid) return null;
+    if (!state.isStep3Valid || state.isSubmitting) return null;
 
     state = state.copyWith(isSubmitting: true, errorMessage: null);
 
@@ -212,7 +217,7 @@ class BookingWizardController extends Notifier<BookingWizardState> {
         throw StateError('Thiếu gói, địa điểm hoặc thời lượng hợp lệ.');
       }
       final parts = selectedTime.split(':');
-      final from = DateTime(
+      final from = DateTime.utc(
         state.selectedDate.year,
         state.selectedDate.month,
         state.selectedDate.day,
@@ -238,7 +243,11 @@ class BookingWizardController extends Notifier<BookingWizardState> {
 
       return created;
     } catch (e) {
-      final conflict = e.toString().contains('Khung giờ này không còn trống');
+      final message = e.toString().toLowerCase();
+      final conflict =
+          message.contains('khung giờ này không còn trống') ||
+          message.contains('photographer is unavailable at this time') ||
+          message.contains('photographer already has a booking at this time');
       if (conflict && state.profile != null) {
         await _refreshAvailability(state.profile!.id);
       }

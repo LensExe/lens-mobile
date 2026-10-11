@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/utils/vietnam_time.dart';
+import '../../discovery/utils/photographer_cover_resolver.dart';
 import '../models/photographer_detail_model.dart';
 import 'photographer_detail_repository.dart';
 
@@ -27,11 +29,11 @@ class ApiPhotographerDetailRepository implements PhotographerDetailRepository {
         ),
         _dio.get<dynamic>('photographers/$photographerId/rating-summary'),
       ]);
-      final profileJson = _asMap(responses[0].data);
-      final planData = _asMap(responses[1].data);
-      final portfolioPage = _asMap(responses[2].data);
-      final reviewPage = _asMap(responses[3].data);
-      final summary = _asMap(responses[4].data);
+      final profileJson = _responseMap(responses[0].data);
+      final planData = _responseMap(responses[1].data);
+      final portfolioPage = _responseMap(responses[2].data);
+      final reviewPage = _responseMap(responses[3].data);
+      final summary = _responseMap(responses[4].data);
 
       final packages = _items(planData)
           .where((item) => item['is_active'] != false)
@@ -42,8 +44,13 @@ class ApiPhotographerDetailRepository implements PhotographerDetailRepository {
       for (final portfolioJson in _items(portfolioPage)) {
         final id = _string(portfolioJson['id']);
         if (id.isEmpty) continue;
-        final detail = _asMap((await _dio.get<dynamic>('portfolios/$id')).data);
+        final detail = _responseMap(
+          (await _dio.get<dynamic>('portfolios/$id')).data,
+        );
         coverUrl = coverUrl.isEmpty ? _string(detail['cover_url']) : coverUrl;
+        if (coverUrl.isNotEmpty) {
+          PhotographerCoverResolver.setCachedCover(photographerId, coverUrl);
+        }
         for (final item in _list(detail['items'])) {
           final json = _asMap(item);
           final url = _string(json['download_url']);
@@ -80,7 +87,9 @@ class ApiPhotographerDetailRepository implements PhotographerDetailRepository {
         id: _string(profileJson['id']),
         name: _string(profileJson['fullname']),
         avatarUrl: _string(profileJson['avatar_url']),
-        coverImageUrl: coverUrl,
+        coverImageUrl: coverUrl.isNotEmpty
+            ? coverUrl
+            : _string(profileJson['avatar_url']),
         city: _string(profileJson['location']),
         rank: _string(rank['name']),
         rating: _decimal(rating),
@@ -121,7 +130,7 @@ class ApiPhotographerDetailRepository implements PhotographerDetailRepository {
           'to': _withVietnamOffset(to),
         },
       );
-      return _items(_asMap(response.data)).map((item) {
+      return _items(_responseMap(response.data)).map((item) {
         final json = _asMap(item);
         return AvailabilityRange(
           from: DateTime.parse(_requiredString(json['from'], 'from')),
@@ -186,20 +195,26 @@ String _relativeTime(DateTime date) {
 }
 
 String _withVietnamOffset(DateTime date) {
-  final local = date.toLocal();
-  final base =
-      '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}T${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}:${local.second.toString().padLeft(2, '0')}';
-  final offset = local.timeZoneOffset;
-  final sign = offset.isNegative ? '-' : '+';
-  final hours = offset.inHours.abs().toString().padLeft(2, '0');
-  final minutes = (offset.inMinutes.abs() % 60).toString().padLeft(2, '0');
-  return '$base$sign$hours:$minutes';
+  return VietnamTime.toApiIso(date);
 }
 
 Map<String, dynamic> _asMap(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return value.map((key, value) => MapEntry('$key', value));
   throw const ApiException('Backend trả về dữ liệu không đúng cấu trúc.');
+}
+
+Map<String, dynamic> _responseMap(Object? value) {
+  var payload = _asMap(value);
+  while (payload.containsKey('success') && payload.containsKey('data')) {
+    if (payload['success'] != true) {
+      throw const ApiException(
+        'Backend không xác nhận yêu cầu hồ sơ nhiếp ảnh gia thành công.',
+      );
+    }
+    payload = _asMap(payload['data']);
+  }
+  return payload;
 }
 
 List<Map<String, dynamic>> _items(Map<String, dynamic> json) =>

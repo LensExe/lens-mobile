@@ -80,6 +80,7 @@ class Step1PackageScheduleView extends StatelessWidget {
             selectedDate: state.selectedDate,
             onDateSelected: onSelectDate,
             availabilityMap: state.availabilityMap,
+            durationHours: state.durationHours,
           ),
           const SizedBox(height: 22),
 

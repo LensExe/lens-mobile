@@ -366,6 +366,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 22),
               OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/customer_home/settings/email-verification'),
+                icon: const Icon(LucideIcons.mailCheck, size: 16),
+                label: Text(
+                  'Xác minh email',
+                  style: AppTypography.bodyMd(color: AppColors.obsidian)
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.obsidian,
+                  side: const BorderSide(color: AppColors.pebble),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
                 onPressed: () => _openChangePasswordDialog(context),
                 icon: const Icon(LucideIcons.keyRound, size: 16),
                 label: Text(

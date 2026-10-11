@@ -67,16 +67,10 @@ class PhotographerDetailController extends Notifier<PhotographerDetailState> {
     state = const PhotographerDetailState(isLoading: true);
     try {
       final profile = await _repo.getPhotographerProfile(id);
-      final defaultPkg = profile.packages.isNotEmpty
-          ? profile.packages.firstWhere(
-              (p) => p.isMostSelected,
-              orElse: () => profile.packages.first,
-            )
-          : null;
       state = state.copyWith(
         isLoading: false,
         profile: profile,
-        selectedPackage: defaultPkg,
+        selectedPackage: null,
         selectedTabIndex: 0,
         selectedPortfolioStyle: 'Tất cả',
         clearError: true,

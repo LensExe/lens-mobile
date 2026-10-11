@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../models/booking_model.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/customer_booking_repository_provider.dart';
@@ -140,9 +141,15 @@ class CustomerBookingsState {
 }
 
 class CustomerBookingsController extends Notifier<CustomerBookingsState> {
+  int _loadRequest = 0;
+  final Set<String> _uncertainBookingInputs = <String>{};
+  final Map<String, Booking> _cachedBookings = <String, Booking>{};
+
   @override
   CustomerBookingsState build() {
     ref.watch(authUserProvider);
+    _uncertainBookingInputs.clear();
+    _cachedBookings.clear();
     final state = CustomerBookingsState();
     Future.microtask(() => loadBookings());
     return state;
@@ -151,16 +158,21 @@ class CustomerBookingsController extends Notifier<CustomerBookingsState> {
   BookingRepository get _repo => ref.read(customerBookingRepositoryProvider);
 
   Future<void> loadBookings() async {
+    final request = ++_loadRequest;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final list = await _repo.getBookings();
+      if (request != _loadRequest) return;
       state = state.copyWith(
         isLoading: false,
         // GET /bookings is already scoped to the authenticated Backend actor.
         // customer_id is a separate entity UUID, not the user's auth UUID.
-        allBookings: ref.read(authUserProvider)?.role == 'client' ? list : [],
+        allBookings: ref.read(authUserProvider)?.role == 'client'
+            ? _mergeCachedBookings(list)
+            : [],
       );
     } catch (_) {
+      if (request != _loadRequest) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Không thể tải lịch đặt. Vui lòng thử lại.',
@@ -227,11 +239,170 @@ class CustomerBookingsController extends Notifier<CustomerBookingsState> {
     if (user == null || user.role != 'client') {
       throw StateError('Vui lòng đăng nhập với tài khoản khách hàng.');
     }
-    final booking = await _repo.createBookingFromInput(input);
-    await loadBookings();
+
+    final inputKey = _bookingInputKey(input);
+    if (_uncertainBookingInputs.contains(inputKey)) {
+      try {
+        final bookings = await _repo.getBookings();
+        final recovered = _findMatchingBooking(bookings, input);
+        if (recovered != null) {
+          _uncertainBookingInputs.remove(inputKey);
+          _cacheBooking(recovered);
+          return recovered;
+        }
+        _uncertainBookingInputs.remove(inputKey);
+      } catch (_) {
+        throw const ApiException(
+          'Kết quả gửi lịch trước đó chưa xác định. Chưa thể kiểm tra lịch đã được tạo hay chưa; vui lòng làm mới mục Lịch đặt trước khi gửi lại.',
+        );
+      }
+    }
+
+    final existing = _findMatchingBooking(state.allBookings, input);
+    if (existing != null) return existing;
+
+    try {
+      final booking = await _repo.createBookingFromInput(input);
+      _cacheBooking(booking);
+      await loadBookings();
+      // Keep the just-created booking available even if the list endpoint is
+      // briefly stale immediately after the POST.
+      _cacheBooking(booking);
+      return booking;
+    } catch (error, stackTrace) {
+      // A timeout or response-decoding error can happen after the Backend has
+      // committed the booking. Reconcile before allowing the caller to retry
+      // the POST, since a pending booking reserves its time slot.
+      var reconciliationSucceeded = false;
+      try {
+        final bookings = await _repo.getBookings();
+        reconciliationSucceeded = true;
+        final recovered = _findMatchingBooking(bookings, input);
+        if (recovered != null) {
+          _uncertainBookingInputs.remove(inputKey);
+          _cacheBooking(recovered);
+          return recovered;
+        }
+      } catch (_) {
+        // Preserve the original POST error when the reconciliation GET also
+        // fails; its failure cannot prove that the booking was not created.
+      }
+      if (!reconciliationSucceeded || _mightHaveCommitted(error)) {
+        _uncertainBookingInputs.add(inputKey);
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<Booking?> loadBookingIfMissing(String bookingId) async {
+    for (final booking in state.allBookings) {
+      if (booking.id == bookingId) return booking;
+    }
+    final booking = await _repo.getBookingById(bookingId);
+    if (booking == null || ref.read(authUserProvider)?.role != 'client') {
+      return null;
+    }
+    _cacheBooking(booking);
     return booking;
   }
+
+  void _cacheBooking(Booking booking) {
+    _cachedBookings[booking.id] = booking;
+    state = state.copyWith(
+      allBookings: [
+        booking,
+        ...state.allBookings.where((item) => item.id != booking.id),
+      ],
+    );
+  }
+
+  List<Booking> _mergeCachedBookings(List<Booking> serverBookings) {
+    final merged = List<Booking>.of(serverBookings);
+    final serverIds = merged.map((booking) => booking.id).toSet();
+    for (final entry in _cachedBookings.entries.toList()) {
+      if (serverIds.contains(entry.key)) {
+        _cachedBookings.remove(entry.key);
+      } else {
+        merged.insert(0, entry.value);
+      }
+    }
+    return merged;
+  }
+
+  Booking? _findMatchingBooking(
+    List<Booking> bookings,
+    BookingCreateInput input,
+  ) {
+    for (final booking in bookings) {
+      final canContinueToPayment =
+          booking.status == BookingStatus.pending ||
+          booking.status == BookingStatus.accepted;
+      if (!canContinueToPayment ||
+          booking.photographerId != input.photographerId ||
+          booking.packageId != input.bookingPlanId ||
+          booking.location.trim() != input.location.trim() ||
+          !_sameWallMinute(_bookingTime(booking, end: false), input.from)) {
+        continue;
+      }
+      final bookingEnd = _bookingTime(booking, end: true);
+      if (bookingEnd == null || _sameWallMinute(bookingEnd, input.to)) {
+        return booking;
+      }
+    }
+    return null;
+  }
 }
+
+String _bookingInputKey(BookingCreateInput input) {
+  String stamp(DateTime value) =>
+      '${value.year.toString().padLeft(4, '0')}-'
+      '${value.month.toString().padLeft(2, '0')}-'
+      '${value.day.toString().padLeft(2, '0')}T'
+      '${value.hour.toString().padLeft(2, '0')}:'
+      '${value.minute.toString().padLeft(2, '0')}';
+
+  return [
+    input.photographerId,
+    input.bookingPlanId,
+    input.location.trim(),
+    stamp(input.from),
+    stamp(input.to),
+  ].join('|');
+}
+
+bool _mightHaveCommitted(Object error) {
+  if (error is! ApiException) return true;
+  final statusCode = error.statusCode;
+  return statusCode == null || statusCode >= 500;
+}
+
+DateTime? _bookingTime(Booking booking, {required bool end}) {
+  final dateParts = booking.date.split('-').map(int.tryParse).toList();
+  if (dateParts.length != 3 || dateParts.any((part) => part == null)) {
+    return null;
+  }
+  final times = (booking.timeSlot ?? '').split(' - ');
+  final time = times.length > 1 ? times[end ? 1 : 0] : (end ? '' : times.first);
+  final timeParts = time.split(':').map(int.tryParse).toList();
+  if (timeParts.length != 2 || timeParts.any((part) => part == null)) {
+    return null;
+  }
+  return DateTime.utc(
+    dateParts[0]!,
+    dateParts[1]!,
+    dateParts[2]!,
+    timeParts[0]!,
+    timeParts[1]!,
+  );
+}
+
+bool _sameWallMinute(DateTime? first, DateTime second) =>
+    first != null &&
+    first.year == second.year &&
+    first.month == second.month &&
+    first.day == second.day &&
+    first.hour == second.hour &&
+    first.minute == second.minute;
 
 final customerBookingsControllerProvider =
     NotifierProvider<CustomerBookingsController, CustomerBookingsState>(() {

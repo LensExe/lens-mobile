@@ -4,6 +4,7 @@ import '../domain/models/models.dart';
 
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/api_auth_repository.dart';
+import '../data/repositories/api_auth_flow_repository.dart';
 import '../data/repositories/api_customer_reviews_repository.dart';
 import '../data/repositories/api_customer_wallet_repository.dart';
 import '../core/network/auth_session_store.dart';
@@ -17,6 +18,14 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     ref.watch(authSessionStoreProvider),
   );
 });
+
+final authFlowRepositoryProvider = Provider<ApiAuthFlowRepository>(
+  (ref) => ApiAuthFlowRepository(
+    ref.watch(dioProvider),
+    ref.watch(authSessionStoreProvider),
+    expectedRole: 'client',
+  ),
+);
 
 class AuthUserNotifier extends Notifier<User?> {
   @override
@@ -34,6 +43,14 @@ class AuthUserNotifier extends Notifier<User?> {
   Future<User> login({required String email, required String password}) async {
     final repo = ref.read(authRepositoryProvider);
     final user = await repo.login(email: email, password: password);
+    setUser(user);
+    return user;
+  }
+
+  Future<User> loginWithGoogleCode(String code) async {
+    final user = await ref
+        .read(authFlowRepositoryProvider)
+        .exchangeGoogleCode(code);
     setUser(user);
     return user;
   }

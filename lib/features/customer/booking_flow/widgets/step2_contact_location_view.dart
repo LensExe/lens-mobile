@@ -85,9 +85,13 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
         const SizedBox(height: 20),
         _LocationField(
           controller: _cityController,
-          label: 'Tỉnh / thành phố',
-          hint: 'Nhập khu vực',
-          icon: LucideIcons.map,
+          label: 'Tỉnh / thành phố (Cố định theo vị trí thợ)',
+          hint: widget.state.profile?.city.isNotEmpty == true
+              ? widget.state.profile!.city
+              : 'Theo vị trí thợ',
+          icon: LucideIcons.mapPin,
+          readOnly: true,
+          suffixIcon: const Icon(LucideIcons.lock, size: 16, color: AppColors.steel),
           onChanged: widget.onCityChanged,
         ),
         const SizedBox(height: 16),
@@ -95,7 +99,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
           controller: _addressController,
           label: 'Địa chỉ hoặc khu vực cụ thể',
           hint: 'Tên studio, đường hoặc địa điểm ngoài trời',
-          icon: LucideIcons.mapPin,
+          icon: LucideIcons.navigation,
           onChanged: widget.onAddressChanged,
           maxLines: 3,
         ),
@@ -114,7 +118,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
               const SizedBox(width: 9),
               Expanded(
                 child: Text(
-                  'Tên liên hệ, số điện thoại, ghi chú và địa chỉ mặc định không thuộc request booking hiện tại.',
+                  'Tỉnh / thành phố được gắn cố định theo khu vực của thợ ảnh để đảm bảo lịch chụp khả dụng. Vui lòng nhập chi tiết địa điểm chụp mong muốn ở ô bên trên.',
                   style: AppTypography.bodySm(
                     fontSize: 12,
                     color: AppColors.steel,
@@ -137,6 +141,8 @@ class _LocationField extends StatelessWidget {
     required this.icon,
     required this.onChanged,
     this.maxLines = 1,
+    this.readOnly = false,
+    this.suffixIcon,
   });
 
   final TextEditingController controller;
@@ -145,6 +151,8 @@ class _LocationField extends StatelessWidget {
   final IconData icon;
   final ValueChanged<String> onChanged;
   final int maxLines;
+  final bool readOnly;
+  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -156,11 +164,18 @@ class _LocationField extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         maxLines: maxLines,
+        readOnly: readOnly,
+        style: readOnly
+            ? AppTypography.bodyMd(color: AppColors.obsidian).copyWith(
+                fontWeight: FontWeight.w600,
+              )
+            : null,
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, size: 18, color: AppColors.steel),
+          prefixIcon: Icon(icon, size: 18, color: readOnly ? AppColors.ember : AppColors.steel),
+          suffixIcon: suffixIcon,
           filled: true,
-          fillColor: AppColors.fog,
+          fillColor: readOnly ? AppColors.pebble.withValues(alpha: 0.35) : AppColors.fog,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,
@@ -175,7 +190,10 @@ class _LocationField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.ember, width: 1.5),
+            borderSide: BorderSide(
+              color: readOnly ? AppColors.pebble : AppColors.ember,
+              width: readOnly ? 1.0 : 1.5,
+            ),
           ),
         ),
       ),

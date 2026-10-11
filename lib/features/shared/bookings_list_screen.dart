@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/lens_tab_app_bar.dart';
 import '../../core/widgets/primary_button.dart';
 import '../customer/bookings/controllers/customer_bookings_controller.dart';
 import '../customer/bookings/models/booking_model.dart';
@@ -36,7 +37,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
 
     if (state.errorMessage != null && state.allBookings.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Lịch chụp của tôi')),
+        backgroundColor: AppColors.canvas,
+        appBar: const LensTabAppBar(title: 'Lịch chụp của tôi'),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -81,47 +83,28 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(
-        backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Lịch chụp của tôi',
-              style: AppTypography.headlineMd(color: AppColors.obsidian),
+      appBar: LensTabAppBar(
+        title: 'Lịch chụp của tôi',
+        subtitle: '$totalCount tổng lịch chụp · $needsActionCount cần xử lý',
+        trailing: IconButton(
+          tooltip: 'Tải lại',
+          onPressed: controller.loadBookings,
+          icon: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.snow,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.pebble),
+              boxShadow: const [AppTokens.surfaceShadow],
             ),
-            const SizedBox(height: 2),
-            Text(
-              '$totalCount tổng lịch chụp · $needsActionCount cần xử lý',
-              style: AppTypography.bodySm(color: AppColors.steel),
+            child: const Icon(
+              LucideIcons.refreshCw,
+              size: 16,
+              color: AppColors.obsidian,
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.snow,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.pebble),
-                boxShadow: const [AppTokens.surfaceShadow],
-              ),
-              child: const Icon(
-                LucideIcons.refreshCw,
-                size: 16,
-                color: AppColors.obsidian,
-              ),
-            ),
-            onPressed: () => controller.loadBookings(),
-            tooltip: 'Tải lại',
           ),
-          const SizedBox(width: AppTokens.pageHorizontal),
-        ],
+        ),
       ),
       body: RefreshIndicator(
         color: AppColors.ember,

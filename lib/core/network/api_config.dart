@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiConfig {
   const ApiConfig({String? baseUrl})
-    : _baseUrl = baseUrl ?? const String.fromEnvironment('API_BASE_URL');
+    : _baseUrl = baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://api.lens.id.vn');
 
   final String _baseUrl;
 
@@ -29,6 +29,7 @@ class ApiConfig {
       'localhost',
       '127.0.0.1',
       '::1',
+      '10.0.2.2',
     }.contains(uri.host.toLowerCase());
     if (uri.scheme != 'https' && !(uri.scheme == 'http' && isLoopback)) {
       throw const ApiConfigurationException(

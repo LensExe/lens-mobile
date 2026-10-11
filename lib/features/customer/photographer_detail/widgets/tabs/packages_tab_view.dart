@@ -39,7 +39,7 @@ class PackagesTabView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
 
         // 2. Packages List
         ListView.separated(
@@ -51,14 +51,31 @@ class PackagesTabView extends StatelessWidget {
             final pkg = packages[index];
             final isChosen = selectedPackage?.id == pkg.id;
 
+            final allNotes = <String>[];
+            if (pkg.deliverables.isNotEmpty) {
+              allNotes.addAll(pkg.deliverables);
+            }
+            if (pkg.subtitle.trim().isNotEmpty) {
+              final subtitleLines = pkg.subtitle
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .where((s) => s.isNotEmpty);
+              for (final line in subtitleLines) {
+                if (!allNotes.contains(line)) {
+                  allNotes.add(line);
+                }
+              }
+            }
+
             return Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AppColors.snow,
                 borderRadius: BorderRadius.circular(20),
-                border: isChosen
-                    ? Border.all(color: AppColors.ember, width: 2)
-                    : Border.all(color: AppColors.pebble),
+                border: Border.all(
+                  color: AppColors.ember,
+                  width: isChosen ? 2.0 : 1.2,
+                ),
                 boxShadow: const [AppTokens.surfaceShadow],
               ),
               child: Column(
@@ -122,25 +139,12 @@ class PackagesTabView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              pkg.name,
-                              style: AppTypography.titleMd(
-                                fontSize: 17,
-                                color: AppColors.obsidian,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              pkg.subtitle,
-                              style: AppTypography.bodySm(
-                                fontSize: 12.5,
-                                color: AppColors.steel,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          pkg.name,
+                          style: AppTypography.titleMd(
+                            fontSize: 17,
+                            color: AppColors.obsidian,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -169,49 +173,51 @@ class PackagesTabView extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Deliverables Checklist
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.fog,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppColors.pebble.withValues(alpha: 0.5),
+                  // Deliverables / Notes Checklist in gray box
+                  if (allNotes.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
                       ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: pkg.deliverables.map((item) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3.5),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                LucideIcons.check,
-                                size: 14,
-                                color: AppColors.emerald,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  item,
-                                  style: AppTypography.bodySm(
-                                    fontSize: 12.5,
-                                    color: AppColors.graphite,
+                      decoration: BoxDecoration(
+                        color: AppColors.fog,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.pebble.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: allNotes.map((item) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3.5),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  LucideIcons.check,
+                                  size: 14,
+                                  color: AppColors.emerald,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    item,
+                                    style: AppTypography.bodySm(
+                                      fontSize: 12.5,
+                                      color: AppColors.graphite,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Action Button
                   Row(

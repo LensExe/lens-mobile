@@ -213,22 +213,26 @@ class _PortfolioLightboxState extends State<PortfolioLightbox> {
                   Row(
                     children: [
                       if (currentItem.subtitle.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.ember,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            currentItem.subtitle,
-                            style: AppTypography.numeric(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.ember,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              currentItem.subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.numeric(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -51,9 +52,17 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
   PaymentIntent? _intent;
   bool _isSubmitting = false;
   bool _isRefreshing = false;
+  bool _isRestoringPayment = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_restoreExistingPayment);
+  }
 
   bool _canPay(Booking booking) => widget.type == BookingPaymentType.deposit
-      ? booking.status == BookingStatus.pending
+      ? booking.status == BookingStatus.pending ||
+            booking.status == BookingStatus.accepted
       : booking.status == BookingStatus.accepted;
 
   @override
@@ -93,66 +102,112 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         ? 'Thanh toán đặt cọc'
         : 'Thanh toán phần còn lại';
 
-    return LensPage(
-      appBar: AppBar(
-        backgroundColor: AppColors.canvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          tooltip: 'Quay lại',
-          onPressed: () => context.pop(),
-          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.obsidian),
-        ),
-        title: Text(heading, style: AppTypography.titleMd()),
-      ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          AppTokens.pageHorizontal,
-          16,
-          AppTokens.pageHorizontal,
-          40,
-        ),
-        children: [
-          _PaymentSummary(booking: booking, amount: amount),
-          const SizedBox(height: 14),
-          if (!_canPay(booking))
-            _StatusNotice(
-              icon: LucideIcons.info,
-              title: 'Booking chưa ở trạng thái thanh toán này',
-              message:
-                  'Trạng thái hiện tại: ${_statusLabel(booking.status)}. Backend chỉ nhận tiền cọc khi yêu cầu đang chờ và tiền còn lại sau khi nhiếp ảnh gia chấp nhận.',
-            )
-          else ...[
-            _methodSelector(),
-            const SizedBox(height: 14),
-            if (_intent != null) ...[
-              _PaymentIntentPanel(
-                intent: _intent!,
-                isRefreshing: _isRefreshing,
-                onRefresh: _refreshPayment,
-              ),
-              const SizedBox(height: 14),
-            ],
-            PrimaryButton(
-              text: _intent == null
-                  ? 'Tạo yêu cầu thanh toán'
-                  : _intent!.status == 'paid'
-                  ? 'Backend đã xác nhận thanh toán'
-                  : 'Tạo lại / kiểm tra yêu cầu thanh toán',
-              height: 52,
-              isLoading: _isSubmitting,
-              onPressed: _isSubmitting || _intent?.status == 'paid'
-                  ? null
-                  : () => _createPayment(booking!),
+    void handleBack() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/customer_home/bookings');
+      }
+    }
+
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.go('/customer_home/bookings');
+        }
+      },
+      child: LensPage(
+        appBar: AppBar(
+          backgroundColor: AppColors.canvas,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            tooltip: 'Quay lại',
+            onPressed: handleBack,
+            icon: const Icon(LucideIcons.arrowLeft, color: AppColors.obsidian),
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Về trang chủ',
+              onPressed: () => context.go('/customer_home'),
+              icon: const Icon(LucideIcons.home, color: AppColors.obsidian),
             ),
           ],
-          const SizedBox(height: 14),
-          Text(
-            'Số tiền được xác định từ booking trên Backend. Tạo yêu cầu thanh toán chưa đồng nghĩa với việc giao dịch đã được thanh toán.',
-            style: AppTypography.bodySm(fontSize: 12, color: AppColors.steel),
+          title: Text(heading, style: AppTypography.titleMd()),
+        ),
+        body: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            AppTokens.pageHorizontal,
+            16,
+            AppTokens.pageHorizontal,
+            40,
           ),
-        ],
+          children: [
+            _PaymentSummary(booking: booking, amount: amount),
+            const SizedBox(height: 14),
+            if (!_canPay(booking))
+              _StatusNotice(
+                icon: LucideIcons.info,
+                title: 'Booking chưa ở trạng thái thanh toán này',
+                message:
+                    'Trạng thái hiện tại: ${_statusLabel(booking.status)}. Backend nhận tiền cọc khi yêu cầu đang chờ hoặc đã được chấp nhận; tiền còn lại sau khi nhiếp ảnh gia chấp nhận.',
+              )
+            else ...[
+              _methodSelector(),
+              const SizedBox(height: 14),
+              if (_intent != null) ...[
+                _PaymentIntentPanel(
+                  intent: _intent!,
+                  isRefreshing: _isRefreshing,
+                  onRefresh: _refreshPayment,
+                  onNavigateToBookings: () =>
+                      context.go('/customer_home/bookings'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/customer_home'),
+                  icon: const Icon(LucideIcons.home, size: 18),
+                  label: const Text('Về trang chủ'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    side: const BorderSide(color: AppColors.pebble),
+                    foregroundColor: AppColors.obsidian,
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+              PrimaryButton(
+                text: _intent == null
+                    ? 'Tạo yêu cầu thanh toán'
+                    : _intent!.status == 'paid'
+                    ? 'Thanh toán thành công · Về lịch đặt'
+                    : 'Làm mới mã / kiểm tra thanh toán',
+                height: 52,
+                isLoading: _isSubmitting || _isRestoringPayment,
+                onPressed:
+                    _isSubmitting ||
+                        _isRestoringPayment ||
+                        _intent?.status == 'failed'
+                    ? null
+                    : _intent?.status == 'paid'
+                    ? () => context.go('/customer_home/bookings')
+                    : _intent == null
+                    ? () => _createPayment(booking!)
+                    : _refreshPayment,
+              ),
+            ],
+            const SizedBox(height: 14),
+            Text(
+              'Số tiền được xác định từ booking trên Backend. Tạo yêu cầu thanh toán chưa đồng nghĩa với việc giao dịch đã được thanh toán.',
+              style: AppTypography.bodySm(fontSize: 12, color: AppColors.steel),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -174,14 +229,66 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
           _PaymentOption(
             method: method,
             selected: _method == method,
-            onTap: () => setState(() {
-              _method = method;
-              _intent = null;
-            }),
+            onTap: _intent != null || _isRestoringPayment
+                ? null
+                : () => setState(() => _method = method),
           ),
       ],
     ),
   );
+
+  Future<void> _restoreExistingPayment() async {
+    try {
+      await ref
+          .read(customerBookingsControllerProvider.notifier)
+          .loadBookingIfMissing(widget.bookingId);
+      final history = await ref
+          .read(bookingPaymentRepositoryProvider)
+          .getBookingHistory(widget.bookingId);
+      PaymentIntent? existing;
+      for (final payment in history.items.reversed) {
+        if (payment.type == widget.type.name) {
+          existing = payment;
+          break;
+        }
+      }
+      if (existing == null) return;
+
+      var intent = existing;
+      if (intent.status == 'pending' &&
+          intent.checkoutUrl == null &&
+          intent.qrCode == null) {
+        try {
+          final qr = await ref
+              .read(bookingPaymentRepositoryProvider)
+              .getPaymentQr(intent.id);
+          intent = _mergeQrDetails(intent, qr);
+        } on Object {
+          // Keep the existing intent visible so the user can safely retry
+          // checkout preparation with the same Backend intent.
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _intent = intent;
+        if (intent.paymentGateway == 'wallet_internal') {
+          _method = PaymentMethod.wallet;
+        } else if (intent.paymentGateway != null) {
+          _method = PaymentMethod.bank;
+        }
+      });
+      if (intent.status == 'paid') {
+        await ref
+            .read(customerBookingsControllerProvider.notifier)
+            .loadBookings();
+      }
+    } on Object {
+      // Payment history is a recovery aid. The user can still create or
+      // retrieve the idempotent intent if this read is temporarily unavailable.
+    } finally {
+      if (mounted) setState(() => _isRestoringPayment = false);
+    }
+  }
 
   Future<void> _createPayment(Booking booking) async {
     if (_isSubmitting || !_canPay(booking)) return;
@@ -200,9 +307,10 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
           intent.checkoutUrl == null &&
           intent.qrCode == null) {
         try {
-          intent = await ref
+          final qr = await ref
               .read(bookingPaymentRepositoryProvider)
               .getPaymentQr(intent.id);
+          intent = _mergeQrDetails(intent, qr);
         } on Object {
           // Keep the confirmed intent data if the provider has not prepared a QR yet.
         }
@@ -213,6 +321,18 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         await ref
             .read(customerBookingsControllerProvider.notifier)
             .loadBookings();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thanh toán thành công! Đang chuyển đến lịch đặt...'),
+              backgroundColor: AppColors.emerald,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted) context.go('/customer_home/bookings');
+          });
+        }
       }
     } catch (error) {
       if (mounted) {
@@ -241,6 +361,29 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         await ref
             .read(customerBookingsControllerProvider.notifier)
             .loadBookings();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thanh toán thành công! Đang chuyển đến lịch đặt...'),
+              backgroundColor: AppColors.emerald,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted) context.go('/customer_home/bookings');
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Trạng thái hiện tại: ${updated.status}. Chưa ghi nhận thanh toán.',
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (error) {
       if (mounted) {
@@ -255,6 +398,19 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
     }
   }
 }
+
+PaymentIntent _mergeQrDetails(PaymentIntent payment, PaymentIntent qr) =>
+    PaymentIntent(
+      id: payment.id,
+      status: qr.status,
+      amount: payment.amount,
+      currency: payment.currency,
+      type: payment.type,
+      paymentGateway: payment.paymentGateway,
+      checkoutUrl: qr.checkoutUrl ?? payment.checkoutUrl,
+      qrCode: qr.qrCode ?? payment.qrCode,
+      checkoutExpiresAt: qr.checkoutExpiresAt ?? payment.checkoutExpiresAt,
+    );
 
 class _PaymentSummary extends StatelessWidget {
   const _PaymentSummary({required this.booking, required this.amount});
@@ -304,11 +460,13 @@ class _PaymentIntentPanel extends StatelessWidget {
     required this.intent,
     required this.isRefreshing,
     required this.onRefresh,
+    this.onNavigateToBookings,
   });
 
   final PaymentIntent intent;
   final bool isRefreshing;
   final VoidCallback onRefresh;
+  final VoidCallback? onNavigateToBookings;
 
   @override
   Widget build(BuildContext context) {
@@ -369,8 +527,22 @@ class _PaymentIntentPanel extends StatelessWidget {
           if (intent.qrCode case final qr? when qr.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text('Mã QR do Backend trả về', style: AppTypography.labelMd()),
-            SelectableText(qr, style: AppTypography.bodySm()),
+            const SizedBox(height: 10),
+            Center(child: _BackendQrCode(value: qr)),
+            const SizedBox(height: 8),
+            Text(
+              'Kiểm tra đúng số tiền và nội dung chuyển khoản trong ứng dụng ngân hàng trước khi xác nhận.',
+              style: AppTypography.bodySm(color: AppColors.steel),
+            ),
           ],
+          if (intent.status == 'failed')
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Payment intent này đã thất bại. Backend hiện không cho phép tạo lại intent trên cùng booking; vui lòng liên hệ hỗ trợ để xử lý.',
+                style: AppTypography.bodySm(color: AppColors.ember),
+              ),
+            ),
           if (!paid)
             Align(
               alignment: Alignment.centerRight,
@@ -384,6 +556,15 @@ class _PaymentIntentPanel extends StatelessWidget {
                       )
                     : const Icon(LucideIcons.refreshCw, size: 15),
                 label: const Text('Kiểm tra trạng thái'),
+              ),
+            )
+          else if (onNavigateToBookings != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: PrimaryButton(
+                text: 'Xem danh sách lịch đặt',
+                height: 44,
+                onPressed: onNavigateToBookings,
               ),
             ),
         ],
@@ -400,7 +581,7 @@ class _PaymentOption extends StatelessWidget {
   });
   final PaymentMethod method;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => ListTile(
@@ -420,6 +601,72 @@ class _PaymentOption extends StatelessWidget {
     trailing: Icon(
       selected ? LucideIcons.circleCheck : LucideIcons.circle,
       color: selected ? AppColors.ember : AppColors.steel,
+    ),
+  );
+}
+
+class _BackendQrCode extends StatelessWidget {
+  const _BackendQrCode({required this.value});
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final uri = Uri.tryParse(value);
+    if (uri != null &&
+        (uri.scheme == 'https' || uri.scheme == 'http') &&
+        uri.host == 'vietqr.app') {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          value,
+          width: 240,
+          height: 240,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => _qrError(),
+          loadingBuilder: (context, child, progress) => progress == null
+              ? child
+              : const SizedBox(
+                  width: 240,
+                  height: 240,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 256,
+      height: 256,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.pebble),
+      ),
+      child: QrImageView(
+        data: value,
+        version: QrVersions.auto,
+        size: 232,
+        backgroundColor: Colors.white,
+        semanticsLabel: 'Mã QR thanh toán booking',
+      ),
+    );
+  }
+
+  Widget _qrError() => Container(
+    width: 240,
+    height: 240,
+    alignment: Alignment.center,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.fog,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      'Không tải được ảnh QR từ Backend. Hãy dùng link thanh toán nếu có hoặc thử làm mới.',
+      textAlign: TextAlign.center,
+      style: AppTypography.bodySm(color: AppColors.steel),
     ),
   );
 }

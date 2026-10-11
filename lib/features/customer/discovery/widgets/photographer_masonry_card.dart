@@ -45,7 +45,9 @@ class PhotographerMasonryCard extends StatelessWidget {
                 AspectRatio(
                   aspectRatio: 3 / 4, // Tỷ lệ dọc nghệ thuật
                   child: CachedNetworkImage(
-                    imageUrl: photographer.coverImageUrl,
+                    imageUrl: photographer.coverImageUrl.isNotEmpty
+                        ? photographer.coverImageUrl
+                        : photographer.avatarUrl,
                     fit: BoxFit.cover,
                     placeholder: (context, url) =>
                         Container(color: AppColors.mist),
