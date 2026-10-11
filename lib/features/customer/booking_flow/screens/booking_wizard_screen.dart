@@ -87,14 +87,11 @@ class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
       controller.nextStep();
     } else if (state.currentStep == 1) {
       if (!state.isStep2Valid) {
-        String msg = 'Vui lòng kiểm tra lại thông tin liên hệ';
-        if (!state.isNameValid) {
-          msg = 'Họ và tên phải có ít nhất 2 ký tự';
-        } else if (!state.isPhoneValid) {
-          msg = 'Số điện thoại không hợp lệ (VD: 0901234567)';
-        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+          const SnackBar(
+            content: Text('Vui lòng nhập địa điểm chụp.'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         return;
       }

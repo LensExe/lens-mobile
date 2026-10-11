@@ -25,14 +25,35 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Future<void> _navigateToNext() async {
     // Delay for a reasonable time (e.g., 2 seconds)
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      // Transition to the main initial route
-      final user = ref.read(authUserProvider);
-      context.go(
-        user?.role == 'client'
-            ? '/customer_home/overview'
-            : '/customer_home/discovery',
-      );
+    if (!mounted) return;
+    String? profileRefreshError;
+    if (ref.read(authUserProvider) != null) {
+      try {
+        await ref.read(authUserProvider.notifier).refreshProfile();
+      } catch (error) {
+        profileRefreshError = error.toString();
+      }
+    }
+    if (!mounted) return;
+    final user = ref.read(authUserProvider);
+    context.go(
+      user?.role == 'client'
+          ? '/customer_home/overview'
+          : '/customer_home/discovery',
+    );
+    if (profileRefreshError != null && user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Không thể tải hồ sơ hiện tại từ Backend: $profileRefreshError',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
+      });
     }
   }
 

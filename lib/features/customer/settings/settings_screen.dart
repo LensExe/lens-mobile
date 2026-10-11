@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -27,35 +26,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _cityController;
-  late final TextEditingController _addressController;
   bool _isSavingProfile = false;
-  bool _isSavingAvatar = false;
-
-  Future<void> _pickAvatar() async {
-    if (_isSavingAvatar) return;
-    try {
-      final image = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        imageQuality: 85,
-      );
-      if (!mounted || image == null) return;
-      setState(() => _isSavingAvatar = true);
-      await ref.read(authUserProvider.notifier).updateAvatar(image.path);
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Đã cập nhật ảnh đại diện')));
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không thể cập nhật ảnh đại diện')),
-      );
-    } finally {
-      if (mounted) setState(() => _isSavingAvatar = false);
-    }
-  }
-
+  bool _isLoadingProfile = false;
+  String? _profileLoadError;
   @override
   void initState() {
     super.initState();
@@ -63,7 +36,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _cityController = TextEditingController(text: user?.city ?? '');
-    _addressController = TextEditingController(text: user?.address ?? '');
+    if (widget.section == SettingsSection.profile) {
+      _isLoadingProfile = true;
+      Future<void>.microtask(_refreshCurrentProfile);
+    }
+  }
+
+  Future<void> _refreshCurrentProfile() async {
+    try {
+      final user = await ref.read(authUserProvider.notifier).refreshProfile();
+      if (!mounted) return;
+      _nameController.text = user.name;
+      _phoneController.text = user.phone;
+      _cityController.text = user.city;
+      setState(() => _profileLoadError = null);
+    } catch (error) {
+      if (mounted) setState(() => _profileLoadError = error.toString());
+    } finally {
+      if (mounted) setState(() => _isLoadingProfile = false);
+    }
   }
 
   @override
@@ -71,15 +62,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
   Future<void> _saveProfile() async {
+    if (_isLoadingProfile) return;
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
     final city = _cityController.text.trim();
-    final address = _addressController.text.trim();
+    final currentUser = ref.read(authUserProvider);
+    if (currentUser == null) return;
 
     if (name.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,8 +100,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             name: name,
             phone: phone,
             city: city,
-            address: address,
-            saveAsDefault: true,
+            address: currentUser.address,
+            saveAsDefault: currentUser.saveAsDefault,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,6 +196,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Column(
       children: [
+        if (_profileLoadError != null) ...[
+          _backendCapabilityNote(
+            'Không tải được hồ sơ hiện tại từ Backend: $_profileLoadError',
+          ),
+          const SizedBox(height: 14),
+        ],
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -216,58 +214,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.ember.withValues(alpha: 0.15),
-                            AppColors.ember.withValues(alpha: 0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.ember.withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: CustomerAvatar(
-                        url: user?.avatarUrl ?? '',
-                        initials: initials,
-                        size: 80,
-                        fallbackStyle: AppTypography.headlineSm(
-                          color: AppColors.ember,
-                          fontSize: 26,
-                        ).copyWith(fontWeight: FontWeight.w800),
-                      ),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.ember.withValues(alpha: 0.15),
+                        AppColors.ember.withValues(alpha: 0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: InkWell(
-                        onTap: _isSavingAvatar ? null : _pickAvatar,
-                        child: Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: AppColors.obsidian,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.snow, width: 2),
-                          ),
-                          child: const Icon(
-                            LucideIcons.camera,
-                            size: 14,
-                            color: AppColors.snow,
-                          ),
-                        ),
-                      ),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.ember.withValues(alpha: 0.3),
+                      width: 2,
                     ),
-                  ],
+                  ),
+                  alignment: Alignment.center,
+                  child: CustomerAvatar(
+                    url: user?.avatarUrl ?? '',
+                    initials: initials,
+                    size: 80,
+                    fallbackStyle: AppTypography.headlineSm(
+                      color: AppColors.ember,
+                      fontSize: 26,
+                    ).copyWith(fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -305,23 +279,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 hintText: 'TP. Hồ Chí Minh, Hà Nội, Đà Nẵng...',
               ),
               const SizedBox(height: 16),
-              Text(
-                'Địa chỉ chi tiết mặc định',
-                style: AppTypography.bodyMd(color: AppColors.obsidian)
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              LensTextField(
-                controller: _addressController,
-                hintText: 'Số nhà, tên đường, phường/xã, quận/huyện',
-                maxLines: 2,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.fog,
+                  borderRadius: BorderRadius.circular(
+                    AppTokens.inputFieldRadius,
+                  ),
+                ),
+                child: Text(
+                  'Backend hiện chưa hỗ trợ lưu địa chỉ chi tiết mặc định. '
+                  'Bạn có thể nhập địa chỉ riêng ở bước đặt lịch.',
+                  style: AppTypography.bodySm(color: AppColors.steel)
+                      .copyWith(height: 1.45),
+                ),
               ),
               const SizedBox(height: 24),
               PrimaryButton(
                 text: 'Lưu thay đổi hồ sơ',
                 height: 52,
                 isLoading: _isSavingProfile,
-                onPressed: _saveProfile,
+                onPressed: _isLoadingProfile ? null : _saveProfile,
               ),
             ],
           ),
@@ -341,7 +319,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Thông tin và địa chỉ mặc định này sẽ được tự động điền vào Bước 2 của Quy trình đặt lịch chụp (Booking Wizard).',
+                  'Họ tên, số điện thoại và tỉnh/thành phố được lưu với Backend '
+                  'và tự động điền vào bước đặt lịch. Địa chỉ chi tiết được nhập '
+                  'riêng cho từng booking.',
                   style: AppTypography.bodySm(color: AppColors.steel)
                       .copyWith(height: 1.45),
                 ),
@@ -356,7 +336,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // FLOW 17: Account & Security
   Widget _buildAccount(BuildContext context) {
     final user = ref.watch(authUserProvider);
-    final sessionsAsync = ref.watch(activeSessionsProvider);
 
     return Column(
       children: [
@@ -373,7 +352,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               _SettingValue(
                 label: 'Email tài khoản',
-                value: user?.email ?? 'customer@lens.com',
+                value: user?.email ?? '—',
                 icon: LucideIcons.mail,
               ),
               const Padding(
@@ -408,241 +387,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: 18),
 
-        // Active Sessions List
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.snow,
-            borderRadius: BorderRadius.circular(AppTokens.cardRadius),
-            border: Border.all(color: AppColors.pebble),
-            boxShadow: const [AppTokens.surfaceShadow],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Phiên đăng nhập đang hoạt động',
-                    style: AppTypography.titleMd(color: AppColors.obsidian),
-                  ),
-                  TextButton(
-                    onPressed: () => _revokeAllOther(context),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                    ),
-                    child: Text(
-                      'Đăng xuất các thiết bị khác',
-                      style: AppTypography.labelSm(color: AppColors.crimson),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              sessionsAsync.when(
-                data: (sessions) => ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: sessions.length,
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 16, color: AppColors.pebble),
-                  itemBuilder: (context, index) {
-                    final session = sessions[index];
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: session.isCurrent
-                                ? AppColors.emerald.withValues(alpha: 0.12)
-                                : AppColors.fog,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            session.isCurrent
-                                ? LucideIcons.smartphone
-                                : LucideIcons.laptop,
-                            size: 16,
-                            color: session.isCurrent
-                                ? AppColors.emerald
-                                : AppColors.steel,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      session.deviceName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.titleMd(
-                                        fontSize: 13,
-                                        color: AppColors.obsidian,
-                                      ),
-                                    ),
-                                  ),
-                                  if (session.isCurrent) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.emerald.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          9999,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Thiết bị này',
-                                        style: AppTypography.labelSm(
-                                          fontSize: 9.5,
-                                          color: AppColors.emerald,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${session.location} · ${session.lastActive}',
-                                style: AppTypography.labelSm(
-                                  fontSize: 11,
-                                  color: AppColors.steel,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (!session.isCurrent)
-                          IconButton(
-                            icon: const Icon(
-                              LucideIcons.x,
-                              size: 16,
-                              color: AppColors.steel,
-                            ),
-                            onPressed: () =>
-                                _revokeSession(context, session.id),
-                            tooltip: 'Đăng xuất',
-                          ),
-                      ],
-                    );
-                  },
-                ),
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: CircularProgressIndicator(color: AppColors.ember),
-                  ),
-                ),
-                error: (e, _) => Text('Không thể tải phiên: $e'),
-              ),
-            ],
-          ),
+        _backendCapabilityNote(
+          'Backend hiện chưa cung cấp API xem hoặc thu hồi các phiên đăng nhập khác.',
         ),
       ],
     );
   }
 
   // FLOW 18: Notification Preferences
-  Widget _buildNotifications(BuildContext context) {
-    final prefs = ref.watch(notificationPreferencesProvider);
-    final notifier = ref.read(notificationPreferencesProvider.notifier);
+  Widget _buildNotifications(BuildContext context) => _backendCapabilityNote(
+    'Backend hiện chưa có API đọc hoặc cập nhật tùy chọn thông báo. Các lựa chọn chưa được lưu đã được ẩn.',
+  );
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.snow,
-        borderRadius: BorderRadius.circular(AppTokens.cardRadius),
-        border: Border.all(color: AppColors.pebble),
-        boxShadow: const [AppTokens.surfaceShadow],
-      ),
-      child: Column(
-        children: [
-          _SwitchRow(
-            title: 'Thông báo đặt lịch qua Email',
-            description: 'Nhận thông báo khi thợ chụp nhận lịch hoặc cập nhật tiến độ hợp đồng',
-            value: prefs.emailBooking,
-            onChanged: (value) {
-              notifier.update(emailBooking: value);
-              _notifySaved('Đã cập nhật tuỳ chọn email đặt lịch');
-            },
+  Widget _backendCapabilityNote(String text) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.snow,
+      borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+      border: Border.all(color: AppColors.pebble),
+      boxShadow: const [AppTokens.surfaceShadow],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(LucideIcons.info, size: 18, color: AppColors.steel),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTypography.bodySm(color: AppColors.steel)
+                .copyWith(height: 1.45),
           ),
-          const Divider(height: 1, color: AppColors.pebble),
-          _SwitchRow(
-            title: 'Thông báo tin nhắn mới qua Email',
-            description:
-                'Gửi bản tóm tắt qua email khi có tin nhắn chưa đọc từ thợ ảnh',
-            value: prefs.emailMessage,
-            onChanged: (value) {
-              notifier.update(emailMessage: value);
-              _notifySaved('Đã cập nhật tuỳ chọn email tin nhắn');
-            },
-          ),
-          const Divider(height: 1, color: AppColors.pebble),
-          _SwitchRow(
-            title: 'Thông báo nhắc lịch qua SMS',
-            description:
-                'Nhận tin nhắn SMS nhắc trước 24 giờ diễn ra buổi chụp thực tế',
-            value: prefs.smsReminder,
-            onChanged: (value) {
-              notifier.update(smsReminder: value);
-              _notifySaved('Đã cập nhật tuỳ chọn SMS nhắc lịch');
-            },
-          ),
-          const Divider(height: 1, color: AppColors.pebble),
-          _SwitchRow(
-            title: 'Cập nhật tin khuyến mãi & hoàn Lens Xu',
-            description: 'Nhận thông báo khi có ưu đãi hoàn xu 5% và chiến dịch voucher mới',
-            value: prefs.promoCashback,
-            onChanged: (value) {
-              notifier.update(promoCashback: value);
-              _notifySaved('Đã cập nhật tuỳ chọn khuyến mãi');
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _notifySaved(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 
   void _openChangePasswordDialog(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (context) => const _ChangePasswordDialog(),
-    );
-  }
-
-  Future<void> _revokeSession(BuildContext context, String sessionId) async {
-    await ref.read(activeSessionsProvider.notifier).revokeSession(sessionId);
-    if (!mounted || !context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Đã đăng xuất phiên này')));
-  }
-
-  Future<void> _revokeAllOther(BuildContext context) async {
-    await ref.read(activeSessionsProvider.notifier).revokeAllOther();
-    if (!mounted || !context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã đăng xuất khỏi tất cả các thiết bị khác'),
-      ),
     );
   }
 }
@@ -848,54 +632,4 @@ class _SettingValue extends StatelessWidget {
       ),
     ],
   );
-}
-
-class _SwitchRow extends StatelessWidget {
-  final String title;
-  final String description;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SwitchRow({
-    required this.title,
-    required this.description,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.bodyMd(color: AppColors.obsidian)
-                      .copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: AppTypography.bodySm(color: AppColors.steel)
-                      .copyWith(height: 1.4),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Switch(
-            value: value,
-            activeTrackColor: AppColors.ember,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
 }

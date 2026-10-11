@@ -1,31 +1,8 @@
 import '../../domain/models/models.dart';
 import '../mock_database.dart';
+import 'auth_repository.dart';
 
-abstract class AuthRepository {
-  Future<User> login({required String email, required String password});
-  Future<User> signup({
-    required String name,
-    required String email,
-    required String password,
-    required String role,
-  });
-  Future<void> logout();
-  Future<User> updateProfile({
-    required String name,
-    required String phone,
-    required String city,
-    required String address,
-    bool? saveAsDefault,
-  });
-  Future<void> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  });
-  Future<User> updateAvatar(String localPath);
-  Future<List<ActiveSession>> getActiveSessions();
-  Future<void> revokeSession(String sessionId);
-  Future<void> revokeAllOtherSessions();
-}
+export 'auth_repository.dart' show AuthException;
 
 class MockAuthRepository implements AuthRepository {
   static final Map<String, List<ActiveSession>> _sessionsByUser = {};
@@ -69,6 +46,13 @@ class MockAuthRepository implements AuthRepository {
       throw const AuthException('Email hoặc mật khẩu không chính xác.');
     }
     MockDatabase.currentUser = user;
+    return user;
+  }
+
+  @override
+  Future<User> readCurrentProfile() async {
+    final user = MockDatabase.currentUser;
+    if (user == null) throw const AuthException('Vui lòng đăng nhập.');
     return user;
   }
 
@@ -182,11 +166,4 @@ class MockAuthRepository implements AuthRepository {
     await Future.delayed(const Duration(milliseconds: 200));
     _sessionsForCurrentUser().removeWhere((s) => !s.isCurrent);
   }
-}
-
-class AuthException implements Exception {
-  final String message;
-  const AuthException(this.message);
-  @override
-  String toString() => message;
 }

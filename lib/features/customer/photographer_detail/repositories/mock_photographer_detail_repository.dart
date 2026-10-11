@@ -9,6 +9,13 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
   MockPhotographerDetailRepository(this.directory);
 
   @override
+  Future<List<AvailabilityRange>> getAvailability({
+    required String photographerId,
+    required DateTime from,
+    required DateTime to,
+  }) async => const [];
+
+  @override
   Future<PhotographerProfile> getPhotographerProfile(
     String photographerId,
   ) async {
@@ -46,6 +53,7 @@ class MockPhotographerDetailRepository implements PhotographerDetailRepository {
       Experience.from1To3Years => 2,
       Experience.from3To5Years => 4,
       Experience.over5Years => 6,
+      null => 0,
     };
 
     final styles = ['Tất cả', ...photographer.styles];

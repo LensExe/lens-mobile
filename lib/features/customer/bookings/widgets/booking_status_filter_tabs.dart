@@ -18,12 +18,12 @@ class BookingStatusFilterTabs extends StatelessWidget {
 
   static const List<String> tabs = [
     'Tất cả',
-    'Chờ đặt cọc',
-    'Chờ xác nhận',
-    'Chờ thanh toán',
-    'Sàn đang giữ tiền',
+    'Chờ xử lý',
+    'Đã chấp nhận',
+    'Đang thực hiện',
+    'Chờ nhận ảnh',
     'Hoàn thành',
-    'Đã huỷ',
+    'Đã hủy',
   ];
 
   @override

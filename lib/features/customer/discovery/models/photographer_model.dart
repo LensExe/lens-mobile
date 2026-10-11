@@ -11,7 +11,7 @@ class PhotographerModel {
   final double pricePerSession;
   final bool isFeatured;
   final bool isVerified;
-  final Experience experience;
+  final Experience? experience;
   final List<String> styles;
   final List<DateTime> availableDates;
 
@@ -26,7 +26,7 @@ class PhotographerModel {
     required this.pricePerSession,
     required this.isFeatured,
     required this.isVerified,
-    required this.experience,
+    this.experience,
     required this.styles,
     required this.availableDates,
   });

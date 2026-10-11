@@ -11,7 +11,11 @@ class BookingProgressStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (booking.status == BookingStatus.cancelled) {
+    if ([
+      BookingStatus.cancelled,
+      BookingStatus.rejected,
+      BookingStatus.expired,
+    ].contains(booking.status)) {
       return const SizedBox.shrink();
     }
 
@@ -30,11 +34,13 @@ class BookingProgressStepper extends StatelessWidget {
         statusTitle = 'Đã cọc • Chờ NAG xác nhận';
         proofInfo = 'Đang chờ phản hồi';
         break;
+      case BookingStatus.accepted:
       case BookingStatus.confirmed:
         currentStep = 1;
         statusTitle = 'Đã xác nhận lịch chụp';
         proofInfo = 'Chuẩn bị buổi chụp';
         break;
+      case BookingStatus.inProgress:
       case BookingStatus.held:
         currentStep = 2;
         statusTitle = 'Chọn ảnh nghiệm thu (65%)';
@@ -42,12 +48,20 @@ class BookingProgressStepper extends StatelessWidget {
             ? '${booking.uploadedProofsCount} ảnh đã tải lên'
             : 'Đang tải ảnh lên';
         break;
+      case BookingStatus.shot:
+        currentStep = 3;
+        statusTitle = 'Ảnh đã được bàn giao';
+        proofInfo = 'Chờ khách xác nhận';
+        break;
+      case BookingStatus.completed:
       case BookingStatus.released:
         currentStep = 3;
         statusTitle = 'Đã nghiệm thu & nhận ảnh';
         proofInfo = 'Đã hoàn tất 100%';
         break;
       case BookingStatus.cancelled:
+      case BookingStatus.rejected:
+      case BookingStatus.expired:
         break;
     }
 

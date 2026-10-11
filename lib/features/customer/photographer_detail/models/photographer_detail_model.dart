@@ -26,6 +26,7 @@ class ProfilePackage {
   final String subtitle;
   final int price;
   final String duration;
+  final int? durationMinutes;
   final List<String> deliverables;
   final bool isMostSelected;
   final int? photoCount;
@@ -39,6 +40,7 @@ class ProfilePackage {
     required this.subtitle,
     required this.price,
     required this.duration,
+    this.durationMinutes,
     required this.deliverables,
     this.isMostSelected = false,
     this.photoCount,
@@ -50,21 +52,21 @@ class ProfilePackage {
 class ClientReview {
   final String id;
   final String clientName;
-  final String clientRole; // e.g. "Giám đốc Sáng tạo • The Row VN"
+  final String clientRole;
   final String clientInitials; // e.g. "MC"
   final double rating;
   final String timeAgo; // e.g. "2 ngày trước"
-  final String packageTag; // e.g. "Lookbook Thời Trang"
+  final String packageTag;
   final String content;
 
   const ClientReview({
     required this.id,
     required this.clientName,
-    required this.clientRole,
+    this.clientRole = '',
     required this.clientInitials,
     required this.rating,
     required this.timeAgo,
-    required this.packageTag,
+    this.packageTag = '',
     required this.content,
   });
 }
@@ -94,17 +96,17 @@ class PhotographerProfile {
   final int reviewCount;
   final int startingPrice;
   final String bio;
-  final int experienceYears;
-  final int completedShoots;
-  final int completionRate;
+  final int? experienceYears;
+  final int? completedShoots;
+  final int? completionRate;
   final bool isVerified;
-  final bool isInsured;
-  final String verificationBadge;
+  final bool? isInsured;
+  final String? verificationBadge;
   final List<String> styles;
   final List<PortfolioItem> portfolio;
   final List<ProfilePackage> packages;
   final List<ClientReview> reviews;
-  final StudioGearInfo gearInfo;
+  final StudioGearInfo? gearInfo;
 
   const PhotographerProfile({
     required this.id,
@@ -117,17 +119,17 @@ class PhotographerProfile {
     required this.reviewCount,
     required this.startingPrice,
     required this.bio,
-    required this.experienceYears,
-    required this.completedShoots,
-    this.completionRate = 100,
+    this.experienceYears,
+    this.completedShoots,
+    this.completionRate,
     this.isVerified = true,
-    this.isInsured = true,
-    this.verificationBadge = 'Studio Đã Xác Minh & Bảo Hiểm',
+    this.isInsured,
+    this.verificationBadge,
     required this.styles,
     required this.portfolio,
     required this.packages,
     required this.reviews,
-    required this.gearInfo,
+    this.gearInfo,
   });
 
   PhotographerProfile copyWith({double? rating, int? reviewCount}) =>

@@ -273,7 +273,6 @@ class MockPhotographerRepository implements PhotographerRepository {
   @override
   Future<List<PhotographerModel>> getPhotographers({
     FilterCriteria? criteria,
-    SortOption sort = SortOption.featured,
   }) async {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 500));
@@ -306,82 +305,30 @@ class MockPhotographerRepository implements PhotographerRepository {
             .toList();
       }
 
-      // Filter by Price Range
-      if (criteria.minPrice != null) {
-        filteredList = filteredList
-            .where((p) => p.pricePerSession >= criteria.minPrice!)
-            .toList();
-      }
-      if (criteria.maxPrice != null) {
-        filteredList = filteredList
-            .where((p) => p.pricePerSession <= criteria.maxPrice!)
-            .toList();
-      }
-
-      // Filter by Styles
-      if (criteria.styles.isNotEmpty) {
-        filteredList = filteredList.where((p) {
-          // Photographer must have AT LEAST ONE of the selected styles
-          return p.styles.any((s) => criteria.styles.contains(s));
-        }).toList();
-      }
-
-      // Filter by Available Date
-      if (criteria.availableDate != null) {
-        filteredList = filteredList.where((p) {
-          return p.availableDates.any(
-            (d) =>
-                d.year == criteria.availableDate!.year &&
-                d.month == criteria.availableDate!.month &&
-                d.day == criteria.availableDate!.day,
-          );
-        }).toList();
-      }
-
       // Filter by Rating
       if (criteria.minRating != null) {
         filteredList = filteredList
             .where((p) => p.rating >= criteria.minRating!)
             .toList();
       }
-
-      // Filter by Experience
-      if (criteria.experience != null) {
-        filteredList = filteredList
-            .where((p) => p.experience == criteria.experience)
-            .toList();
-      }
-    }
-
-    // Sorting
-    switch (sort) {
-      case SortOption.featured:
-        filteredList.sort((a, b) {
-          if (a.isFeatured && !b.isFeatured) return -1;
-          if (!a.isFeatured && b.isFeatured) return 1;
-          return b.rating.compareTo(
-            a.rating,
-          ); // If both featured or not, sort by rating desc
-        });
-        break;
-      case SortOption.rating:
-        filteredList.sort((a, b) => b.rating.compareTo(a.rating));
-        break;
-      case SortOption.priceAsc:
-        filteredList.sort(
-          (a, b) => a.pricePerSession.compareTo(b.pricePerSession),
-        );
-        break;
-      case SortOption.priceDesc:
-        filteredList.sort(
-          (a, b) => b.pricePerSession.compareTo(a.pricePerSession),
-        );
-        break;
-      case SortOption.reviewCount:
-        filteredList.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
-        break;
     }
 
     return filteredList;
+  }
+
+  @override
+  Future<PhotographerPage> getPhotographersPage({
+    FilterCriteria? criteria,
+    required int limit,
+    required int offset,
+    bool topRated = false,
+  }) async {
+    final all = await getPhotographers(criteria: criteria);
+    return PhotographerPage(
+      items: all.skip(offset).take(limit).toList(),
+      total: all.length,
+      limit: limit,
+      offset: offset,
+    );
   }
 }

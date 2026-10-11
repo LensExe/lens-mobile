@@ -487,36 +487,23 @@ class _BookingActions extends ConsumerWidget {
           iconColor: AppColors.ember,
           iconBgColor: AppColors.ember.withValues(alpha: 0.1),
           title: 'Đang chờ nhiếp ảnh gia xác nhận',
-          message: 'Bạn đã đặt cọc thành công. Nhiếp ảnh gia sẽ phản hồi trong 24 giờ; nếu bị từ chối, toàn bộ tiền cọc sẽ được hoàn 100% vào Ví.',
-          primaryAction: OutlinedButton(
+          message: 'Yêu cầu đang chờ nhiếp ảnh gia. Bạn có thể thanh toán khoản đặt cọc theo số tiền do Backend xác định.',
+          primaryAction: PrimaryButton(
+            text: 'Mở thanh toán đặt cọc',
+            height: 48,
+            onPressed: () =>
+                context.push('/customer_home/bookings/${booking.id}/deposit'),
+          ),
+          secondaryAction: TextButton(
             onPressed: () => _cancel(context, ref),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: AppColors.crimson.withValues(alpha: 0.35),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTokens.pillRadius),
-              ),
-              minimumSize: const Size.fromHeight(46),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  LucideIcons.xCircle,
-                  size: 16,
-                  color: AppColors.crimson,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Huỷ yêu cầu đặt lịch',
-                  style: AppTypography.labelMd(color: AppColors.crimson),
-                ),
-              ],
+            child: Text(
+              'Hủy yêu cầu',
+              style: AppTypography.labelMd(color: AppColors.crimson),
             ),
           ),
         );
 
+      case BookingStatus.accepted:
       case BookingStatus.confirmed:
         return _ActionCard(
           icon: LucideIcons.creditCard,
@@ -540,6 +527,7 @@ class _BookingActions extends ConsumerWidget {
           ),
         );
 
+      case BookingStatus.inProgress:
       case BookingStatus.held:
         return _ActionCard(
           icon: LucideIcons.shieldCheck,
@@ -590,6 +578,27 @@ class _BookingActions extends ConsumerWidget {
               : null,
         );
 
+      case BookingStatus.shot:
+        return _ActionCard(
+          icon: LucideIcons.images,
+          iconColor: AppColors.lagoon,
+          iconBgColor: AppColors.lagoon.withValues(alpha: 0.1),
+          title: 'Nhiếp ảnh gia đã bàn giao ảnh',
+          message: booking.galleryPublishedAt == null
+              ? 'Booking đã chuyển sang trạng thái chờ nhận ảnh. Backend chưa xác nhận gallery đã công khai.'
+              : 'Mở gallery đã được Backend công khai để xem ảnh và xác nhận đã nhận.',
+          primaryAction: booking.galleryPublishedAt == null
+              ? null
+              : PrimaryButton(
+                  text: 'Mở bộ ảnh',
+                  height: 48,
+                  onPressed: () => context.push(
+                    '/customer_home/bookings/${booking.id}/gallery',
+                  ),
+                ),
+        );
+
+      case BookingStatus.completed:
       case BookingStatus.released:
         return _ActionCard(
           icon: LucideIcons.checkCircle2,
@@ -613,6 +622,24 @@ class _BookingActions extends ConsumerWidget {
           title: 'Lịch đặt chụp đã huỷ',
           message: 'Lịch chụp này đã được huỷ bỏ theo chính sách hoàn tiền.',
         );
+
+      case BookingStatus.rejected:
+        return const _ActionCard(
+          icon: LucideIcons.circleX,
+          iconColor: AppColors.crimson,
+          iconBgColor: Color(0x1AE11D48),
+          title: 'Yêu cầu bị từ chối',
+          message: 'Backend đã ghi nhận trạng thái từ chối cho booking này.',
+        );
+
+      case BookingStatus.expired:
+        return const _ActionCard(
+          icon: LucideIcons.clockAlert,
+          iconColor: AppColors.steel,
+          iconBgColor: AppColors.fog,
+          title: 'Yêu cầu đã hết hạn',
+          message: 'Backend đã đóng yêu cầu booking này.',
+        );
     }
   }
 
@@ -620,6 +647,7 @@ class _BookingActions extends ConsumerWidget {
       status == BookingStatus.awaiting_deposit ||
       status == BookingStatus.pending ||
       status == BookingStatus.confirmed ||
+      status == BookingStatus.accepted ||
       status == BookingStatus.held;
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {

@@ -13,8 +13,8 @@ import '../../core/widgets/primary_button.dart';
 import '../../features/customer/bookings/controllers/customer_bookings_controller.dart';
 import '../../features/customer/bookings/models/booking_model.dart';
 import '../../features/customer/bookings/widgets/booking_status_pill.dart';
-import '../../features/customer/discovery/controllers/discovery_controller.dart';
 import '../../features/customer/discovery/models/photographer_model.dart';
+import '../../features/customer/discovery/repositories/customer_recommendations_repository.dart';
 import '../../providers/data_providers.dart';
 
 enum _OverviewFilter { all, payment, pending, completed }
@@ -33,7 +33,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authUserProvider);
     final bookingState = ref.watch(customerBookingsControllerProvider);
-    final discoveryState = ref.watch(discoveryControllerProvider);
+    final recommendationsState = ref.watch(customerRecommendationsProvider);
     final bookings = bookingState.allBookings;
     final upcoming = bookings.where((booking) => _isUpcoming(booking)).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
@@ -41,14 +41,20 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         .where(
           (booking) =>
               booking.status == BookingStatus.awaiting_deposit ||
-              booking.status == BookingStatus.confirmed,
+              booking.status == BookingStatus.pending ||
+              booking.status == BookingStatus.confirmed ||
+              booking.status == BookingStatus.accepted,
         )
         .toList();
     final pending = bookings
         .where((booking) => booking.status == BookingStatus.pending)
         .toList();
     final completed = bookings
-        .where((booking) => booking.status == BookingStatus.released)
+        .where(
+          (booking) =>
+              booking.status == BookingStatus.released ||
+              booking.status == BookingStatus.completed,
+        )
         .toList();
     final visible = switch (_filter) {
       _OverviewFilter.all => upcoming,
@@ -57,7 +63,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             .where(
               (b) =>
                   b.status == BookingStatus.awaiting_deposit ||
-                  b.status == BookingStatus.confirmed,
+                  b.status == BookingStatus.pending ||
+                  b.status == BookingStatus.confirmed ||
+                  b.status == BookingStatus.accepted,
             )
             .toList(),
       _OverviewFilter.pending =>
@@ -71,8 +79,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           (total, conversation) => total + conversation.unreadCount,
         );
     final firstName = (user?.name ?? 'bạn').split(' ').first;
-    final recommendations = [...discoveryState.photographers]
-      ..sort((a, b) => b.rating.compareTo(a.rating));
 
     return LensPage(
       body: RefreshIndicator(
@@ -138,7 +144,11 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: _buildDiscoverySection(context, recommendations),
+              child: _buildDiscoverySection(
+                context,
+                recommendationsState,
+                () => ref.invalidate(customerRecommendationsProvider),
+              ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
@@ -442,13 +452,15 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       items.add(
         _TodoItem(
           icon: LucideIcons.creditCard,
-          title: booking.status == BookingStatus.awaiting_deposit
+          title:
+              booking.status == BookingStatus.awaiting_deposit ||
+                  booking.status == BookingStatus.pending
               ? 'Thanh toán tiền cọc'
               : 'Thanh toán phần còn lại',
           hint: 'Hoàn tất để giữ lịch chụp của bạn.',
           color: AppColors.ember,
           onTap: () => context.push(
-            '/customer_home/bookings/${booking.id}/${booking.status == BookingStatus.awaiting_deposit ? 'deposit' : 'pay'}',
+            '/customer_home/bookings/${booking.id}/${booking.status == BookingStatus.awaiting_deposit || booking.status == BookingStatus.pending ? 'deposit' : 'pay'}',
           ),
         ),
       );
@@ -663,7 +675,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   Widget _buildDiscoverySection(
     BuildContext context,
-    List<PhotographerModel> photographers,
+    AsyncValue<List<PhotographerModel>> recommendations,
+    VoidCallback onRetry,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppTokens.pageHorizontal, 28, 0, 0),
@@ -674,39 +687,76 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             padding: const EdgeInsets.only(right: AppTokens.pageHorizontal),
             child: _buildSectionHeading(
               'Gợi ý dành cho bạn',
-              'Khám phá theo phong cách nghệ thuật yêu thích',
+              'Theo phong cách và khu vực trong hồ sơ của bạn',
               onSeeAll: () => context.go('/customer_home/discovery'),
             ),
           ),
           const SizedBox(height: 14),
-          if (photographers.isEmpty)
-            const SizedBox(
+          recommendations.when(
+            loading: () => const SizedBox(
               height: 120,
               child: Center(
                 child: CircularProgressIndicator(color: AppColors.ember),
               ),
-            )
-          else
-            SizedBox(
-              height: 250,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(right: AppTokens.pageHorizontal),
-                itemCount: photographers.take(6).length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) =>
-                    _RecommendationCard(photographer: photographers[index]),
+            ),
+            error: (error, _) => SizedBox(
+              height: 120,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Không thể tải gợi ý từ Backend.',
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                    TextButton(
+                      onPressed: onRetry,
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
               ),
             ),
+            data: (photographers) => photographers.isEmpty
+                ? SizedBox(
+                    height: 120,
+                    child: Center(
+                      child: Text(
+                        'Chưa có nhiếp ảnh gia phù hợp với hồ sơ của bạn.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySm(color: AppColors.steel),
+                      ),
+                    ),
+                  )
+                : SizedBox(
+                    height: 250,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.only(
+                        right: AppTokens.pageHorizontal,
+                      ),
+                      itemCount: photographers.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) => _RecommendationCard(
+                        photographer: photographers[index],
+                      ),
+                    ),
+                  ),
+          ),
         ],
       ),
     );
   }
 
   bool _isUpcoming(Booking booking) =>
-      booking.status != BookingStatus.released &&
-      booking.status != BookingStatus.cancelled &&
+      ![
+        BookingStatus.released,
+        BookingStatus.completed,
+        BookingStatus.cancelled,
+        BookingStatus.rejected,
+        BookingStatus.expired,
+      ].contains(booking.status) &&
       booking.date.compareTo(_todayIso()) >= 0;
 
   String _todayIso() => DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -1078,6 +1128,12 @@ class _BookingProgress extends StatelessWidget {
       BookingStatus.held => 3,
       BookingStatus.released => 4,
       BookingStatus.cancelled => 0,
+      BookingStatus.accepted => 2,
+      BookingStatus.inProgress => 3,
+      BookingStatus.shot => 4,
+      BookingStatus.completed => 4,
+      BookingStatus.rejected => 0,
+      BookingStatus.expired => 0,
     };
     const labels = ['Đặt cọc', 'Xác nhận', 'Thanh toán', 'Hoàn tất'];
     return Row(

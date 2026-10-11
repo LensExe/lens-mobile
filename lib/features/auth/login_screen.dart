@@ -20,8 +20,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController(text: 'customer@lens.com');
-  final _passwordController = TextEditingController(text: '123456');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _isSubmitting = false;
@@ -32,22 +32,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _quickFillCustomer() {
-    setState(() {
-      _emailController.text = 'customer@lens.com';
-      _passwordController.text = '123456';
-      _errorMessage = null;
-    });
-  }
-
-  void _quickFillPhotographer() {
-    setState(() {
-      _emailController.text = 'photo@lens.com';
-      _passwordController.text = '123456';
-      _errorMessage = null;
-    });
   }
 
   Future<void> _submit() async {
@@ -130,111 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Quick-fill Demo Account bar
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.fog,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.pebble.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                LucideIcons.sparkles,
-                                size: 14,
-                                color: AppColors.ember,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  'Tài khoản thử nghiệm nhanh (Demo):',
-                                  style: AppTypography.labelSm(
-                                    color: AppColors.steel,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: _quickFillCustomer,
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 7,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.snow,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: AppColors.pebble,
-                                      ),
-                                      boxShadow: const [
-                                        AppTokens.surfaceShadow,
-                                      ],
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      'Trần Khách Hàng',
-                                      style: AppTypography.numeric(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.obsidian,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: InkWell(
-                                  onTap: _quickFillPhotographer,
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 7,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.snow,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: AppColors.pebble,
-                                      ),
-                                      boxShadow: const [
-                                        AppTokens.surfaceShadow,
-                                      ],
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      'Nhiếp ảnh gia Demo',
-                                      style: AppTypography.numeric(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.steel,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
                     Container(
                       padding: const EdgeInsets.all(22),
@@ -340,7 +220,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () => _showMessage(
-                                'Vui lòng liên hệ tổng đài Lens Care hoặc dùng tài khoản Demo.',
+                                'Vui lòng liên hệ tổng đài Lens Care để được hỗ trợ.',
                               ),
                               child: const Text('Quên mật khẩu?'),
                             ),

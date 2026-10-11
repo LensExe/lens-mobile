@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../providers/data_providers.dart';
-
 import '../controllers/photographer_detail_controller.dart';
 import '../models/photographer_detail_model.dart';
 import '../widgets/photographer_detail_header.dart';
@@ -207,30 +205,10 @@ class _PhotographerDetailScreenState
               _bookPackage(context, controller, profile, pkg),
         );
       case 2:
-        final myReviews = ref.watch(customerReviewsProvider).value ?? [];
-        final customerName =
-            ref.read(authUserProvider)?.name ?? 'Khách hàng LENS';
-        final visibleReviews = [
-          for (final review in myReviews.where(
-            (review) => review.photographerId == profile.id,
-          ))
-            ClientReview(
-              id: review.bookingId,
-              clientName: customerName,
-              clientRole: 'Khách hàng LENS',
-              clientInitials: 'KH',
-              rating: review.rating,
-              timeAgo:
-                  '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
-              packageTag: review.style,
-              content: review.comment,
-            ),
-          ...profile.reviews,
-        ];
         return ReviewsTabView(
           rating: profile.rating,
           reviewCount: profile.reviewCount,
-          reviews: visibleReviews,
+          reviews: profile.reviews,
         );
       default:
         return const SizedBox.shrink();

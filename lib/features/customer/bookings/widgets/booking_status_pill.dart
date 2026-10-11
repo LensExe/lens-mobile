@@ -53,23 +53,44 @@ class BookingStatusPill extends StatelessWidget {
         background: const Color(0xFFFEF3C7),
         foreground: AppColors.statusAmber,
       );
+    case BookingStatus.accepted:
     case BookingStatus.confirmed:
       return (
         label: 'Chờ thanh toán',
         background: const Color(0xFFDBEAFE),
         foreground: AppColors.statusBlue,
       );
+    case BookingStatus.inProgress:
     case BookingStatus.held:
       return (
         label: 'Sàn đang giữ tiền',
         background: const Color(0xFFEDE9FE),
         foreground: AppColors.statusViolet,
       );
+    case BookingStatus.shot:
+      return (
+        label: 'Chờ xác nhận ảnh',
+        background: const Color(0xFFEDE9FE),
+        foreground: AppColors.statusViolet,
+      );
+    case BookingStatus.completed:
     case BookingStatus.released:
       return (
         label: 'Hoàn thành',
         background: const Color(0xFFD1FAE5),
         foreground: AppColors.success,
+      );
+    case BookingStatus.rejected:
+      return (
+        label: 'Bị từ chối',
+        background: AppColors.fog,
+        foreground: AppColors.steel,
+      );
+    case BookingStatus.expired:
+      return (
+        label: 'Đã hết hạn',
+        background: AppColors.fog,
+        foreground: AppColors.steel,
       );
     case BookingStatus.cancelled:
       return (

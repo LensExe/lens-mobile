@@ -11,7 +11,7 @@ import 'studio_gear_tab_view.dart';
 class AboutTabView extends StatelessWidget {
   final PhotographerProfile profile;
   final List<ProfilePackage> packages;
-  final StudioGearInfo gearInfo;
+  final StudioGearInfo? gearInfo;
   final ProfilePackage? selectedPackage;
   final ValueChanged<ProfilePackage> onSelectPackage;
   final ValueChanged<ProfilePackage> onBookPackage;
@@ -41,8 +41,10 @@ class AboutTabView extends StatelessWidget {
             onSelectPackage: onSelectPackage,
             onBookPackage: onBookPackage,
           ),
-          const SizedBox(height: 16),
-          StudioGearTabView(gearInfo: gearInfo),
+          if (gearInfo != null) ...[
+            const SizedBox(height: 16),
+            StudioGearTabView(gearInfo: gearInfo!),
+          ],
           const SizedBox(height: 32),
         ],
       ),
@@ -89,15 +91,18 @@ class _IntroCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _FactChip(icon: LucideIcons.mapPin, label: profile.city),
-              _FactChip(
-                icon: LucideIcons.briefcaseBusiness,
-                label: '${profile.experienceYears}+ năm kinh nghiệm',
-              ),
-              _FactChip(
-                icon: LucideIcons.shieldCheck,
-                label: profile.isInsured ? 'Có bảo hiểm' : 'Đã xác minh',
-                isHighlight: profile.isInsured,
-              ),
+              if (profile.experienceYears != null &&
+                  profile.experienceYears! > 0)
+                _FactChip(
+                  icon: LucideIcons.briefcaseBusiness,
+                  label: '${profile.experienceYears}+ năm hoạt động',
+                ),
+              if (profile.isVerified)
+                const _FactChip(
+                  icon: LucideIcons.shieldCheck,
+                  label: 'Đã xác minh',
+                  isHighlight: true,
+                ),
             ],
           ),
         ],

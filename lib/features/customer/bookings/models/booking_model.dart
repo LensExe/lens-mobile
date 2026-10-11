@@ -7,6 +7,12 @@ enum BookingStatus {
   held, // Đã thanh toán 100%, sàn giữ tiền (escrow) chờ chụp & giao ảnh
   released, // Khách đã nghiệm thu nhận ảnh -> hoàn tất, giải ngân cho NAG
   cancelled, // Đã huỷ lịch
+  accepted,
+  rejected,
+  expired,
+  inProgress,
+  shot,
+  completed,
 }
 
 class PackageTerms {
@@ -96,8 +102,8 @@ class Booking {
   final List<BookingCollaborator>? collaborators;
 
   // Thuộc tính phụ trợ phục vụ hiển thị
-  final double rating;
-  final int reviewCount;
+  final double? rating;
+  final int? reviewCount;
   final int uploadedProofsCount;
   final List<String> deliveryPhotoUrls;
   final String? createdTimeAgo;
@@ -125,15 +131,17 @@ class Booking {
     this.coinsRedeemed,
     this.coinsEarned,
     this.collaborators,
-    this.rating = 4.95,
-    this.reviewCount = 50,
+    this.rating,
+    this.reviewCount,
     this.uploadedProofsCount = 0,
     this.deliveryPhotoUrls = const [],
-    this.createdTimeAgo = 'Vừa xong',
+    this.createdTimeAgo,
     this.isStorageLocked = false,
+    this.galleryPublishedAt,
   });
 
   final bool isStorageLocked;
+  final String? galleryPublishedAt;
 
   /// Tính số tiền còn lại phải thanh toán sau khi cọc (70%)
   int get remainingAmount => price - depositAmount;
@@ -170,6 +178,7 @@ class Booking {
     List<String>? deliveryPhotoUrls,
     String? createdTimeAgo,
     bool? isStorageLocked,
+    String? galleryPublishedAt,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -200,6 +209,7 @@ class Booking {
       deliveryPhotoUrls: deliveryPhotoUrls ?? this.deliveryPhotoUrls,
       createdTimeAgo: createdTimeAgo ?? this.createdTimeAgo,
       isStorageLocked: isStorageLocked ?? this.isStorageLocked,
+      galleryPublishedAt: galleryPublishedAt ?? this.galleryPublishedAt,
     );
   }
 }

@@ -162,33 +162,36 @@ class BookingCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    LucideIcons.star,
-                                    color: AppColors.ember,
-                                    size: 13,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '${booking.rating}',
-                                    style: AppTypography.numeric(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.obsidian,
+                              if (booking.rating != null &&
+                                  booking.reviewCount != null) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.star,
+                                      color: AppColors.ember,
+                                      size: 13,
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '(${booking.reviewCount} đánh giá)',
-                                    style: AppTypography.bodySm(
-                                      fontSize: 11.5,
-                                      color: AppColors.steel,
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      '${booking.rating}',
+                                      style: AppTypography.numeric(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.obsidian,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '(${booking.reviewCount} đánh giá)',
+                                      style: AppTypography.bodySm(
+                                        fontSize: 11.5,
+                                        color: AppColors.steel,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -431,20 +434,38 @@ class BookingCard extends StatelessWidget {
         textColor = AppColors.lagoon;
         label = 'Chờ xác nhận';
         break;
+      case BookingStatus.accepted:
       case BookingStatus.confirmed:
         dotColor = AppColors.lagoon;
         textColor = AppColors.lagoon;
         label = 'Đã xác nhận';
         break;
+      case BookingStatus.inProgress:
       case BookingStatus.held:
         dotColor = AppColors.ember;
         textColor = AppColors.ember;
         label = 'Đang xử lý ảnh';
         break;
+      case BookingStatus.shot:
+        dotColor = AppColors.lagoon;
+        textColor = AppColors.lagoon;
+        label = 'Chờ nhận ảnh';
+        break;
+      case BookingStatus.completed:
       case BookingStatus.released:
         dotColor = AppColors.emerald;
         textColor = AppColors.emerald;
         label = 'Đã hoàn thành';
+        break;
+      case BookingStatus.rejected:
+        dotColor = AppColors.crimson;
+        textColor = AppColors.crimson;
+        label = 'Bị từ chối';
+        break;
+      case BookingStatus.expired:
+        dotColor = AppColors.steel;
+        textColor = AppColors.steel;
+        label = 'Hết hạn';
         break;
       case BookingStatus.cancelled:
         dotColor = AppColors.crimson;
@@ -505,7 +526,32 @@ class BookingCard extends StatelessWidget {
         dotColor = AppColors.steel;
         break;
       case BookingStatus.pending:
-        text = 'Đã giữ cọc 30%';
+        text = 'Yêu cầu đang chờ xử lý';
+        dotColor = AppColors.steel;
+        break;
+      case BookingStatus.accepted:
+        text = 'Đã được nhiếp ảnh gia chấp nhận';
+        dotColor = AppColors.lagoon;
+        break;
+      case BookingStatus.inProgress:
+        text = 'Buổi chụp đang thực hiện';
+        dotColor = AppColors.lagoon;
+        break;
+      case BookingStatus.shot:
+        text = 'Ảnh đã được bàn giao';
+        dotColor = AppColors.lagoon;
+        break;
+      case BookingStatus.completed:
+        text = 'Đã hoàn tất';
+        dotColor = AppColors.emerald;
+        break;
+      case BookingStatus.rejected:
+        text = 'Yêu cầu bị từ chối';
+        dotColor = AppColors.steel;
+        break;
+      case BookingStatus.expired:
+        text = 'Yêu cầu đã hết hạn';
+        dotColor = AppColors.steel;
         break;
     }
 
@@ -543,7 +589,18 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.awaiting_deposit:
         return 'Đặt cọc 30%';
       case BookingStatus.pending:
-        return 'Xem chi tiết lịch hẹn';
+        return 'Thanh toán cọc';
+      case BookingStatus.accepted:
+        return 'Thanh toán còn lại';
+      case BookingStatus.inProgress:
+        return 'Theo dõi buổi chụp';
+      case BookingStatus.shot:
+        return 'Xem ảnh bàn giao';
+      case BookingStatus.completed:
+        return 'Xem chi tiết';
+      case BookingStatus.rejected:
+      case BookingStatus.expired:
+        return 'Xem chi tiết';
       case BookingStatus.confirmed:
         return 'Thanh toán nốt 70%';
       case BookingStatus.released:

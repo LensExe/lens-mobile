@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_client.dart';
 import 'booking_repository.dart';
-import 'mock_booking_repository.dart';
+import 'api_booking_repository.dart';
 
 final customerBookingRepositoryProvider = Provider<BookingRepository>((ref) {
-  return MockBookingRepository();
+  return ApiBookingRepository(ref.watch(dioProvider));
 });

@@ -27,7 +27,7 @@ class PackagesTabView extends StatelessWidget {
       children: [
         // 1. Header Row
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
@@ -36,23 +36,6 @@ class PackagesTabView extends StatelessWidget {
                 fontSize: 18,
                 color: AppColors.obsidian,
               ),
-            ),
-            Row(
-              children: [
-                const Icon(
-                  LucideIcons.shieldCheck,
-                  size: 14,
-                  color: AppColors.emerald,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Bảo hiểm Escrow',
-                  style: AppTypography.labelSm(
-                    fontSize: 12,
-                    color: AppColors.steel,
-                  ),
-                ),
-              ],
             ),
           ],
         ),

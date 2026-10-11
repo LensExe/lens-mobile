@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../models/booking_model.dart';
 import 'booking_repository.dart';
 
@@ -332,5 +334,41 @@ class MockBookingRepository implements BookingRepository {
     });
     if (occupied) throw StateError('Khung giờ này không còn trống.');
     _bookings.insert(0, booking);
+  }
+
+  @override
+  Future<Booking> createBookingFromInput(BookingCreateInput input) async {
+    final date = input.from;
+    final value = Booking(
+      id: 'preview-${DateTime.now().microsecondsSinceEpoch}',
+      clientId: 'preview-customer',
+      clientName: '',
+      photographerId: input.photographerId,
+      photographerName: input.photographerName,
+      photographerAvatar: input.photographerAvatar,
+      style: '',
+      date: DateFormat('yyyy-MM-dd').format(date),
+      timeSlot:
+          '${DateFormat('HH:mm').format(input.from)} - ${DateFormat('HH:mm').format(input.to)}',
+      location: input.location,
+      price: 0,
+      status: BookingStatus.pending,
+      packageId: input.bookingPlanId,
+      depositAmount: 0,
+    );
+    await createBooking(value);
+    return value;
+  }
+
+  @override
+  Future<Booking> cancelBooking(String bookingId, String reason) async {
+    await updateBookingStatus(bookingId, BookingStatus.cancelled);
+    return (await getBookingById(bookingId))!;
+  }
+
+  @override
+  Future<Booking> confirmReceipt(String bookingId) async {
+    await updateBookingStatus(bookingId, BookingStatus.released);
+    return (await getBookingById(bookingId))!;
   }
 }

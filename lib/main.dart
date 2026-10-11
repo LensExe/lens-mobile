@@ -4,11 +4,20 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:lens_app/core/router/app_router.dart';
 import 'package:lens_app/core/theme/app_theme.dart';
 
+import 'core/network/auth_session_store.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN', null);
+  final sessionStore = AuthSessionStore();
+  await sessionStore.restore();
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [authSessionStoreProvider.overrideWithValue(sessionStore)],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {

@@ -8,10 +8,10 @@ abstract class DeliveryMediaRepository {
   Future<void> saveImage({required String url, required String name});
 }
 
-class MockDeliveryMediaRepository implements DeliveryMediaRepository {
+class ApiDeliveryMediaRepository implements DeliveryMediaRepository {
   final Dio _dio;
 
-  MockDeliveryMediaRepository({Dio? dio}) : _dio = dio ?? Dio();
+  ApiDeliveryMediaRepository({Dio? dio}) : _dio = dio ?? Dio();
 
   @override
   Future<void> saveImage({required String url, required String name}) async {
@@ -37,5 +37,5 @@ class MockDeliveryMediaRepository implements DeliveryMediaRepository {
 final deliveryMediaRepositoryProvider = Provider<DeliveryMediaRepository>((
   ref,
 ) {
-  return MockDeliveryMediaRepository();
+  return ApiDeliveryMediaRepository();
 });

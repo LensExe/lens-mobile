@@ -3,6 +3,7 @@ enum WalletTransactionType {
   coinCashback,
   coinRedemption,
   reviewReward,
+  ledgerEntry,
 }
 
 class WalletTransaction {
@@ -13,6 +14,9 @@ class WalletTransaction {
   final int amount;
   final bool isPositive;
   final WalletTransactionType type;
+  final String entryType;
+  final int availableDelta;
+  final int frozenDelta;
 
   const WalletTransaction({
     required this.id,
@@ -22,10 +26,17 @@ class WalletTransaction {
     required this.amount,
     required this.isPositive,
     required this.type,
+    this.entryType = '',
+    this.availableDelta = 0,
+    this.frozenDelta = 0,
   });
 }
 
 class CustomerWallet {
+  /// Actual backend wallet amounts. Legacy coin fields below remain only for
+  /// isolated mock fixtures and are not displayed in production.
+  final int availableBalance;
+  final int frozenBalance;
   final int cashBalance; // Tiền mặt hoàn từ huỷ lịch (VND)
   final int coinBalance; // Lens Xu tích luỹ (1 Xu = 1 VND)
   final int expiringCoins; // Xu sắp hết hạn trong 6 tháng
@@ -35,6 +46,8 @@ class CustomerWallet {
   final List<WalletTransaction> transactions;
 
   const CustomerWallet({
+    this.availableBalance = 0,
+    this.frozenBalance = 0,
     this.cashBalance = 0,
     this.coinBalance = 0,
     this.expiringCoins = 0,
@@ -45,6 +58,8 @@ class CustomerWallet {
   });
 
   CustomerWallet copyWith({
+    int? availableBalance,
+    int? frozenBalance,
     int? cashBalance,
     int? coinBalance,
     int? expiringCoins,
@@ -54,6 +69,8 @@ class CustomerWallet {
     List<WalletTransaction>? transactions,
   }) {
     return CustomerWallet(
+      availableBalance: availableBalance ?? this.availableBalance,
+      frozenBalance: frozenBalance ?? this.frozenBalance,
       cashBalance: cashBalance ?? this.cashBalance,
       coinBalance: coinBalance ?? this.coinBalance,
       expiringCoins: expiringCoins ?? this.expiringCoins,

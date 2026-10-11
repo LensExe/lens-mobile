@@ -57,16 +57,11 @@ class BookingWizardState {
 
   double get durationHours {
     final pkg = selectedPackage;
-    if (pkg == null) return 2.0;
-    // Parse duration: e.g. "1.5 Giờ" -> 1.5, "3 Giờ" -> 3.0, "5 Giờ" -> 5.0
-    final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(pkg.duration);
-    if (match != null) {
-      return double.tryParse(match.group(1) ?? '2.0') ?? 2.0;
-    }
-    return 2.0;
+    final minutes = pkg?.durationMinutes;
+    return minutes == null || minutes <= 0 ? 0 : minutes / 60;
   }
 
-  int get price => selectedPackage?.price ?? profile?.startingPrice ?? 2800000;
+  int get price => selectedPackage?.price ?? 0;
 
   int get depositAmount => (price * 0.3).round();
 
@@ -83,23 +78,25 @@ class BookingWizardState {
   ];
 
   // Validation
-  bool get isPhoneValid {
-    return RegExp(r'^(0|\+84)\d{8,10}$').hasMatch(contactPhone.trim());
-  }
-
-  bool get isNameValid => contactName.trim().length >= 2;
-
-  bool get isCityValid => standardCities.contains(city.trim());
+  String get bookingLocation => [
+    addressDetail.trim(),
+    city.trim(),
+  ].where((part) => part.isNotEmpty).join(', ');
 
   bool get isStep1Valid {
-    if (selectedPackageId == null || selectedTimeSlot == null) return false;
+    if (selectedPackageId == null ||
+        selectedTimeSlot == null ||
+        durationHours <= 0 ||
+        price <= 0) {
+      return false;
+    }
     final key =
         '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
     return availabilityMap[key]?.canStartAt(selectedTimeSlot!, durationHours) ??
         false;
   }
 
-  bool get isStep2Valid => isNameValid && isPhoneValid && isCityValid;
+  bool get isStep2Valid => bookingLocation.isNotEmpty;
 
   bool get isStep3Valid => isStep1Valid && isStep2Valid && agreedToTerms;
 

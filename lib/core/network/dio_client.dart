@@ -1,28 +1,25 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'api_config.dart';
+import 'auth_session_store.dart';
+import 'session_interceptor.dart';
+
 final dioProvider = Provider<Dio>((ref) {
+  final baseUrl = ref.watch(apiConfigProvider).requireBaseUrl();
+  final sessionStore = ref.watch(authSessionStoreProvider);
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost:3000/api', // To be updated
+      baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 10),
+      headers: const {'Accept': 'application/json'},
     ),
   );
 
   dio.interceptors.add(
-    InterceptorsWrapper(
-      onRequest: (options, handler) {
-        // TODO: Add auth token or mock data interceptor
-        return handler.next(options);
-      },
-      onResponse: (response, handler) {
-        return handler.next(response);
-      },
-      onError: (DioException e, handler) {
-        return handler.next(e);
-      },
-    ),
+    SessionInterceptor(dio: dio, baseUrl: baseUrl, sessionStore: sessionStore),
   );
 
   return dio;

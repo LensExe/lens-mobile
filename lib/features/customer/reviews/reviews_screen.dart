@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../domain/models/customer_review_model.dart';
@@ -30,12 +31,12 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
     final reviewsState = ref.watch(customerReviewsProvider);
     final reviews = reviewsState.value ?? [];
 
-    // Released bookings that have not been reviewed yet
+    // Backend permits review creation only after the booking is completed.
     final reviewedBookingIds = reviews.map((r) => r.bookingId).toSet();
     final reviewable = bookingsState.allBookings
         .where(
           (booking) =>
-              booking.status == BookingStatus.released &&
+              booking.status == BookingStatus.completed &&
               !reviewedBookingIds.contains(booking.id),
         )
         .toList();
@@ -77,13 +78,9 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
       body: RefreshIndicator(
         color: AppColors.ember,
         onRefresh: () async {
-          ref.invalidate(customerReviewsProvider);
-          await Future.wait([
-            ref
-                .read(customerBookingsControllerProvider.notifier)
-                .loadBookings(),
-            ref.read(customerReviewsProvider.future),
-          ]);
+          await ref
+              .read(customerBookingsControllerProvider.notifier)
+              .loadBookings();
         },
         child: ListView(
           physics: const BouncingScrollPhysics(),
@@ -95,7 +92,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
           ),
           children: [
             Text(
-              'Chia sẻ trải nghiệm khách quan sau mỗi buổi chụp đã hoàn thành để giúp cộng đồng và nhận quà tặng Lens Xu.',
+              'Chia sẻ trải nghiệm sau buổi chụp đã hoàn thành để giúp khách hàng khác tham khảo.',
               style: AppTypography.bodySm(color: AppColors.steel),
             ),
             const SizedBox(height: 16),
@@ -107,52 +104,29 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Coin incentive card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.snow,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.pebble),
-                boxShadow: const [AppTokens.surfaceShadow],
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.ember.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.gift,
-                      size: 19,
-                      color: AppColors.ember,
-                    ),
+                  const Icon(
+                    LucideIcons.info,
+                    size: 19,
+                    color: AppColors.ember,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Nhận ngay +10.000 Lens Xu',
-                          style: AppTypography.titleMd(
-                            fontSize: 13.5,
-                            color: AppColors.obsidian,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Mỗi đánh giá hợp lệ (từ 10 ký tự) sẽ được tặng ngay 10.000 Xu trực tiếp vào ví của bạn.',
-                          style: AppTypography.bodySm(
-                            fontSize: 12,
-                            color: AppColors.steel,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Chỉ booking ở trạng thái completed mới đủ điều kiện. Backend yêu cầu chấm điểm tổng thể, đúng giờ và thái độ. API hiện chưa có lịch sử review riêng của khách.',
+                      style: AppTypography.bodySm(
+                        fontSize: 12,
+                        color: AppColors.steel,
+                      ),
                     ),
                   ),
                 ],
@@ -167,7 +141,6 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
                     const Text('Không thể tải đánh giá. Vui lòng thử lại.'),
                     TextButton(
                       onPressed: () {
-                        ref.invalidate(customerReviewsProvider);
                         ref
                             .read(customerBookingsControllerProvider.notifier)
                             .loadBookings();
@@ -191,7 +164,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
               if (reviewable.isEmpty)
                 const _ReviewEmpty(
                   title: 'Chưa có buổi chụp nào cần đánh giá',
-                  message: 'Sau khi hoàn thành và nghiệm thu buổi chụp, bạn có thể viết đánh giá cho nhiếp ảnh gia.',
+                  message: 'Sau khi Backend chuyển booking sang completed, bạn có thể gửi đánh giá cho nhiếp ảnh gia.',
                 )
               else
                 ...reviewable.map(
@@ -206,8 +179,8 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
             ] else ...[
               if (reviews.isEmpty)
                 const _ReviewEmpty(
-                  title: 'Chưa có đánh giá nào đã gửi',
-                  message: 'Những đánh giá bạn đã viết sẽ được lưu trữ và hiển thị tại đây.',
+                  title: 'Chưa gửi đánh giá trong phiên này',
+                  message: 'Backend chưa cung cấp endpoint để tải lịch sử đánh giá của khách.',
                 )
               else
                 ...reviews.map(
@@ -265,6 +238,8 @@ class _BookingReviewDialog extends ConsumerStatefulWidget {
 
 class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
   double _rating = 5.0;
+  int _punctualityRating = 5;
+  int _attitudeRating = 5;
   final _commentController = TextEditingController();
   bool _isSubmitting = false;
 
@@ -273,6 +248,8 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
     super.initState();
     if (widget.isReadOnly && widget.review != null) {
       _rating = widget.review!.rating;
+      _punctualityRating = widget.review!.punctualityRating;
+      _attitudeRating = widget.review!.attitudeRating;
       _commentController.text = widget.review!.comment;
     }
   }
@@ -302,7 +279,12 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
     final date = widget.isReadOnly ? widget.review!.date : widget.booking!.date;
 
     final commentLength = _commentController.text.trim().length;
-    final canSubmit = !widget.isReadOnly && _rating > 0 && commentLength >= 10;
+    final canSubmit =
+        !widget.isReadOnly &&
+        _rating >= 1 &&
+        _punctualityRating >= 1 &&
+        _attitudeRating >= 1 &&
+        commentLength <= 10000;
 
     return Dialog(
       backgroundColor: AppColors.snow,
@@ -388,62 +370,33 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
             ),
             const SizedBox(height: 20),
 
-            // Star Rating Section
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    _ratingLabel,
-                    style: AppTypography.titleMd(
-                      fontSize: 15,
-                      color: AppColors.ember,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      final starValue = index + 1;
-                      final isSelected = starValue <= _rating;
-                      return widget.isReadOnly
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: Icon(
-                                isSelected
-                                    ? Icons.star_rounded
-                                    : Icons.star_outline_rounded,
-                                size: 36,
-                                color: isSelected
-                                    ? const Color(0xFFF59E0B)
-                                    : AppColors.pebble,
-                              ),
-                            )
-                          : InkWell(
-                              onTap: () => setState(
-                                () => _rating = starValue.toDouble(),
-                              ),
-                              borderRadius: BorderRadius.circular(9999),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: Icon(
-                                  isSelected
-                                      ? Icons.star_rounded
-                                      : Icons.star_outline_rounded,
-                                  size: 38,
-                                  color: isSelected
-                                      ? const Color(0xFFF59E0B)
-                                      : AppColors.pebble,
-                                ),
-                              ),
-                            );
-                    }),
-                  ),
-                ],
+            Text(
+              _ratingLabel,
+              style: AppTypography.titleMd(
+                fontSize: 15,
+                color: AppColors.ember,
               ),
+            ),
+            const SizedBox(height: 10),
+            _RatingSelector(
+              label: 'Đánh giá tổng thể',
+              value: _rating.round(),
+              readOnly: widget.isReadOnly,
+              onChanged: (value) => setState(() => _rating = value.toDouble()),
+            ),
+            const SizedBox(height: 8),
+            _RatingSelector(
+              label: 'Đúng giờ',
+              value: _punctualityRating,
+              readOnly: widget.isReadOnly,
+              onChanged: (value) => setState(() => _punctualityRating = value),
+            ),
+            const SizedBox(height: 8),
+            _RatingSelector(
+              label: 'Thái độ phục vụ',
+              value: _attitudeRating,
+              readOnly: widget.isReadOnly,
+              onChanged: (value) => setState(() => _attitudeRating = value),
             ),
             const SizedBox(height: 20),
 
@@ -463,7 +416,9 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
                   border: Border.all(color: AppColors.pebble),
                 ),
                 child: Text(
-                  widget.review!.comment,
+                  widget.review!.comment.isEmpty
+                      ? 'Không có nhận xét.'
+                      : widget.review!.comment,
                   style: AppTypography.bodySm(
                     color: AppColors.obsidian,
                     fontSize: 13,
@@ -474,7 +429,7 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
               TextFormField(
                 controller: _commentController,
                 maxLines: 4,
-                maxLength: 500,
+                maxLength: 10000,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Chia sẻ về sự chuyên nghiệp, đúng giờ, nhiệt tình của thợ và chất lượng bộ ảnh nhận được...',
@@ -484,10 +439,10 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
                   ),
                   filled: true,
                   fillColor: AppColors.fog,
-                  counterText: '$commentLength/500 ký tự (tối thiểu 10 ký tự)',
+                  counterText: '$commentLength/10.000 ký tự · Không bắt buộc',
                   counterStyle: AppTypography.bodySm(
                     fontSize: 11,
-                    color: commentLength >= 10
+                    color: commentLength <= 10000
                         ? AppColors.steel
                         : AppColors.ember,
                   ),
@@ -538,6 +493,7 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
   }
 
   Future<void> _submitReview() async {
+    if (_isSubmitting) return;
     setState(() => _isSubmitting = true);
     final booking = widget.booking!;
 
@@ -551,7 +507,9 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
             photographerAvatar: booking.photographerAvatar ?? '',
             style: booking.style,
             date: booking.date,
-            rating: _rating,
+            rating: _rating.round(),
+            punctualityRating: _punctualityRating,
+            attitudeRating: _attitudeRating,
             comment: _commentController.text.trim(),
           );
 
@@ -563,21 +521,63 @@ class _BookingReviewDialogState extends ConsumerState<_BookingReviewDialog> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'Đã gửi đánh giá cho ${booking.photographerName} · Nhận +10.000 Xu',
+            'Backend đã ghi nhận đánh giá cho ${booking.photographerName}.',
           ),
           backgroundColor: AppColors.emerald,
         ),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không thể gửi đánh giá, vui lòng thử lại'),
+        SnackBar(
+          content: Text(
+            error is ApiException
+                ? error.message
+                : 'Không thể gửi đánh giá. Vui lòng thử lại.',
+          ),
         ),
       );
     }
   }
+}
+
+class _RatingSelector extends StatelessWidget {
+  const _RatingSelector({
+    required this.label,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int value;
+  final bool readOnly;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Text(
+          label,
+          style: AppTypography.labelMd(color: AppColors.obsidian),
+        ),
+      ),
+      for (var score = 1; score <= 5; score++)
+        IconButton(
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.all(2),
+          constraints: const BoxConstraints(minWidth: 30, minHeight: 32),
+          onPressed: readOnly ? null : () => onChanged(score),
+          icon: Icon(
+            score <= value ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 25,
+            color: score <= value ? const Color(0xFFF59E0B) : AppColors.pebble,
+          ),
+        ),
+    ],
+  );
 }
 
 class _Tabs extends StatelessWidget {
@@ -607,7 +607,7 @@ class _Tabs extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _TabPill(
-            label: 'Đã đánh giá',
+            label: 'Đã gửi phiên này',
             count: completedCount,
             selected: selected == _ReviewTab.completed,
             onTap: () => onChanged(_ReviewTab.completed),

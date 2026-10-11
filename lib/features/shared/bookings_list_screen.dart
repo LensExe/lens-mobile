@@ -11,7 +11,6 @@ import '../customer/bookings/controllers/customer_bookings_controller.dart';
 import '../customer/bookings/models/booking_model.dart';
 import '../customer/bookings/widgets/booking_card.dart';
 import '../customer/bookings/widgets/booking_status_filter_tabs.dart';
-import '../customer/bookings/widgets/escrow_summary_card.dart';
 
 class BookingsListScreen extends ConsumerStatefulWidget {
   const BookingsListScreen({super.key});
@@ -331,17 +330,6 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
               ),
             ),
 
-            // 5. Escrow Protection Summary Card
-            SliverToBoxAdapter(
-              child: EscrowSummaryCard(
-                totalAmount: state.totalEscrowHeld,
-                activeShootsCount: state.inProgressBookings.length,
-                onTap: () {
-                  controller.selectTab('Tất cả');
-                },
-              ),
-            ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 6)),
 
             // 6. Bookings List or Empty State
@@ -387,13 +375,19 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
       case BookingStatus.held:
         context.push('/customer_home/bookings/${booking.id}/gallery');
         break;
+      case BookingStatus.pending:
       case BookingStatus.awaiting_deposit:
         context.push('/customer_home/bookings/${booking.id}/deposit');
         break;
+      case BookingStatus.accepted:
       case BookingStatus.confirmed:
         context.push('/customer_home/bookings/${booking.id}/pay');
         break;
-      case BookingStatus.pending:
+      case BookingStatus.inProgress:
+      case BookingStatus.shot:
+      case BookingStatus.completed:
+      case BookingStatus.rejected:
+      case BookingStatus.expired:
       case BookingStatus.released:
       case BookingStatus.cancelled:
         context.push('/customer_home/bookings/${booking.id}');

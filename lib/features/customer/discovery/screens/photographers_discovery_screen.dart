@@ -10,12 +10,9 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../providers/data_providers.dart';
 import '../controllers/discovery_controller.dart';
-import '../models/filter_criteria.dart';
-import '../models/photo_style_options.dart';
 import '../models/photographer_model.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/photographer_feed_card.dart';
-import '../widgets/sort_bottom_sheet.dart';
 
 class PhotographersDiscoveryScreen extends ConsumerStatefulWidget {
   const PhotographersDiscoveryScreen({super.key});
@@ -31,9 +28,6 @@ class _PhotographersDiscoveryScreenState
   final FocusNode _searchFocusNode = FocusNode();
   bool _isSearchFocused = false;
   Timer? _debounce;
-
-  // Danh sách phong cách chụp ảnh chuẩn hệ thống LENS kèm lựa chọn 'Tất cả'
-  final List<String> _styleOptions = ['Tất cả', ...PhotoStyleOptions.all];
 
   @override
   void initState() {
@@ -86,26 +80,8 @@ class _PhotographersDiscoveryScreenState
     if (criteria.city?.isNotEmpty == true && criteria.city != 'Tất cả') {
       params['city'] = criteria.city!;
     }
-    if (criteria.minPrice != null) {
-      params['priceMin'] = criteria.minPrice!.toStringAsFixed(0);
-    }
-    if (criteria.maxPrice != null) {
-      params['priceMax'] = criteria.maxPrice!.toStringAsFixed(0);
-    }
-    if (criteria.availableDate != null) {
-      final date = criteria.availableDate!;
-      params['date'] =
-          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    }
     if (criteria.minRating != null) {
       params['rating'] = criteria.minRating!.toString();
-    }
-    if (criteria.experience != null) params['exp'] = criteria.experience!.name;
-    if (criteria.styles.isNotEmpty) {
-      params['styles'] = criteria.styles.join(',');
-    }
-    if (state.sortOption != SortOption.featured) {
-      params['sort'] = state.sortOption.name;
     }
     if (state.currentPage > 1) params['page'] = state.currentPage.toString();
     final target = Uri(
@@ -135,22 +111,6 @@ class _PhotographersDiscoveryScreenState
     );
   }
 
-  void _openSortBottomSheet() {
-    final currentSort = ref.read(discoveryControllerProvider).sortOption;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => SortBottomSheet(
-        initialSort: currentSort,
-        onApply: (newSort) {
-          ref.read(discoveryControllerProvider.notifier).updateSort(newSort);
-          _syncUrl();
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(discoveryControllerProvider);
@@ -164,11 +124,8 @@ class _PhotographersDiscoveryScreenState
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(child: _buildPageHeading()),
-            if (isGuest)
-              if (isGuest)
-                SliverToBoxAdapter(child: _buildGuestPrompt(context)),
+            if (isGuest) SliverToBoxAdapter(child: _buildGuestPrompt(context)),
             SliverToBoxAdapter(child: _buildSearchAndFilters(state)),
-            SliverToBoxAdapter(child: _buildStyleRail(state, controller)),
             SliverToBoxAdapter(child: _buildResultsToolbar(state)),
             if (state.isLoading)
               _buildLoadingSliver()
@@ -413,95 +370,7 @@ class _PhotographersDiscoveryScreenState
     );
   }
 
-  Widget _buildStyleRail(DiscoveryState state, DiscoveryController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppTokens.pageHorizontal,
-            18,
-            AppTokens.pageHorizontal,
-            8,
-          ),
-          child: Text(
-            'PHONG CÁCH',
-            style: AppTypography.labelSm(color: AppColors.steel)
-                .copyWith(letterSpacing: 1.1, fontWeight: FontWeight.w700),
-          ),
-        ),
-        SizedBox(
-          height: 42,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppTokens.pageHorizontal,
-            ),
-            itemCount: _styleOptions.length,
-            itemBuilder: (context, index) {
-              final style = _styleOptions[index];
-              final isAll = style == 'Tất cả';
-              final isSelected = isAll
-                  ? state.criteria.styles.isEmpty
-                  : state.criteria.styles.contains(style);
-
-              return Padding(
-                padding: const EdgeInsets.only(right: 22),
-                child: Semantics(
-                  button: true,
-                  selected: isSelected,
-                  child: InkWell(
-                    onTap: () {
-                      if (isAll) {
-                        controller.updateFilters(
-                          state.criteria.copyWith(styles: []),
-                        );
-                      } else {
-                        controller.toggleStyle(style);
-                      }
-                      _syncUrl();
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isSelected
-                                ? AppColors.ember
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Text(
-                        style,
-                        style:
-                            AppTypography.bodySm(
-                              color: isSelected
-                                  ? AppColors.obsidian
-                                  : AppColors.steel,
-                            ).copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                            ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildResultsToolbar(DiscoveryState state) {
-    final isCustomSort = state.sortOption != SortOption.featured;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
@@ -510,73 +379,19 @@ class _PhotographersDiscoveryScreenState
         12,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  state.totalCount.toString(),
-                  style: AppTypography.numeric(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.obsidian,
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Text(
-                    'nhiếp ảnh gia',
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySm(color: AppColors.steel),
-                  ),
-                ),
-              ],
+          Text(
+            state.totalCount.toString(),
+            style: AppTypography.numeric(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.obsidian,
             ),
           ),
-          Semantics(
-            button: true,
-            excludeSemantics: true,
-            label: 'Sắp xếp theo ${_sortLabel(state.sortOption)}',
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _openSortBottomSheet,
-                borderRadius: BorderRadius.circular(AppTokens.pillRadius),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        LucideIcons.arrowDownUp,
-                        size: 15,
-                        color: isCustomSort ? AppColors.ember : AppColors.steel,
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        _sortLabel(state.sortOption),
-                        style: AppTypography.labelMd(
-                          color: isCustomSort
-                              ? AppColors.ember
-                              : AppColors.steel,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Icon(
-                        LucideIcons.chevronDown,
-                        size: 14,
-                        color: isCustomSort ? AppColors.ember : AppColors.steel,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          const SizedBox(width: 7),
+          Text(
+            'nhiếp ảnh gia',
+            style: AppTypography.bodySm(color: AppColors.steel),
           ),
         ],
       ),
@@ -738,21 +553,6 @@ class _PhotographersDiscoveryScreenState
         ),
       ),
     );
-  }
-
-  String _sortLabel(SortOption option) {
-    switch (option) {
-      case SortOption.featured:
-        return 'Nổi bật';
-      case SortOption.rating:
-        return 'Đánh giá cao';
-      case SortOption.priceAsc:
-        return 'Giá thấp đến cao';
-      case SortOption.priceDesc:
-        return 'Giá cao đến thấp';
-      case SortOption.reviewCount:
-        return 'Nhiều đánh giá';
-    }
   }
 }
 

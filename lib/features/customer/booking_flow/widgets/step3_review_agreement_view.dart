@@ -21,8 +21,12 @@ class Step3ReviewAgreementView extends StatelessWidget {
 
   String _calculateEndTime(String startTime, double hours) {
     final parts = startTime.split(':');
-    final h = int.parse(parts[0]);
-    final m = int.parse(parts[1]);
+    if (parts.length != 2) return '—';
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) {
+      return '—';
+    }
     final totalMinutes = (h * 60 + m + (hours * 60).round());
     final endH = (totalMinutes ~/ 60) % 24;
     final endM = totalMinutes % 60;
@@ -33,9 +37,11 @@ class Step3ReviewAgreementView extends StatelessWidget {
   Widget build(BuildContext context) {
     final pkg = state.selectedPackage;
     final dateStr = DateFormat('dd/MM/yyyy').format(state.selectedDate);
-    final startTime = state.selectedTimeSlot ?? '14:00';
+    final startTime = state.selectedTimeSlot ?? '';
     final endTime = _calculateEndTime(startTime, state.durationHours);
-    final timeStr = '$dateStr · $startTime – $endTime';
+    final timeStr = startTime.isEmpty
+        ? 'Chưa chọn khung giờ'
+        : '$dateStr · $startTime – $endTime';
     final locationStr = state.addressDetail.isNotEmpty
         ? '${state.addressDetail}, ${state.city}'
         : state.city;
@@ -109,27 +115,6 @@ class Step3ReviewAgreementView extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(height: 1, color: AppColors.pebble),
                 ),
-
-                // Row 4: Liên hệ -> Sửa step 1
-                _ReviewRow(
-                  icon: LucideIcons.userCheck,
-                  label: 'Người liên hệ',
-                  value: '${state.contactName} · ${state.contactPhone}',
-                  onEdit: () => onJumpToStep(1),
-                ),
-
-                if (state.note.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(height: 1, color: AppColors.pebble),
-                  ),
-                  _ReviewRow(
-                    icon: LucideIcons.messageSquare,
-                    label: 'Ghi chú cho thợ',
-                    value: state.note,
-                    onEdit: () => onJumpToStep(1),
-                  ),
-                ],
               ],
             ),
           ),
@@ -166,7 +151,7 @@ class Step3ReviewAgreementView extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Chính sách đặt cọc & hoàn tiền Escrow',
+                        'Yêu cầu đặt lịch',
                         style: AppTypography.titleMd(
                           fontSize: 14.5,
                           color: AppColors.obsidian,
@@ -177,15 +162,7 @@ class Step3ReviewAgreementView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _PolicyBullet(
-                  text:
-                      'Đặt cọc 30% (${AppTypography.formatCurrency(state.depositAmount)}) ngay sau bước này để bảo đảm lịch và gửi yêu cầu cho nhiếp ảnh gia.',
-                ),
-                _PolicyBullet(
-                  text: 'Huỷ trước khi nhiếp ảnh gia duyệt, hoặc trước buổi chụp từ 7 ngày: hoàn tiền 100%. Nếu nhiếp ảnh gia từ chối: hoàn 100% tự động.',
-                ),
-                _PolicyBullet(
-                  text:
-                      'Phần còn lại 70% (${AppTypography.formatCurrency(state.remainingAmount)}) thanh toán sau khi lịch chụp được xác nhận.',
+                  text: 'Backend tạo yêu cầu đặt lịch ở trạng thái chờ nhiếp ảnh gia. Backend xác định số tiền và các bước thanh toán riêng.',
                 ),
               ],
             ),
@@ -216,7 +193,7 @@ class Step3ReviewAgreementView extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Tôi đồng ý với điều khoản đặt lịch và chính sách bảo vệ Escrow của Lens.',
+                      'Tôi xác nhận địa điểm và thời gian đặt lịch là chính xác.',
                       style: AppTypography.bodySm(
                         fontSize: 13,
                         color: AppColors.obsidian,

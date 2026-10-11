@@ -75,31 +75,43 @@ class _PhotographerFeedCardState extends State<PhotographerFeedCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CachedNetworkImage(
-                imageUrl: photographer.coverImageUrl,
-                fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 280),
-                placeholder: (context, url) => const ColoredBox(
+              if (photographer.coverImageUrl.isNotEmpty)
+                CachedNetworkImage(
+                  imageUrl: photographer.coverImageUrl,
+                  fit: BoxFit.cover,
+                  fadeInDuration: const Duration(milliseconds: 280),
+                  placeholder: (context, url) => const ColoredBox(
+                    color: AppColors.fog,
+                    child: Center(
+                      child: Icon(
+                        LucideIcons.aperture,
+                        color: AppColors.ash,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => const ColoredBox(
+                    color: AppColors.fog,
+                    child: Center(
+                      child: Icon(
+                        LucideIcons.imageOff,
+                        color: AppColors.steel,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const ColoredBox(
                   color: AppColors.fog,
                   child: Center(
                     child: Icon(
-                      LucideIcons.aperture,
+                      LucideIcons.image,
                       color: AppColors.ash,
-                      size: 24,
+                      size: 28,
                     ),
                   ),
                 ),
-                errorWidget: (context, url, error) => const ColoredBox(
-                  color: AppColors.fog,
-                  child: Center(
-                    child: Icon(
-                      LucideIcons.imageOff,
-                      color: AppColors.steel,
-                      size: 26,
-                    ),
-                  ),
-                ),
-              ),
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -280,33 +292,39 @@ class _PhotographerFeedCardState extends State<PhotographerFeedCard> {
             ),
           ],
           const SizedBox(height: 5),
-          Row(
-            children: [
-              Text(
-                'Từ ',
-                style: AppTypography.bodySm(color: AppColors.steel)
-                    .copyWith(fontSize: 11),
-              ),
-              Expanded(
-                child: Text(
-                  PhotographerDisplayHelper.formatPrice(
-                    photographer.pricePerSession,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.priceDisplay(
-                    fontSize: 14,
-                    color: AppColors.obsidian,
+          if (photographer.pricePerSession > 0)
+            Row(
+              children: [
+                Text(
+                  'Từ ',
+                  style: AppTypography.bodySm(color: AppColors.steel)
+                      .copyWith(fontSize: 11),
+                ),
+                Expanded(
+                  child: Text(
+                    PhotographerDisplayHelper.formatPrice(
+                      photographer.pricePerSession,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.priceDisplay(
+                      fontSize: 14,
+                      color: AppColors.obsidian,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(
-                LucideIcons.arrowUpRight,
-                size: 15,
-                color: AppColors.steel,
-              ),
-            ],
-          ),
+                const Icon(
+                  LucideIcons.arrowUpRight,
+                  size: 15,
+                  color: AppColors.steel,
+                ),
+              ],
+            )
+          else
+            Text(
+              'Xem gói chụp',
+              style: AppTypography.labelMd(color: AppColors.steel),
+            ),
         ],
       ),
     );
@@ -317,16 +335,18 @@ class _PhotographerFeedCardState extends State<PhotographerFeedCard> {
       padding: const EdgeInsets.fromLTRB(3, 11, 3, 0),
       child: Row(
         children: [
-          Text('Từ ', style: AppTypography.bodySm(color: AppColors.steel)),
           Expanded(
-            child: Text(
-              PhotographerDisplayHelper.formatPrice(
-                photographer.pricePerSession,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.priceDisplay(fontSize: 19),
-            ),
+            child: photographer.pricePerSession > 0
+                ? Text(
+                    'Từ ${PhotographerDisplayHelper.formatPrice(photographer.pricePerSession)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.priceDisplay(fontSize: 19),
+                  )
+                : Text(
+                    'Xem gói chụp',
+                    style: AppTypography.labelMd(color: AppColors.steel),
+                  ),
           ),
           Text(
             'Mở hồ sơ',

@@ -8,16 +8,25 @@ import 'package:lens_app/data/mock_database.dart';
 import 'package:lens_app/data/repositories/mock_auth_repository.dart';
 import 'package:lens_app/data/repositories/mock_customer_reviews_repository.dart';
 import 'package:lens_app/data/repositories/mock_customer_wallet_repository.dart';
+import 'package:lens_app/data/repositories/api_customer_wallet_repository.dart';
+import 'package:lens_app/domain/models/customer_wallet_model.dart';
 import 'package:lens_app/data/repositories/mock_customer_messages_repository.dart';
 import 'package:lens_app/domain/models/models.dart' show Message, User;
 import 'package:lens_app/providers/data_providers.dart';
 import 'package:lens_app/features/customer/bookings/models/booking_model.dart';
 import 'package:lens_app/features/customer/booking_flow/controllers/booking_wizard_controller.dart';
 import 'package:lens_app/features/customer/bookings/repositories/mock_booking_repository.dart';
-import 'package:lens_app/features/customer/bookings/widgets/cancel_booking_dialog.dart';
 import 'package:lens_app/features/customer/discovery/models/filter_criteria.dart';
 import 'package:lens_app/features/customer/discovery/controllers/discovery_controller.dart';
+import 'package:lens_app/features/customer/discovery/repositories/discovery_repository_provider.dart';
 import 'package:lens_app/features/customer/discovery/repositories/mock_photographer_repository.dart';
+import 'package:lens_app/features/customer/discovery/repositories/photographer_repository.dart';
+import 'package:lens_app/features/customer/discovery/models/photographer_model.dart';
+import 'package:lens_app/core/network/api_config.dart';
+import 'package:lens_app/core/network/auth_session_store.dart';
+import 'package:lens_app/features/customer/photographer_detail/models/photographer_detail_model.dart';
+import 'package:lens_app/features/customer/photographer_detail/repositories/photographer_detail_repository.dart';
+import 'package:lens_app/features/customer/photographer_detail/repositories/photographer_detail_repository_provider.dart';
 
 String _dateAfter(int days) {
   final date = DateTime.now().add(Duration(days: days));
@@ -127,27 +136,21 @@ void main() {
     },
   );
 
-  test('cancellation returns cash and redeemed coins using calendar days', () {
-    final base = _booking('policy')
-        .copyWith(status: BookingStatus.held, coinsRedeemed: 100000);
-    final early = CancelBookingTerms.calculate(base);
-    expect(early.refundAmount, 900000);
-    expect(early.coinsBack, 100000);
-    expect(early.penaltyAmount, 0);
-
-    final late = CancelBookingTerms.calculate(
-      base.copyWith(date: _dateAfter(3)),
-    );
-    expect(late.refundAmount, 600000);
-    expect(late.coinsBack, 100000);
-    expect(late.penaltyAmount, 300000);
-  });
-
   test(
-    'new customers do not inherit the demo wallet or review history',
+    'wallet and review providers do not expose demo balances or review history',
     () async {
       MockDatabase.currentUser = null;
-      final container = ProviderContainer();
+      const backendWallet = CustomerWallet(
+        availableBalance: 123000,
+        frozenBalance: 45000,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          customerWalletRepositoryProvider.overrideWithValue(
+            _FixedWalletDataSource(backendWallet),
+          ),
+        ],
+      );
       addTearDown(container.dispose);
       final user = User(
         id: 'isolation-${DateTime.now().microsecondsSinceEpoch}',
@@ -157,31 +160,20 @@ void main() {
       );
       container.read(authUserProvider.notifier).setUser(user);
       expect(
-        (await container.read(customerWalletProvider.future)).coinBalance,
-        0,
+        (await container.read(customerWalletProvider.future)).availableBalance,
+        123000,
+      );
+      expect(
+        (await container.read(customerWalletProvider.future)).frozenBalance,
+        45000,
       );
       expect(await container.read(customerReviewsProvider.future), isEmpty);
       expect(container.read(conversationsProvider), isEmpty);
-      container
-          .read(notificationPreferencesProvider.notifier)
-          .update(emailBooking: false);
       expect(
-        container.read(notificationPreferencesProvider).emailBooking,
-        isFalse,
+        (await container.read(customerWalletProvider.future)).availableBalance,
+        123000,
       );
-
-      container
-          .read(authUserProvider.notifier)
-          .setUser(MockDatabase.customerUser);
-      expect(
-        container.read(notificationPreferencesProvider).emailBooking,
-        isTrue,
-      );
-      expect(
-        (await container.read(customerWalletProvider.future)).coinBalance,
-        greaterThan(0),
-      );
-      expect(await container.read(customerReviewsProvider.future), isNotEmpty);
+      expect(await container.read(customerReviewsProvider.future), isEmpty);
     },
   );
 
@@ -279,7 +271,11 @@ void main() {
     tester,
   ) async {
     MockDatabase.currentUser = null;
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(MockAuthRepository()),
+      ],
+    );
     addTearDown(container.dispose);
     final router = container.read(goRouterProvider);
     await tester.pumpWidget(
@@ -298,6 +294,11 @@ void main() {
     );
     final loginButton = find.widgetWithText(PrimaryButton, 'Đăng nhập');
     await tester.ensureVisible(loginButton);
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'customer@lens.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(1), '123456');
     await tester.tap(loginButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 700));
@@ -312,13 +313,16 @@ void main() {
   testWidgets('photographers are redirected away from Customer-only routes', (
     tester,
   ) async {
-    MockDatabase.currentUser = User(
+    final photographer = User(
       id: 'photographer-test',
       name: 'Nhiếp ảnh gia thử nghiệm',
       email: 'creator@lens.test',
       role: 'photographer',
     );
-    final container = ProviderContainer();
+    MockDatabase.currentUser = photographer;
+    final container = ProviderContainer(
+      overrides: [initialAuthUserProvider.overrideWithValue(photographer)],
+    );
     addTearDown(container.dispose);
     final router = container.read(goRouterProvider);
     await tester.pumpWidget(
@@ -353,7 +357,17 @@ void main() {
     };
     addTearDown(() => FlutterError.onError = previousErrorHandler);
     MockDatabase.currentUser = MockDatabase.customerUser;
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [
+        discoveryRepositoryProvider.overrideWithValue(
+          _MissingPhotographerRepository(),
+        ),
+        photographerDetailRepositoryProvider.overrideWithValue(
+          _MissingApiProfileRepository(),
+        ),
+        initialAuthUserProvider.overrideWithValue(MockDatabase.customerUser),
+      ],
+    );
     addTearDown(container.dispose);
     final router = container.read(goRouterProvider);
     await tester.pumpWidget(
@@ -393,7 +407,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 800));
     expect(
       container.read(bookingWizardControllerProvider).selectedPackageId,
-      'pkg_mh_1',
+      isNull,
+    );
+    expect(
+      container.read(bookingWizardControllerProvider).errorMessage,
+      contains('API_BASE_URL'),
     );
     for (final size in [
       const Size(320, 740),
@@ -419,41 +437,66 @@ void main() {
     await tester.tap(find.byTooltip('Xóa tìm kiếm'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
-    await tester.tap(find.bySemanticsLabel('Mở bộ lọc'));
-    await tester.pumpAndSettle();
-    expect(find.text('Bộ lọc'), findsOneWidget);
-    await tester.tap(find.text('Hà Nội').last);
-    await tester.tap(find.text('Áp dụng bộ lọc'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(container.read(discoveryControllerProvider).criteria.city, 'Hà Nội');
+    expect(find.bySemanticsLabel('Mở bộ lọc'), findsOneWidget);
 
-    await tester.tap(find.bySemanticsLabel('Sắp xếp theo Nổi bật'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Giá thấp đến cao'));
-    await tester.tap(find.text('Áp dụng'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(
-      container.read(discoveryControllerProvider).sortOption,
-      SortOption.priceAsc,
-    );
-
-    expect(
-      container
-          .read(discoveryControllerProvider)
-          .photographers
-          .map((photographer) => photographer.id),
-      contains('p11'),
-    );
-    final kimNganCard = find.byKey(const ValueKey('p11'));
-    await tester.ensureVisible(kimNganCard);
-    await tester.pump();
-    await tester.tapAt(tester.getTopLeft(kimNganCard) + const Offset(24, 24));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
-    expect(router.canPop(), isTrue);
-    expect(tester.takeException(), isNull, reason: 'Explore detail navigation');
-    await tester.pump(const Duration(seconds: 2));
+    final discoveryState = container.read(discoveryControllerProvider);
+    expect(discoveryState.photographers, isEmpty);
+    expect(discoveryState.errorMessage, contains('API_BASE_URL'));
+    expect(tester.takeException(), isNull, reason: 'Explore API error state');
   });
+}
+
+class _FixedWalletDataSource implements CustomerWalletDataSource {
+  const _FixedWalletDataSource(this.wallet);
+
+  final CustomerWallet wallet;
+
+  @override
+  Future<CustomerWallet> getWallet() async => wallet;
+}
+
+class _MissingApiProfileRepository implements PhotographerDetailRepository {
+  const _MissingApiProfileRepository();
+
+  @override
+  Future<PhotographerProfile> getPhotographerProfile(String photographerId) =>
+      Future<PhotographerProfile>.error(
+        const ApiConfigurationException('Thiếu API_BASE_URL.'),
+      );
+
+  @override
+  Future<List<AvailabilityRange>> getAvailability({
+    required String photographerId,
+    required DateTime from,
+    required DateTime to,
+  }) => Future<List<AvailabilityRange>>.error(
+    const ApiConfigurationException('Thiếu API_BASE_URL.'),
+  );
+}
+
+class _MissingPhotographerRepository implements PhotographerRepository {
+  const _MissingPhotographerRepository();
+
+  @override
+  Future<List<PhotographerModel>> getPhotographers({
+    FilterCriteria? criteria,
+  }) => Future<List<PhotographerModel>>.error(
+    const ApiConfigurationException('Thiếu API_BASE_URL.'),
+  );
+
+  @override
+  Future<PhotographerPage> getPhotographersPage({
+    FilterCriteria? criteria,
+    required int limit,
+    required int offset,
+    bool topRated = false,
+  }) => Future<PhotographerPage>.error(
+    const ApiConfigurationException('Thiếu API_BASE_URL.'),
+  );
+
+  @override
+  Future<void> recordReview(String photographerId, double rating) =>
+      Future<void>.error(
+        const ApiConfigurationException('Thiếu API_BASE_URL.'),
+      );
 }

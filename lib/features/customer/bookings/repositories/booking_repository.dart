@@ -6,4 +6,28 @@ abstract class BookingRepository {
   Future<void> updateBookingStatus(String bookingId, BookingStatus newStatus);
   Future<void> payRemaining(String bookingId, int coinsRedeemed);
   Future<void> createBooking(Booking booking);
+
+  Future<Booking> createBookingFromInput(BookingCreateInput input);
+  Future<Booking> cancelBooking(String bookingId, String reason);
+  Future<Booking> confirmReceipt(String bookingId);
+}
+
+class BookingCreateInput {
+  const BookingCreateInput({
+    required this.photographerId,
+    required this.bookingPlanId,
+    required this.location,
+    required this.from,
+    required this.to,
+    this.photographerName = '',
+    this.photographerAvatar = '',
+  });
+
+  final String photographerId;
+  final String bookingPlanId;
+  final String location;
+  final DateTime from;
+  final DateTime to;
+  final String photographerName;
+  final String photographerAvatar;
 }

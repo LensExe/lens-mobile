@@ -1,15 +1,16 @@
-enum PaymentMethod { bank, card, momo }
+enum PaymentMethod { bank, wallet }
 
 extension PaymentMethodLabel on PaymentMethod {
   String get label => switch (this) {
-    PaymentMethod.bank => 'Chuyển khoản ngân hàng',
-    PaymentMethod.card => 'Thẻ tín dụng / ghi nợ',
-    PaymentMethod.momo => 'Ví MoMo',
+    PaymentMethod.bank => 'Cổng thanh toán',
+    PaymentMethod.wallet => 'Ví LENS',
   };
 
   String get hint => switch (this) {
-    PaymentMethod.bank => 'Quét mã QR hoặc chuyển khoản thủ công',
-    PaymentMethod.card => 'Visa, Mastercard, JCB',
-    PaymentMethod.momo => 'Thanh toán qua ứng dụng MoMo',
+    PaymentMethod.bank => 'Thanh toán qua cổng Backend cấu hình',
+    PaymentMethod.wallet => 'Backend xác định số dư ví VND',
   };
+
+  String get backendMethod =>
+      this == PaymentMethod.wallet ? 'wallet' : 'gateway';
 }
