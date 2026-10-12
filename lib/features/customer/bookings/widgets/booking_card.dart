@@ -359,11 +359,14 @@ class BookingCard extends StatelessWidget {
                     const SizedBox(height: 14),
 
                     // 6. Action Button
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: onPrimaryAction,
+                    Builder(
+                      builder: (context) {
+                        final primaryLabel = _getPrimaryActionLabel(booking);
+                        final isOnlyDetails = primaryLabel == 'Xem chi tiết';
+
+                        if (isOnlyDetails) {
+                          return InkWell(
+                            onTap: onTap,
                             borderRadius: BorderRadius.circular(9999),
                             child: Container(
                               height: 46,
@@ -373,7 +376,7 @@ class BookingCard extends StatelessWidget {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _getPrimaryActionLabel(booking),
+                                'Xem chi tiết',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.labelMd(
@@ -382,31 +385,59 @@ class BookingCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: onTap,
-                          borderRadius: BorderRadius.circular(9999),
-                          child: Container(
-                            height: 46,
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                            decoration: BoxDecoration(
-                              color: AppColors.fog,
-                              borderRadius: BorderRadius.circular(9999),
-                              border: Border.all(color: AppColors.pebble),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Chi tiết',
-                              style: AppTypography.labelMd(
-                                fontSize: 13,
-                                color: AppColors.obsidian,
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: onPrimaryAction,
+                                borderRadius: BorderRadius.circular(9999),
+                                child: Container(
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.ember,
+                                    borderRadius: BorderRadius.circular(9999),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    primaryLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.labelMd(
+                                      fontSize: 13.5,
+                                      color: AppColors.snow,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ],
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: onTap,
+                              borderRadius: BorderRadius.circular(9999),
+                              child: Container(
+                                height: 46,
+                                padding: const EdgeInsets.symmetric(horizontal: 18),
+                                decoration: BoxDecoration(
+                                  color: AppColors.fog,
+                                  borderRadius: BorderRadius.circular(9999),
+                                  border: Border.all(color: AppColors.pebble),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Chi tiết',
+                                  style: AppTypography.labelMd(
+                                    fontSize: 13,
+                                    color: AppColors.obsidian,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -597,14 +628,18 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.shot:
         return 'Xem ảnh bàn giao';
       case BookingStatus.completed:
+        if (booking.galleryPublishedAt != null ||
+            booking.deliveryPhotoUrls.isNotEmpty) {
+          return 'Xem bộ ảnh';
+        }
         return 'Xem chi tiết';
+      case BookingStatus.released:
+        return 'Xem bộ ảnh';
       case BookingStatus.rejected:
       case BookingStatus.expired:
         return 'Xem chi tiết';
       case BookingStatus.confirmed:
         return 'Thanh toán nốt 70%';
-      case BookingStatus.released:
-        return 'Xem ảnh đã nhận';
       case BookingStatus.cancelled:
         return 'Đặt lịch lại';
     }

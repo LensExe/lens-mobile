@@ -12,6 +12,7 @@ import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
 import 'controllers/customer_bookings_controller.dart';
 import 'models/booking_model.dart';
+import '../payments/payment_repository.dart';
 import 'widgets/booking_progress_stepper.dart';
 import 'widgets/booking_status_pill.dart';
 import 'widgets/cancel_booking_dialog.dart';
@@ -171,7 +172,7 @@ class BookingDetailScreen extends ConsumerWidget {
               AppTokens.pageHorizontal,
               12,
               AppTokens.pageHorizontal,
-              40,
+              60,
             ),
             children: [
               _BookingHeading(booking: booking),
@@ -457,6 +458,19 @@ class _BookingActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final canPayRemaining =
+        booking.status == BookingStatus.accepted ||
+        booking.status == BookingStatus.inProgress ||
+        booking.status == BookingStatus.shot;
+    final paidTotalState = canPayRemaining
+        ? ref.watch(bookingPaidTotalProvider(booking.id))
+        : null;
+    final shouldOfferRemainingPayment =
+        canPayRemaining &&
+        (paidTotalState!.isLoading ||
+            paidTotalState.hasError ||
+            (paidTotalState.value ?? 0) < booking.price);
+
     switch (booking.status) {
       case BookingStatus.awaiting_deposit:
         return _ActionCard(
@@ -510,14 +524,18 @@ class _BookingActions extends ConsumerWidget {
           iconColor: AppColors.emerald,
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
           title: 'Lịch chụp đã được xác nhận',
-          message: 'Nhiếp ảnh gia đã nhận lịch. Vui lòng thanh toán 70% còn lại trước ngày chụp để kích hoạt bảo vệ Escrow.',
-          primaryAction: PrimaryButton(
-            text:
-                'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
-            height: 48,
-            onPressed: () =>
-                context.push('/customer_home/bookings/${booking.id}/pay'),
-          ),
+          message: shouldOfferRemainingPayment
+              ? 'Nhiếp ảnh gia đã nhận lịch. Hãy thanh toán phần còn lại theo số tiền Backend xác định. Nếu bạn đã chuyển khoản, mở thanh toán để kiểm tra trạng thái.'
+              : 'Backend đã ghi nhận đủ khoản thanh toán cho booking này.',
+          primaryAction: shouldOfferRemainingPayment
+              ? PrimaryButton(
+                  text:
+                      'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                  height: 48,
+                  onPressed: () =>
+                      context.push('/customer_home/bookings/${booking.id}/pay'),
+                )
+              : null,
           secondaryAction: TextButton(
             onPressed: () => _cancel(context, ref),
             child: Text(
@@ -533,37 +551,56 @@ class _BookingActions extends ConsumerWidget {
           icon: LucideIcons.shieldCheck,
           iconColor: AppColors.emerald,
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
-          title: 'Đang bảo vệ Escrow 100%',
-          message: 'Lens đang giữ tiền an toàn qua Escrow. Vui lòng mở bộ sưu tập và xác nhận nghiệm thu sau khi nhận đủ ảnh.',
-          primaryAction: Row(
+          title: 'Buổi chụp đang được thực hiện',
+          message: shouldOfferRemainingPayment
+              ? 'Bạn vẫn có thể thanh toán phần còn lại tại đây. Backend chỉ cho phép nghiệm thu sau khi đã thanh toán đủ và photographer công bố gallery.'
+              : 'Backend đã ghi nhận đủ khoản thanh toán. Gallery sẽ xuất hiện sau khi photographer công bố ảnh.',
+          primaryAction: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => context.push(
-                    '/customer_home/bookings/${booking.id}/gallery',
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.pebble),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTokens.pillRadius),
-                    ),
-                    minimumSize: const Size(0, 48),
-                  ),
-                  child: Text(
-                    'Mở bộ ảnh',
-                    style: AppTypography.labelMd(color: AppColors.obsidian),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: PrimaryButton(
-                  text: 'Nghiệm thu ảnh',
+              if (shouldOfferRemainingPayment) ...[
+                PrimaryButton(
+                  text:
+                      'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
                   height: 48,
-                  onPressed: () => context.push(
-                    '/customer_home/bookings/${booking.id}/gallery',
-                  ),
+                  onPressed: () =>
+                      context.push('/customer_home/bookings/${booking.id}/pay'),
                 ),
+                const SizedBox(height: 8),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => context.push(
+                        '/customer_home/bookings/${booking.id}/gallery',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.pebble),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTokens.pillRadius,
+                          ),
+                        ),
+                        minimumSize: const Size(0, 48),
+                      ),
+                      child: Text(
+                        'Mở bộ ảnh',
+                        style: AppTypography.labelMd(color: AppColors.obsidian),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Kiểm tra ảnh',
+                      height: 48,
+                      onPressed: () => context.push(
+                        '/customer_home/bookings/${booking.id}/gallery',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -587,15 +624,47 @@ class _BookingActions extends ConsumerWidget {
           message: booking.galleryPublishedAt == null
               ? 'Booking đã chuyển sang trạng thái chờ nhận ảnh. Backend chưa xác nhận gallery đã công khai.'
               : 'Mở gallery đã được Backend công khai để xem ảnh và xác nhận đã nhận.',
-          primaryAction: booking.galleryPublishedAt == null
-              ? null
-              : PrimaryButton(
-                  text: 'Mở bộ ảnh',
-                  height: 48,
-                  onPressed: () => context.push(
-                    '/customer_home/bookings/${booking.id}/gallery',
-                  ),
-                ),
+          primaryAction:
+              shouldOfferRemainingPayment || booking.galleryPublishedAt != null
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (shouldOfferRemainingPayment) ...[
+                      PrimaryButton(
+                        text:
+                            'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                        height: 48,
+                        onPressed: () => context.push(
+                          '/customer_home/bookings/${booking.id}/pay',
+                        ),
+                      ),
+                      if (booking.galleryPublishedAt != null)
+                        const SizedBox(height: 8),
+                    ],
+                    if (booking.galleryPublishedAt != null)
+                      OutlinedButton(
+                        onPressed: () => context.push(
+                          '/customer_home/bookings/${booking.id}/gallery',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.pebble),
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppTokens.pillRadius,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Mở bộ ảnh',
+                          style: AppTypography.labelMd(
+                            color: AppColors.obsidian,
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              : null,
         );
 
       case BookingStatus.completed:

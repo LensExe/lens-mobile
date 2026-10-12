@@ -1,6 +1,9 @@
+import 'dart:ui' as ui;
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -63,7 +66,9 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
   bool _canPay(Booking booking) => widget.type == BookingPaymentType.deposit
       ? booking.status == BookingStatus.pending ||
             booking.status == BookingStatus.accepted
-      : booking.status == BookingStatus.accepted;
+      : booking.status == BookingStatus.accepted ||
+            booking.status == BookingStatus.inProgress ||
+            booking.status == BookingStatus.shot;
 
   @override
   Widget build(BuildContext context) {
@@ -254,20 +259,7 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
       }
       if (existing == null) return;
 
-      var intent = existing;
-      if (intent.status == 'pending' &&
-          intent.checkoutUrl == null &&
-          intent.qrCode == null) {
-        try {
-          final qr = await ref
-              .read(bookingPaymentRepositoryProvider)
-              .getPaymentQr(intent.id);
-          intent = _mergeQrDetails(intent, qr);
-        } on Object {
-          // Keep the existing intent visible so the user can safely retry
-          // checkout preparation with the same Backend intent.
-        }
-      }
+      final intent = await _loadCheckoutDetails(existing);
       if (!mounted) return;
       setState(() {
         _intent = intent;
@@ -303,18 +295,7 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
                 ? BookingPaymentMethod.wallet
                 : BookingPaymentMethod.gateway,
           );
-      if (intent.status == 'pending' &&
-          intent.checkoutUrl == null &&
-          intent.qrCode == null) {
-        try {
-          final qr = await ref
-              .read(bookingPaymentRepositoryProvider)
-              .getPaymentQr(intent.id);
-          intent = _mergeQrDetails(intent, qr);
-        } on Object {
-          // Keep the confirmed intent data if the provider has not prepared a QR yet.
-        }
-      }
+      intent = await _loadCheckoutDetails(intent);
       if (!mounted) return;
       setState(() => _intent = intent);
       if (intent.status == 'paid') {
@@ -324,7 +305,9 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Thanh toán thành công! Đang chuyển đến lịch đặt...'),
+              content: Text(
+                'Thanh toán thành công! Đang chuyển đến lịch đặt...',
+              ),
               backgroundColor: AppColors.emerald,
               duration: Duration(seconds: 2),
             ),
@@ -352,9 +335,10 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
     if (current == null || _isRefreshing) return;
     setState(() => _isRefreshing = true);
     try {
-      final updated = await ref
+      var updated = await ref
           .read(bookingPaymentRepositoryProvider)
           .getPayment(current.id);
+      updated = await _loadCheckoutDetails(updated);
       if (!mounted) return;
       setState(() => _intent = updated);
       if (updated.status == 'paid') {
@@ -364,7 +348,9 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Thanh toán thành công! Đang chuyển đến lịch đặt...'),
+              content: Text(
+                'Thanh toán thành công! Đang chuyển đến lịch đặt...',
+              ),
               backgroundColor: AppColors.emerald,
               duration: Duration(seconds: 2),
             ),
@@ -395,6 +381,23 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
       }
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  Future<PaymentIntent> _loadCheckoutDetails(PaymentIntent intent) async {
+    if (intent.status != 'pending' ||
+        intent.checkoutUrl != null ||
+        intent.qrCode != null) {
+      return intent;
+    }
+    try {
+      final qr = await ref
+          .read(bookingPaymentRepositoryProvider)
+          .getPaymentQr(intent.id);
+      return _mergeQrDetails(intent, qr);
+    } on Object {
+      // Keep the intent visible; refresh can retry checkout preparation.
+      return intent;
     }
   }
 }
@@ -503,33 +506,19 @@ class _PaymentIntentPanel extends StatelessWidget {
             'Trạng thái: ${intent.status} · ${AppTypography.formatCurrency(intent.amount)} ${intent.currency}',
             style: AppTypography.bodySm(color: AppColors.steel),
           ),
-          if (intent.checkoutUrl case final url? when url.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SelectableText(url, style: AppTypography.bodySm()),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: url));
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã sao chép link thanh toán.'),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(LucideIcons.copy, size: 15),
-                label: const Text('Sao chép link'),
-              ),
-            ),
-          ],
           if (intent.qrCode case final qr? when qr.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text('Mã QR do Backend trả về', style: AppTypography.labelMd()),
             const SizedBox(height: 10),
             Center(child: _BackendQrCode(value: qr)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            Center(
+              child: _DownloadQrButton(
+                qrData: qr,
+                name: 'lens_qr_${intent.id.length > 8 ? intent.id.substring(0, 8) : intent.id}',
+              ),
+            ),
+            const SizedBox(height: 10),
             Text(
               'Kiểm tra đúng số tiền và nội dung chuyển khoản trong ứng dụng ngân hàng trước khi xác nhận.',
               style: AppTypography.bodySm(color: AppColors.steel),
@@ -756,3 +745,117 @@ String _statusLabel(BookingStatus status) => switch (status) {
   BookingStatus.held => 'đang giữ tiền (demo)',
   BookingStatus.released => 'hoàn tất (demo)',
 };
+
+class _DownloadQrButton extends StatefulWidget {
+  const _DownloadQrButton({required this.qrData, this.name});
+  final String qrData;
+  final String? name;
+
+  @override
+  State<_DownloadQrButton> createState() => _DownloadQrButtonState();
+}
+
+class _DownloadQrButtonState extends State<_DownloadQrButton> {
+  bool _isDownloading = false;
+
+  Future<void> _download() async {
+    if (_isDownloading) return;
+    setState(() => _isDownloading = true);
+    try {
+      final hasAccess = await Gal.requestAccess();
+      if (!hasAccess) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Vui lòng cấp quyền lưu ảnh vào thiết bị.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      Uint8List? bytes;
+      final uri = Uri.tryParse(widget.qrData);
+      if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+        final response = await Dio().get<List<int>>(
+          widget.qrData,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        final data = response.data;
+        if (data != null && data.isNotEmpty) {
+          bytes = Uint8List.fromList(data);
+        }
+      } else {
+        final painter = QrPainter(
+          data: widget.qrData,
+          version: QrVersions.auto,
+          gapless: true,
+          eyeStyle: const QrEyeStyle(
+            eyeShape: QrEyeShape.square,
+            color: Color(0xFF000000),
+          ),
+          dataModuleStyle: const QrDataModuleStyle(
+            dataModuleShape: QrDataModuleShape.square,
+            color: Color(0xFF000000),
+          ),
+        );
+        final picData = await painter.toImageData(800, format: ui.ImageByteFormat.png);
+        if (picData != null) {
+          bytes = picData.buffer.asUint8List();
+        }
+      }
+
+      if (bytes == null || bytes.isEmpty) {
+        throw StateError('Không thể tạo hình ảnh QR.');
+      }
+
+      final fileName = widget.name ?? 'qr_${DateTime.now().millisecondsSinceEpoch}';
+      await Gal.putImageBytes(bytes, album: 'LENS', name: fileName);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã tải mã QR về máy thành công.'),
+            backgroundColor: AppColors.emerald,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi khi tải mã QR: $e'),
+            backgroundColor: AppColors.ember,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _isDownloading ? null : _download,
+      icon: _isDownloading
+          ? const SizedBox(
+              width: 15,
+              height: 15,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(LucideIcons.download, size: 16),
+      label: Text(
+        _isDownloading ? 'Đang tải...' : 'Tải mã QR về máy',
+        style: AppTypography.labelMd(fontSize: 13, color: AppColors.obsidian),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.obsidian,
+        side: const BorderSide(color: AppColors.pebble),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      ),
+    );
+  }
+}
+

@@ -38,7 +38,7 @@ class MoreTabScreen extends ConsumerWidget {
           AppTokens.pageHorizontal,
           10,
           AppTokens.pageHorizontal,
-          40,
+          120,
         ),
         children: [
           // User Profile Card

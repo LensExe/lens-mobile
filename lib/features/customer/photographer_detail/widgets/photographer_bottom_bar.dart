@@ -50,19 +50,31 @@ class PhotographerBottomBar extends StatelessWidget {
             children: [
               // Price info
               Expanded(
+                flex: 5,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(priceLabel, style: AppTypography.labelSm()),
-                    const SizedBox(height: 2),
                     Text(
-                      AppTypography.formatCurrency(displayPrice),
-                      style: AppTypography.priceDisplay(fontSize: 19),
+                      priceLabel,
+                      style: AppTypography.labelSm(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        AppTypography.formatCurrency(displayPrice),
+                        style: AppTypography.priceDisplay(fontSize: 18),
+                        maxLines: 1,
+                      ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
 
               // Message Icon Button (44x44 circular target)
               GestureDetector(
@@ -88,7 +100,7 @@ class PhotographerBottomBar extends StatelessWidget {
 
               // Book Now Button (Height 52px, Pill-shaped with scale feedback)
               Expanded(
-                flex: 2,
+                flex: 6,
                 child: PrimaryButton(
                   text: 'Đặt lịch ngay',
                   height: AppTokens.primaryButtonHeight, // 52px

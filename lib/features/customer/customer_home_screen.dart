@@ -156,7 +156,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 () => ref.invalidate(customerRecommendationsProvider),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
       ),

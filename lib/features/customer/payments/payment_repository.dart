@@ -148,7 +148,11 @@ String _requiredString(Object? value, String field) {
 }
 
 String? _nullableString(Object? value) => value is String ? value : null;
-int _int(Object? value) => value is num ? value.toInt() : 0;
+int _int(Object? value) => value is num
+    ? value.toInt()
+    : value is String
+    ? int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? 0
+    : 0;
 
 final bookingPaymentRepositoryProvider = Provider<BookingPaymentRepository>(
   (ref) => BookingPaymentRepository(ref.watch(dioProvider)),

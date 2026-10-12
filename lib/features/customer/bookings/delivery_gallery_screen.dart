@@ -122,17 +122,43 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
             if (paidTotalState.isLoading)
               const Center(child: CircularProgressIndicator())
             else if (paidTotalState.hasError)
-              _MessageCard(
-                icon: LucideIcons.circleAlert,
-                title: 'Chưa xác minh khoản thanh toán',
-                message: 'Ứng dụng không thể kiểm tra lịch sử thanh toán từ Backend nên chưa bật xác nhận nhận ảnh.',
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _MessageCard(
+                    icon: LucideIcons.circleAlert,
+                    title: 'Chưa xác minh khoản thanh toán',
+                    message: 'Ứng dụng chưa kiểm tra được lịch sử thanh toán từ Backend. Hãy thử tải lại trước khi xác nhận nhận ảnh.',
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => ref.invalidate(
+                      bookingPaidTotalProvider(widget.bookingId),
+                    ),
+                    icon: const Icon(LucideIcons.refreshCw, size: 17),
+                    label: const Text('Kiểm tra lại thanh toán'),
+                  ),
+                ],
               )
             else if (paidTotal != null && paidTotal < booking.price)
-              _MessageCard(
-                icon: LucideIcons.creditCard,
-                title: 'Booking chưa được thanh toán đủ',
-                message:
-                    'Backend ghi nhận ${AppTypography.formatCurrency(paidTotal)} / ${AppTypography.formatCurrency(booking.price)} VND đã thanh toán.',
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _MessageCard(
+                    icon: LucideIcons.creditCard,
+                    title: 'Booking chưa được thanh toán đủ',
+                    message:
+                        'Backend ghi nhận ${AppTypography.formatCurrency(paidTotal)} / ${AppTypography.formatCurrency(booking.price)} VND đã thanh toán.',
+                  ),
+                  const SizedBox(height: 8),
+                  PrimaryButton(
+                    text:
+                        'Thanh toán phần còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                    height: 48,
+                    onPressed: () => context.push(
+                      '/customer_home/bookings/${widget.bookingId}/pay',
+                    ),
+                  ),
+                ],
               )
             else if (canConfirmReceipt)
               PrimaryButton(

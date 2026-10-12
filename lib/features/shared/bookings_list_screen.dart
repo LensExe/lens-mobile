@@ -342,7 +342,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
                 }, childCount: displayList.length),
               ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
       ),
@@ -366,12 +366,19 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
       case BookingStatus.confirmed:
         context.push('/customer_home/bookings/${booking.id}/pay');
         break;
-      case BookingStatus.inProgress:
       case BookingStatus.shot:
       case BookingStatus.completed:
+      case BookingStatus.released:
+        if (booking.galleryPublishedAt != null ||
+            booking.deliveryPhotoUrls.isNotEmpty) {
+          context.push('/customer_home/bookings/${booking.id}/gallery');
+        } else {
+          context.push('/customer_home/bookings/${booking.id}');
+        }
+        break;
+      case BookingStatus.inProgress:
       case BookingStatus.rejected:
       case BookingStatus.expired:
-      case BookingStatus.released:
       case BookingStatus.cancelled:
         context.push('/customer_home/bookings/${booking.id}');
         break;
@@ -393,7 +400,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 110),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

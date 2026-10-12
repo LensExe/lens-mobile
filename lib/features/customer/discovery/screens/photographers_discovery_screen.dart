@@ -167,7 +167,7 @@ class _PhotographersDiscoveryScreenState
               _buildPhotographerResults(state.photographers),
               if (state.totalCount > 9) _buildPagination(state),
             ],
-            const SliverToBoxAdapter(child: SizedBox(height: 36)),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
       ),

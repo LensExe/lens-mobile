@@ -31,7 +31,7 @@ class BookingGalleryRepository {
   Future<BookingGallery> getPublishedGallery(String bookingId) async {
     try {
       final response = await _dio.get<dynamic>('bookings/$bookingId/gallery');
-      final data = _map(response.data);
+      final data = _responseMap(response.data);
       return BookingGallery(
         publishedAt: _string(data['published_at']),
         items: _items(data['items'])
@@ -65,7 +65,7 @@ class BookingGalleryRepository {
       final response = await _dio.get<dynamic>(
         'bookings/$bookingId/gallery/download',
       );
-      final data = _map(response.data);
+      final data = _responseMap(response.data);
       for (final item in _items(data['items'])) {
         final json = _map(item);
         if (_string(json['media_id'] ?? json['id']) == mediaId) {
@@ -92,7 +92,25 @@ String _requiredString(Object? value, String field) {
   throw ApiException('Backend không trả trường $field hợp lệ.');
 }
 
-int _int(Object? value) => value is num ? value.toInt() : 0;
+int _int(Object? value) => value is num
+    ? value.toInt()
+    : value is String
+    ? int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? 0
+    : 0;
+
+Map<String, dynamic> _responseMap(Object? value) {
+  var payload = _map(value);
+  while (payload.containsKey('data')) {
+    if (payload['success'] == false) {
+      final message = _string(payload['message']);
+      throw ApiException(
+        message.isEmpty ? 'Backend không trả gallery thành công.' : message,
+      );
+    }
+    payload = _map(payload['data']);
+  }
+  return payload;
+}
 
 final bookingGalleryRepositoryProvider = Provider<BookingGalleryRepository>(
   (ref) => BookingGalleryRepository(ref.watch(dioProvider)),
