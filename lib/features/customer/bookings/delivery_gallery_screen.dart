@@ -61,11 +61,15 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
     final publishedGallery = galleryState.value;
     final paidTotal = paidTotalState.value;
     final isPublished = publishedGallery?.publishedAt?.isNotEmpty == true;
+    final requiredPhotoCount = booking.packageSnapshot?.photoCount ?? 1;
+    final deliveredPhotoCount =
+        publishedGallery?.items.map((item) => item.mediaId).toSet().length ?? 0;
     final canConfirmReceipt =
         booking.status == BookingStatus.shot &&
         isPublished &&
         paidTotal != null &&
-        paidTotal >= booking.price;
+        paidTotal >= booking.price &&
+        deliveredPhotoCount >= requiredPhotoCount;
 
     return LensPage(
       appBar: AppBar(
@@ -159,6 +163,13 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
                     ),
                   ),
                 ],
+              )
+            else if (deliveredPhotoCount < requiredPhotoCount)
+              _MessageCard(
+                icon: LucideIcons.images,
+                title: 'Gallery chưa đủ ảnh theo gói',
+                message:
+                    'Đã giao $deliveredPhotoCount/$requiredPhotoCount ảnh. Bạn chỉ có thể nghiệm thu khi gallery đủ số ảnh đã cam kết.',
               )
             else if (canConfirmReceipt)
               PrimaryButton(

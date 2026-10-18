@@ -84,7 +84,10 @@ class BookingCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    _buildStatusPill(booking.status),
+                    _buildStatusPill(
+                      booking.flowStatus,
+                      paymentDue: booking.paymentDue,
+                    ),
                   ],
                 ),
               ),
@@ -419,7 +422,9 @@ class BookingCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(9999),
                               child: Container(
                                 height: 46,
-                                padding: const EdgeInsets.symmetric(horizontal: 18),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.fog,
                                   borderRadius: BorderRadius.circular(9999),
@@ -449,7 +454,7 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusPill(BookingStatus status) {
+  Widget _buildStatusPill(BookingStatus status, {bool paymentDue = false}) {
     Color dotColor;
     Color textColor;
     String label;
@@ -475,7 +480,7 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.held:
         dotColor = AppColors.ember;
         textColor = AppColors.ember;
-        label = 'Đang xử lý ảnh';
+        label = 'Sàn đang giữ tiền';
         break;
       case BookingStatus.shot:
         dotColor = AppColors.lagoon;
@@ -503,6 +508,12 @@ class BookingCard extends StatelessWidget {
         textColor = AppColors.crimson;
         label = 'Đã hủy';
         break;
+    }
+
+    if (paymentDue) {
+      dotColor = AppColors.ember;
+      textColor = AppColors.ember;
+      label = 'Chờ thanh toán';
     }
 
     return Container(
@@ -537,9 +548,13 @@ class BookingCard extends StatelessWidget {
     String text;
     Color dotColor = AppColors.ember;
 
-    switch (booking.status) {
+    switch (booking.flowStatus) {
       case BookingStatus.held:
-        text = '100% Escrow giữ tiền';
+        text = switch (booking.backendStatus) {
+          'in_progress' => 'Buổi chụp đang thực hiện',
+          'shot' => 'Đã thanh toán đủ · Chờ giao ảnh',
+          _ => '100% Escrow giữ tiền',
+        };
         break;
       case BookingStatus.confirmed:
         text = 'Đã cọc 30% • Giữ tiền';
@@ -557,8 +572,8 @@ class BookingCard extends StatelessWidget {
         dotColor = AppColors.steel;
         break;
       case BookingStatus.pending:
-        text = 'Yêu cầu đang chờ xử lý';
-        dotColor = AppColors.steel;
+        text = 'Đã cọc • Chờ xác nhận';
+        dotColor = AppColors.lagoon;
         break;
       case BookingStatus.accepted:
         text = 'Đã được nhiếp ảnh gia chấp nhận';
@@ -569,7 +584,7 @@ class BookingCard extends StatelessWidget {
         dotColor = AppColors.lagoon;
         break;
       case BookingStatus.shot:
-        text = 'Ảnh đã được bàn giao';
+        text = 'Đã chụp · Chờ bàn giao ảnh';
         dotColor = AppColors.lagoon;
         break;
       case BookingStatus.completed:
@@ -584,6 +599,11 @@ class BookingCard extends StatelessWidget {
         text = 'Yêu cầu đã hết hạn';
         dotColor = AppColors.steel;
         break;
+    }
+
+    if (booking.paymentDue) {
+      text = 'Chờ thanh toán phần còn lại';
+      dotColor = AppColors.ember;
     }
 
     return Container(
@@ -612,15 +632,25 @@ class BookingCard extends StatelessWidget {
   }
 
   String _getPrimaryActionLabel(Booking booking) {
-    switch (booking.status) {
-      case BookingStatus.held:
-        return booking.uploadedProofsCount > 0
-            ? 'Duyệt ảnh (${booking.uploadedProofsCount})'
-            : 'Theo dõi tiến độ';
+    if (booking.needsRemainingPayment) return 'Thanh toán còn lại';
+
+    switch (booking.flowStatus) {
       case BookingStatus.awaiting_deposit:
         return 'Đặt cọc 30%';
       case BookingStatus.pending:
-        return 'Thanh toán cọc';
+        return 'Xem chi tiết';
+      case BookingStatus.confirmed:
+        return 'Thanh toán còn lại';
+      case BookingStatus.held:
+        if (booking.galleryPublishedAt != null ||
+            booking.deliveryPhotoUrls.isNotEmpty) {
+          return booking.uploadedProofsCount > 0
+              ? 'Duyệt ảnh (${booking.uploadedProofsCount})'
+              : 'Xem bộ ảnh';
+        }
+        return 'Theo dõi tiến độ';
+      case BookingStatus.released:
+        return 'Xem bộ ảnh';
       case BookingStatus.accepted:
         return 'Thanh toán còn lại';
       case BookingStatus.inProgress:
@@ -633,13 +663,9 @@ class BookingCard extends StatelessWidget {
           return 'Xem bộ ảnh';
         }
         return 'Xem chi tiết';
-      case BookingStatus.released:
-        return 'Xem bộ ảnh';
       case BookingStatus.rejected:
       case BookingStatus.expired:
         return 'Xem chi tiết';
-      case BookingStatus.confirmed:
-        return 'Thanh toán nốt 70%';
       case BookingStatus.cancelled:
         return 'Đặt lịch lại';
     }

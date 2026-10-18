@@ -14,6 +14,13 @@ const _baseUrl = 'https://api.example.test/v1/';
 
 void main() {
   group('API runtime configuration', () {
+    test('uses the deployed API base URL by default', () {
+      expect(
+        const ApiConfig().requireBaseUrl(),
+        'https://api.lens.id.vn/api/v1/',
+      );
+    });
+
     test('preserves a configured API prefix and appends a trailing slash', () {
       expect(
         ApiConfig(baseUrl: 'https://api.example.test/v1').requireBaseUrl(),

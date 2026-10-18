@@ -184,7 +184,9 @@ class BookingDetailScreen extends ConsumerWidget {
               _BookingActions(booking: booking),
               const SizedBox(height: 12),
               if (booking.status == BookingStatus.held ||
-                  booking.status == BookingStatus.released) ...[
+                  booking.status == BookingStatus.released ||
+                  (booking.status == BookingStatus.shot &&
+                      booking.galleryPublishedAt != null)) ...[
                 _EmbeddedGalleryPanel(booking: booking),
                 const SizedBox(height: 12),
               ],
@@ -220,7 +222,10 @@ class _BookingHeading extends StatelessWidget {
         style: AppTypography.bodySm(color: AppColors.steel),
       ),
       const SizedBox(height: 8),
-      BookingStatusPill(status: booking.status),
+      BookingStatusPill(
+        status: booking.flowStatus,
+        paymentDue: booking.paymentDue,
+      ),
     ],
   );
 }
@@ -460,16 +465,21 @@ class _BookingActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final canPayRemaining =
         booking.status == BookingStatus.accepted ||
-        booking.status == BookingStatus.inProgress ||
+        booking.status == BookingStatus.confirmed ||
         booking.status == BookingStatus.shot;
     final paidTotalState = canPayRemaining
         ? ref.watch(bookingPaidTotalProvider(booking.id))
         : null;
+    final paidAmount = paidTotalState?.value ?? booking.paidAmount;
+    final isFullyPaid = paidAmount >= booking.price;
+    final isWaitingForDelivery =
+        booking.status == BookingStatus.inProgress ||
+        booking.backendStatus == 'in_progress';
     final shouldOfferRemainingPayment =
         canPayRemaining &&
         (paidTotalState!.isLoading ||
             paidTotalState.hasError ||
-            (paidTotalState.value ?? 0) < booking.price);
+            paidAmount < booking.price);
 
     switch (booking.status) {
       case BookingStatus.awaiting_deposit:
@@ -501,13 +511,7 @@ class _BookingActions extends ConsumerWidget {
           iconColor: AppColors.ember,
           iconBgColor: AppColors.ember.withValues(alpha: 0.1),
           title: 'Đang chờ nhiếp ảnh gia xác nhận',
-          message: 'Yêu cầu đang chờ nhiếp ảnh gia. Bạn có thể thanh toán khoản đặt cọc theo số tiền do Backend xác định.',
-          primaryAction: PrimaryButton(
-            text: 'Mở thanh toán đặt cọc',
-            height: 48,
-            onPressed: () =>
-                context.push('/customer_home/bookings/${booking.id}/deposit'),
-          ),
+          message: 'Tiền cọc đã được ghi nhận. Yêu cầu đang chờ nhiếp ảnh gia xác nhận lịch.',
           secondaryAction: TextButton(
             onPressed: () => _cancel(context, ref),
             child: Text(
@@ -553,8 +557,12 @@ class _BookingActions extends ConsumerWidget {
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
           title: 'Buổi chụp đang được thực hiện',
           message: shouldOfferRemainingPayment
-              ? 'Bạn vẫn có thể thanh toán phần còn lại tại đây. Backend chỉ cho phép nghiệm thu sau khi đã thanh toán đủ và photographer công bố gallery.'
-              : 'Backend đã ghi nhận đủ khoản thanh toán. Gallery sẽ xuất hiện sau khi photographer công bố ảnh.',
+              ? 'Bạn có thể thanh toán phần còn lại sau khi nhiếp ảnh gia đánh dấu buổi chụp đã hoàn tất.'
+              : isWaitingForDelivery && !isFullyPaid
+              ? 'Buổi chụp đang diễn ra. Thanh toán phần còn lại sau khi nhiếp ảnh gia đánh dấu đã chụp.'
+              : isFullyPaid
+              ? 'Backend đã ghi nhận đủ khoản thanh toán. Gallery sẽ xuất hiện sau khi photographer công bố ảnh.'
+              : 'Khoản thanh toán còn lại cần hoàn tất trước khi photographer công bố gallery.',
           primaryAction: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -604,7 +612,7 @@ class _BookingActions extends ConsumerWidget {
               ),
             ],
           ),
-          secondaryAction: _canCancel(booking.status)
+          secondaryAction: _canCancel(booking)
               ? TextButton(
                   onPressed: () => _cancel(context, ref),
                   child: Text(
@@ -620,9 +628,11 @@ class _BookingActions extends ConsumerWidget {
           icon: LucideIcons.images,
           iconColor: AppColors.lagoon,
           iconBgColor: AppColors.lagoon.withValues(alpha: 0.1),
-          title: 'Nhiếp ảnh gia đã bàn giao ảnh',
+          title: 'Buổi chụp đã hoàn tất',
           message: booking.galleryPublishedAt == null
-              ? 'Booking đã chuyển sang trạng thái chờ nhận ảnh. Backend chưa xác nhận gallery đã công khai.'
+              ? shouldOfferRemainingPayment
+                    ? 'Thanh toán đủ phần còn lại để nhiếp ảnh gia có thể công bố gallery.'
+                    : 'Đã thanh toán đủ. Nhiếp ảnh gia có thể công bố gallery.'
               : 'Mở gallery đã được Backend công khai để xem ảnh và xác nhận đã nhận.',
           primaryAction:
               shouldOfferRemainingPayment || booking.galleryPublishedAt != null
@@ -712,12 +722,14 @@ class _BookingActions extends ConsumerWidget {
     }
   }
 
-  bool _canCancel(BookingStatus status) =>
-      status == BookingStatus.awaiting_deposit ||
-      status == BookingStatus.pending ||
-      status == BookingStatus.confirmed ||
-      status == BookingStatus.accepted ||
-      status == BookingStatus.held;
+  bool _canCancel(Booking booking) =>
+      [
+        BookingStatus.awaiting_deposit,
+        BookingStatus.pending,
+        BookingStatus.confirmed,
+      ].contains(booking.flowStatus) ||
+      (booking.backendStatus == null &&
+          booking.status == BookingStatus.accepted);
 
   Future<void> _cancel(BuildContext context, WidgetRef ref) async {
     await CancelBookingDialog.show(context, booking);
@@ -747,7 +759,11 @@ class _TimelineCard extends StatelessWidget {
               'Tiến trình thực hiện',
               style: AppTypography.titleMd(color: AppColors.obsidian),
             ),
-            BookingStatusPill(status: booking.status, compact: true),
+            BookingStatusPill(
+              status: booking.flowStatus,
+              paymentDue: booking.paymentDue,
+              compact: true,
+            ),
           ],
         ),
         const SizedBox(height: 16),

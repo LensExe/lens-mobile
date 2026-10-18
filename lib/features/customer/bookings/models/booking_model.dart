@@ -4,7 +4,7 @@ enum BookingStatus {
   awaiting_deposit, // Chờ đặt cọc (30%)
   pending, // Đã cọc, chờ NAG xác nhận
   confirmed, // NAG đã nhận, chờ thanh toán nốt (70%)
-  held, // Đã thanh toán 100%, sàn giữ tiền (escrow) chờ chụp & giao ảnh
+  held, // Đang thực hiện/đã chụp; thanh toán hiển thị riêng theo giao dịch
   released, // Khách đã nghiệm thu nhận ảnh -> hoàn tất, giải ngân cho NAG
   cancelled, // Đã huỷ lịch
   accepted,
@@ -90,6 +90,8 @@ class Booking {
   final String location; // "Hồ Gươm, Hà Nội"
   final int price; // Tổng giá tiền (VND)
   final BookingStatus status;
+  final String? backendStatus;
+  final int paidAmount;
   final String? packageId; // "basic", "standard", "premium"
   final PackageTerms? packageSnapshot;
   final String? contactPhone;
@@ -121,6 +123,8 @@ class Booking {
     required this.location,
     required this.price,
     required this.status,
+    this.backendStatus,
+    this.paidAmount = 0,
     this.packageId,
     this.packageSnapshot,
     this.contactPhone,
@@ -146,6 +150,33 @@ class Booking {
   /// Tính số tiền còn lại phải thanh toán sau khi cọc (70%)
   int get remainingAmount => price - depositAmount;
 
+  /// Keep booking lifecycle separate from payment progress. The backend stores
+  /// `accepted` even when the customer has already paid the full amount.
+  BookingStatus get flowStatus {
+    final rawStatus = backendStatus;
+    if (rawStatus == null) return status;
+
+    final paidDeposit = paidAmount >= depositAmount;
+    return switch (rawStatus) {
+      'pending' =>
+        paidDeposit ? BookingStatus.pending : BookingStatus.awaiting_deposit,
+      'accepted' => BookingStatus.confirmed,
+      'in_progress' || 'shot' => BookingStatus.held,
+      'completed' => BookingStatus.released,
+      'rejected' || 'cancelled' || 'expired' => BookingStatus.cancelled,
+      _ => status,
+    };
+  }
+
+  bool get paymentDue =>
+      flowStatus == BookingStatus.held &&
+      backendStatus == 'shot' &&
+      paidAmount < price;
+
+  bool get needsRemainingPayment =>
+      (flowStatus == BookingStatus.confirmed || paymentDue) &&
+      paidAmount < price;
+
   /// Mã booking hiển thị cho user (vd: "bk-tkh-1" -> "LS-TKH-1")
   String get displayCode => id.toUpperCase().replaceAll('BK-', 'LS-');
 
@@ -162,6 +193,8 @@ class Booking {
     String? location,
     int? price,
     BookingStatus? status,
+    String? backendStatus,
+    int? paidAmount,
     String? packageId,
     PackageTerms? packageSnapshot,
     String? contactPhone,
@@ -193,6 +226,8 @@ class Booking {
       location: location ?? this.location,
       price: price ?? this.price,
       status: status ?? this.status,
+      backendStatus: backendStatus ?? this.backendStatus,
+      paidAmount: paidAmount ?? this.paidAmount,
       packageId: packageId ?? this.packageId,
       packageSnapshot: packageSnapshot ?? this.packageSnapshot,
       contactPhone: contactPhone ?? this.contactPhone,

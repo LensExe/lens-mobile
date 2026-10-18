@@ -57,17 +57,18 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
     // Calculate 4 summary metrics for Flow 9
     final totalCount = state.allBookings.length;
     final pendingCount = state.allBookings
-        .where((b) => b.status == BookingStatus.pending)
+        .where((b) => b.flowStatus == BookingStatus.pending)
         .length;
     final needsActionCount = state.allBookings
         .where(
           (b) =>
-              b.status == BookingStatus.awaiting_deposit ||
-              b.status == BookingStatus.confirmed,
+              b.flowStatus == BookingStatus.awaiting_deposit ||
+              b.flowStatus == BookingStatus.confirmed ||
+              b.needsRemainingPayment,
         )
         .length;
     final completedCount = state.allBookings
-        .where((b) => b.status == BookingStatus.released)
+        .where((b) => b.flowStatus == BookingStatus.released)
         .length;
 
     // Filter by search query if any
@@ -354,21 +355,37 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
   }
 
   void _handlePrimaryAction(BuildContext context, Booking booking) {
-    switch (booking.status) {
-      case BookingStatus.held:
-        context.push('/customer_home/bookings/${booking.id}/gallery');
-        break;
-      case BookingStatus.pending:
+    if (booking.needsRemainingPayment) {
+      context.push('/customer_home/bookings/${booking.id}/pay');
+      return;
+    }
+
+    switch (booking.flowStatus) {
       case BookingStatus.awaiting_deposit:
         context.push('/customer_home/bookings/${booking.id}/deposit');
         break;
-      case BookingStatus.accepted:
+      case BookingStatus.pending:
+        context.push('/customer_home/bookings/${booking.id}');
+        break;
       case BookingStatus.confirmed:
+        context.push('/customer_home/bookings/${booking.id}/pay');
+        break;
+      case BookingStatus.held:
+        if (booking.galleryPublishedAt != null ||
+            booking.deliveryPhotoUrls.isNotEmpty) {
+          context.push('/customer_home/bookings/${booking.id}/gallery');
+        } else {
+          context.push('/customer_home/bookings/${booking.id}');
+        }
+        break;
+      case BookingStatus.released:
+        context.push('/customer_home/bookings/${booking.id}/gallery');
+        break;
+      case BookingStatus.accepted:
         context.push('/customer_home/bookings/${booking.id}/pay');
         break;
       case BookingStatus.shot:
       case BookingStatus.completed:
-      case BookingStatus.released:
         if (booking.galleryPublishedAt != null ||
             booking.deliveryPhotoUrls.isNotEmpty) {
           context.push('/customer_home/bookings/${booking.id}/gallery');

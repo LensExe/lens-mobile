@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,12 +64,18 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
     Future.microtask(_restoreExistingPayment);
   }
 
-  bool _canPay(Booking booking) => widget.type == BookingPaymentType.deposit
-      ? booking.status == BookingStatus.pending ||
-            booking.status == BookingStatus.accepted
-      : booking.status == BookingStatus.accepted ||
-            booking.status == BookingStatus.inProgress ||
-            booking.status == BookingStatus.shot;
+  bool _canPay(Booking booking) {
+    if (widget.type == BookingPaymentType.deposit) {
+      return booking.flowStatus == BookingStatus.awaiting_deposit &&
+          booking.paidAmount < booking.depositAmount;
+    }
+    return [
+          BookingStatus.accepted,
+          BookingStatus.confirmed,
+          BookingStatus.shot,
+        ].contains(booking.status) &&
+        booking.paidAmount < booking.price;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,9 +162,16 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
             if (!_canPay(booking))
               _StatusNotice(
                 icon: LucideIcons.info,
-                title: 'Booking chưa ở trạng thái thanh toán này',
-                message:
-                    'Trạng thái hiện tại: ${_statusLabel(booking.status)}. Backend nhận tiền cọc khi yêu cầu đang chờ hoặc đã được chấp nhận; tiền còn lại sau khi nhiếp ảnh gia chấp nhận.',
+                title: _paymentIsComplete(booking)
+                    ? 'Đã thanh toán đủ'
+                    : widget.type == BookingPaymentType.deposit
+                    ? 'Booking đã qua bước đặt cọc'
+                    : 'Booking chưa ở trạng thái thanh toán này',
+                message: _paymentIsComplete(booking)
+                    ? 'Backend đã ghi nhận khoản thanh toán này. Bạn không cần thanh toán thêm.'
+                    : widget.type == BookingPaymentType.deposit
+                    ? 'Tiền cọc đã được ghi nhận hoặc yêu cầu không còn chờ cọc. Hãy kiểm tra trạng thái booking.'
+                    : 'Trạng thái hiện tại: ${_statusLabel(booking.status)}. Phần còn lại được thanh toán sau khi nhiếp ảnh gia xác nhận lịch.',
               )
             else ...[
               _methodSelector(),
@@ -216,6 +230,11 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
       ),
     );
   }
+
+  bool _paymentIsComplete(Booking booking) =>
+      widget.type == BookingPaymentType.deposit
+      ? booking.paidAmount >= booking.depositAmount
+      : booking.paidAmount >= booking.price;
 
   Widget _methodSelector() => Container(
     padding: const EdgeInsets.all(18),
@@ -515,7 +534,8 @@ class _PaymentIntentPanel extends StatelessWidget {
             Center(
               child: _DownloadQrButton(
                 qrData: qr,
-                name: 'lens_qr_${intent.id.length > 8 ? intent.id.substring(0, 8) : intent.id}',
+                name:
+                    'lens_qr_${intent.id.length > 8 ? intent.id.substring(0, 8) : intent.id}',
               ),
             ),
             const SizedBox(height: 10),
@@ -799,7 +819,10 @@ class _DownloadQrButtonState extends State<_DownloadQrButton> {
             color: Color(0xFF000000),
           ),
         );
-        final picData = await painter.toImageData(800, format: ui.ImageByteFormat.png);
+        final picData = await painter.toImageData(
+          800,
+          format: ui.ImageByteFormat.png,
+        );
         if (picData != null) {
           bytes = picData.buffer.asUint8List();
         }
@@ -809,7 +832,8 @@ class _DownloadQrButtonState extends State<_DownloadQrButton> {
         throw StateError('Không thể tạo hình ảnh QR.');
       }
 
-      final fileName = widget.name ?? 'qr_${DateTime.now().millisecondsSinceEpoch}';
+      final fileName =
+          widget.name ?? 'qr_${DateTime.now().millisecondsSinceEpoch}';
       await Gal.putImageBytes(bytes, album: 'LENS', name: fileName);
 
       if (mounted) {
@@ -858,4 +882,3 @@ class _DownloadQrButtonState extends State<_DownloadQrButton> {
     );
   }
 }
-

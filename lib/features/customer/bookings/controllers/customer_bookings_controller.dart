@@ -38,42 +38,47 @@ class CustomerBookingsState {
   List<Booking> get inProgressBookings => allBookings
       .where(
         (b) =>
-            b.status == BookingStatus.inProgress ||
-            b.status == BookingStatus.held,
+            b.flowStatus == BookingStatus.held ||
+            (b.backendStatus == null && b.status == BookingStatus.inProgress),
       )
       .toList();
 
   List<Booking> get awaitingBookings => allBookings
       .where(
         (b) =>
-            b.status == BookingStatus.awaiting_deposit ||
-            b.status == BookingStatus.pending ||
-            b.status == BookingStatus.accepted,
+            b.flowStatus == BookingStatus.awaiting_deposit ||
+            b.flowStatus == BookingStatus.pending ||
+            b.flowStatus == BookingStatus.confirmed ||
+            (b.backendStatus == null && b.status == BookingStatus.accepted),
       )
       .toList();
 
   List<Booking> get confirmedBookings => allBookings
       .where(
         (b) =>
-            b.status == BookingStatus.confirmed ||
-            b.status == BookingStatus.accepted,
+            b.flowStatus == BookingStatus.confirmed ||
+            (b.backendStatus == null && b.status == BookingStatus.accepted),
       )
       .toList();
 
   List<Booking> get completedBookings => allBookings
       .where(
         (b) =>
-            b.status == BookingStatus.released ||
-            b.status == BookingStatus.completed,
+            b.flowStatus == BookingStatus.released ||
+            (b.backendStatus == null && b.status == BookingStatus.completed),
       )
       .toList();
 
   List<Booking> get cancelledBookings => allBookings
       .where(
         (b) =>
-            b.status == BookingStatus.cancelled ||
-            b.status == BookingStatus.rejected ||
-            b.status == BookingStatus.expired,
+            b.flowStatus == BookingStatus.cancelled ||
+            (b.backendStatus == null &&
+                [
+                  BookingStatus.rejected,
+                  BookingStatus.expired,
+                  BookingStatus.cancelled,
+                ].contains(b.status)),
       )
       .toList();
 
@@ -82,11 +87,11 @@ class CustomerBookingsState {
       .where(
         (b) => ![
           BookingStatus.released,
-          BookingStatus.completed,
           BookingStatus.cancelled,
+          BookingStatus.completed,
           BookingStatus.rejected,
           BookingStatus.expired,
-        ].contains(b.status),
+        ].contains(b.flowStatus),
       )
       .length;
 
@@ -99,7 +104,7 @@ class CustomerBookingsState {
       case 'Chờ xác nhận':
       case 'Chờ duyệt':
         return allBookings
-            .where((b) => b.status == BookingStatus.pending)
+            .where((b) => b.flowStatus == BookingStatus.pending)
             .toList();
       case 'Đã chấp nhận':
         return confirmedBookings;
@@ -113,10 +118,11 @@ class CustomerBookingsState {
         return allBookings
             .where(
               (b) =>
-                  b.status == BookingStatus.awaiting_deposit ||
-                  b.status == BookingStatus.pending ||
-                  b.status == BookingStatus.confirmed ||
-                  b.status == BookingStatus.accepted,
+                  b.flowStatus == BookingStatus.awaiting_deposit ||
+                  b.flowStatus == BookingStatus.confirmed ||
+                  b.needsRemainingPayment ||
+                  (b.backendStatus == null &&
+                      b.status == BookingStatus.accepted),
             )
             .toList();
       case 'Hoàn thành':
@@ -335,6 +341,7 @@ class CustomerBookingsController extends Notifier<CustomerBookingsState> {
   ) {
     for (final booking in bookings) {
       final canContinueToPayment =
+          booking.status == BookingStatus.awaiting_deposit ||
           booking.status == BookingStatus.pending ||
           booking.status == BookingStatus.accepted;
       if (!canContinueToPayment ||

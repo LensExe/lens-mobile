@@ -5,17 +5,25 @@ import '../models/booking_model.dart';
 
 class BookingStatusPill extends StatelessWidget {
   final BookingStatus status;
+  final bool paymentDue;
   final bool compact;
 
   const BookingStatusPill({
     super.key,
     required this.status,
+    this.paymentDue = false,
     this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final meta = _meta(status);
+    final meta = paymentDue
+        ? (
+            label: 'Chờ thanh toán',
+            background: const Color(0xFFFFEDD5),
+            foreground: AppColors.statusOrange,
+          )
+        : _meta(status);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 8 : 10,
@@ -69,7 +77,7 @@ class BookingStatusPill extends StatelessWidget {
       );
     case BookingStatus.shot:
       return (
-        label: 'Chờ xác nhận ảnh',
+        label: 'Chờ bàn giao ảnh',
         background: const Color(0xFFEDE9FE),
         foreground: AppColors.statusViolet,
       );

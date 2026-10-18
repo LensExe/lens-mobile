@@ -50,8 +50,8 @@ class BookingProgressStepper extends StatelessWidget {
         break;
       case BookingStatus.shot:
         currentStep = 3;
-        statusTitle = 'Ảnh đã được bàn giao';
-        proofInfo = 'Chờ khách xác nhận';
+        statusTitle = 'Đã chụp · Chờ bàn giao ảnh';
+        proofInfo = 'Chờ nhiếp ảnh gia công bố gallery';
         break;
       case BookingStatus.completed:
       case BookingStatus.released:

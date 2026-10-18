@@ -17,6 +17,7 @@ import '../../features/customer/bookings/models/booking_model.dart';
 import '../../features/customer/bookings/widgets/booking_status_pill.dart';
 import '../../features/customer/discovery/models/photographer_model.dart';
 import '../../features/customer/discovery/repositories/customer_recommendations_repository.dart';
+import '../../features/customer/messages/api_customer_chat_repository.dart';
 import '../../providers/data_providers.dart';
 
 enum _OverviewFilter { all, payment, pending, completed }
@@ -42,20 +43,19 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final needsPayment = bookings
         .where(
           (booking) =>
-              booking.status == BookingStatus.awaiting_deposit ||
-              booking.status == BookingStatus.pending ||
-              booking.status == BookingStatus.confirmed ||
-              booking.status == BookingStatus.accepted,
+              booking.flowStatus == BookingStatus.awaiting_deposit ||
+              booking.needsRemainingPayment,
         )
         .toList();
     final pending = bookings
-        .where((booking) => booking.status == BookingStatus.pending)
+        .where((booking) => booking.flowStatus == BookingStatus.pending)
         .toList();
     final completed = bookings
         .where(
           (booking) =>
-              booking.status == BookingStatus.released ||
-              booking.status == BookingStatus.completed,
+              booking.flowStatus == BookingStatus.released ||
+              (booking.backendStatus == null &&
+                  booking.status == BookingStatus.completed),
         )
         .toList();
     final visible = switch (_filter) {
@@ -64,22 +64,24 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         upcoming
             .where(
               (b) =>
-                  b.status == BookingStatus.awaiting_deposit ||
-                  b.status == BookingStatus.pending ||
-                  b.status == BookingStatus.confirmed ||
-                  b.status == BookingStatus.accepted,
+                  b.flowStatus == BookingStatus.awaiting_deposit ||
+                  b.needsRemainingPayment,
             )
             .toList(),
       _OverviewFilter.pending =>
-        upcoming.where((b) => b.status == BookingStatus.pending).toList(),
+        upcoming.where((b) => b.flowStatus == BookingStatus.pending).toList(),
       _OverviewFilter.completed => completed,
     };
-    final unread = ref
-        .watch(conversationsProvider)
-        .fold<int>(
-          0,
-          (total, conversation) => total + conversation.unreadCount,
-        );
+    final unread =
+        ref
+            .watch(customerConversationsProvider)
+            .asData
+            ?.value
+            .fold<int>(
+              0,
+              (total, conversation) => total + conversation.unreadCount,
+            ) ??
+        0;
     final firstName = (user?.name ?? 'bạn').split(' ').first;
 
     return LensPage(
@@ -424,15 +426,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       items.add(
         _TodoItem(
           icon: LucideIcons.creditCard,
-          title:
-              booking.status == BookingStatus.awaiting_deposit ||
-                  booking.status == BookingStatus.pending
+          title: booking.flowStatus == BookingStatus.awaiting_deposit
               ? 'Thanh toán tiền cọc'
               : 'Thanh toán phần còn lại',
           hint: 'Hoàn tất để giữ lịch chụp của bạn.',
           color: AppColors.ember,
           onTap: () => context.push(
-            '/customer_home/bookings/${booking.id}/${booking.status == BookingStatus.awaiting_deposit || booking.status == BookingStatus.pending ? 'deposit' : 'pay'}',
+            '/customer_home/bookings/${booking.id}/${booking.flowStatus == BookingStatus.awaiting_deposit ? 'deposit' : 'pay'}',
           ),
         ),
       );
@@ -584,7 +584,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             ),
                           ),
                           BookingStatusPill(
-                            status: nearest.status,
+                            status: nearest.flowStatus,
+                            paymentDue: nearest.paymentDue,
                             compact: true,
                           ),
                         ],
@@ -838,7 +839,8 @@ class _OverviewBookingCard extends StatelessWidget {
             booking.packageSnapshot!.durationHours * 60,
           );
 
-    final isAwaitingDeposit = booking.status == BookingStatus.awaiting_deposit;
+    final isAwaitingDeposit =
+        booking.flowStatus == BookingStatus.awaiting_deposit;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -914,7 +916,11 @@ class _OverviewBookingCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              BookingStatusPill(status: booking.status, compact: true),
+              BookingStatusPill(
+                status: booking.flowStatus,
+                paymentDue: booking.paymentDue,
+                compact: true,
+              ),
             ],
           ),
           const SizedBox(height: 14),

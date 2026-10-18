@@ -81,9 +81,7 @@ class SessionInterceptor extends Interceptor {
     }
 
     try {
-      final token = await (_refreshing ??= _refreshAccessToken().whenComplete(
-        () => _refreshing = null,
-      ));
+      final token = await refreshAccessToken();
       if (token == null) {
         await _clearSession();
         handler.next(err);
@@ -156,4 +154,7 @@ class SessionInterceptor extends Interceptor {
     await sessionStore.updateTokens(tokenData);
     return sessionStore.accessToken;
   }
+
+  Future<String?> refreshAccessToken() => (_refreshing ??= _refreshAccessToken()
+      .whenComplete(() => _refreshing = null));
 }

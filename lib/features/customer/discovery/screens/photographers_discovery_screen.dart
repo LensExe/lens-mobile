@@ -123,9 +123,10 @@ class _PhotographersDiscoveryScreenState
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: const LensTabAppBar(
+      appBar: LensTabAppBar(
         title: 'Khám phá',
         subtitle: 'Tìm phong cách hình ảnh bạn yêu thích.',
+        showNotification: !isGuest,
       ),
       body: SafeArea(
         child: CustomScrollView(

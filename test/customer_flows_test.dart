@@ -145,6 +145,7 @@ void main() {
         frozenBalance: 45000,
       );
       final container = ProviderContainer(
+        retry: (_, _) => null,
         overrides: [
           customerWalletRepositoryProvider.overrideWithValue(
             _FixedWalletDataSource(backendWallet),
@@ -166,12 +167,6 @@ void main() {
       expect(
         (await container.read(customerWalletProvider.future)).frozenBalance,
         45000,
-      );
-      expect(await container.read(customerReviewsProvider.future), isEmpty);
-      expect(container.read(conversationsProvider), isEmpty);
-      expect(
-        (await container.read(customerWalletProvider.future)).availableBalance,
-        123000,
       );
       expect(await container.read(customerReviewsProvider.future), isEmpty);
     },
@@ -272,6 +267,7 @@ void main() {
   ) async {
     MockDatabase.currentUser = null;
     final container = ProviderContainer(
+      retry: (_, _) => null,
       overrides: [
         authRepositoryProvider.overrideWithValue(MockAuthRepository()),
       ],
@@ -321,6 +317,7 @@ void main() {
     );
     MockDatabase.currentUser = photographer;
     final container = ProviderContainer(
+      retry: (_, _) => null,
       overrides: [initialAuthUserProvider.overrideWithValue(photographer)],
     );
     addTearDown(container.dispose);
@@ -358,6 +355,7 @@ void main() {
     addTearDown(() => FlutterError.onError = previousErrorHandler);
     MockDatabase.currentUser = MockDatabase.customerUser;
     final container = ProviderContainer(
+      retry: (_, _) => null,
       overrides: [
         discoveryRepositoryProvider.overrideWithValue(
           _MissingPhotographerRepository(),

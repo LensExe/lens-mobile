@@ -31,6 +31,8 @@ class PaymentIntent {
   final String? qrCode;
   final String? checkoutExpiresAt;
 
+  bool get isSettled => status.toLowerCase() == 'paid';
+
   factory PaymentIntent.fromJson(Map<String, dynamic> json) => PaymentIntent(
     id: _requiredString(json['id'], 'id'),
     status: _requiredString(json['status'], 'status'),
@@ -111,13 +113,15 @@ class BookingPaymentRepository {
 
   Future<int> getPaidBookingTotal(String bookingId) async {
     final history = await getBookingHistory(bookingId);
-    return history.items
-        .where(
-          (payment) =>
-              payment.status == 'paid' &&
-              (payment.type == 'deposit' || payment.type == 'remaining'),
-        )
-        .fold<int>(0, (total, payment) => total + payment.amount);
+    final netPaid = history.items.fold<int>(0, (total, payment) {
+      if (!payment.isSettled) return total;
+      return switch (payment.type?.toLowerCase()) {
+        'deposit' || 'remaining' => total + payment.amount,
+        'refund' => total - payment.amount,
+        _ => total,
+      };
+    });
+    return netPaid < 0 ? 0 : netPaid;
   }
 }
 

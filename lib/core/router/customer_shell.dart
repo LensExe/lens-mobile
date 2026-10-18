@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../providers/data_providers.dart';
+import '../../features/customer/messages/api_customer_chat_repository.dart';
+import '../../features/customer/messages/customer_chat_realtime.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
@@ -16,9 +17,17 @@ class CustomerShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unread = ref
-        .watch(conversationsProvider)
-        .fold<int>(0, (sum, conversation) => sum + conversation.unreadCount);
+    ref.watch(customerChatRealtimeClientProvider);
+    final unread =
+        ref
+            .watch(customerConversationsProvider)
+            .asData
+            ?.value
+            .fold<int>(
+              0,
+              (sum, conversation) => sum + conversation.unreadCount,
+            ) ??
+        0;
     final selectedIndex = _calculateSelectedIndex(context);
     const destinations = [
       _NavDestination(LucideIcons.search, 'Khám phá'),

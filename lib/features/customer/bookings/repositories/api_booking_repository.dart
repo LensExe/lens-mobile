@@ -4,12 +4,25 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/vietnam_time.dart';
 import '../models/booking_model.dart';
+import '../../payments/payment_repository.dart';
 import 'booking_repository.dart';
 
 class ApiBookingRepository implements BookingRepository {
   const ApiBookingRepository(this._dio);
 
   final Dio _dio;
+
+  Future<Booking> _bookingWithPayment(
+    Map<String, dynamic> json,
+    Map<String, dynamic>? profile,
+  ) async {
+    final id = _requiredString(json['id'], 'id');
+    final embeddedPaidAmount = json['paid_amount'];
+    final paidAmount = embeddedPaidAmount == null
+        ? await BookingPaymentRepository(_dio).getPaidBookingTotal(id)
+        : _integer(embeddedPaidAmount);
+    return _booking(json, profile, paidAmount: paidAmount);
+  }
 
   @override
   Future<List<Booking>> getBookings() async {
@@ -55,9 +68,12 @@ class ApiBookingRepository implements BookingRepository {
           }
         }),
       );
-      return items
-          .map((item) => _booking(item, profiles[item['photographer_id']]))
-          .toList(growable: false);
+      return await Future.wait(
+        items.map(
+          (item) =>
+              _bookingWithPayment(item, profiles[item['photographer_id']]),
+        ),
+      );
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -67,7 +83,7 @@ class ApiBookingRepository implements BookingRepository {
   Future<Booking?> getBookingById(String id) async {
     try {
       final response = await _dio.get<dynamic>('bookings/$id');
-      return _booking(_responseMap(response.data), null);
+      return await _bookingWithPayment(_responseMap(response.data), null);
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
       throw ApiException.fromDio(error);
@@ -166,7 +182,11 @@ class ApiBookingRepository implements BookingRepository {
   }
 }
 
-Booking _booking(Map<String, dynamic> json, Map<String, dynamic>? profile) {
+Booking _booking(
+  Map<String, dynamic> json,
+  Map<String, dynamic>? profile, {
+  int paidAmount = 0,
+}) {
   final start = VietnamTime.fromInstant(
     DateTime.parse(_requiredString(json['from'], 'from')),
   );
@@ -174,7 +194,10 @@ Booking _booking(Map<String, dynamic> json, Map<String, dynamic>? profile) {
     DateTime.parse(_requiredString(json['to'], 'to')),
   );
   final status = switch (_requiredString(json['status'], 'status')) {
-    'pending' => BookingStatus.pending,
+    'pending' =>
+      paidAmount >= _integer(json['deposit_amount'])
+          ? BookingStatus.pending
+          : BookingStatus.awaiting_deposit,
     'accepted' => BookingStatus.accepted,
     'rejected' => BookingStatus.rejected,
     'cancelled' => BookingStatus.cancelled,
@@ -200,8 +223,12 @@ Booking _booking(Map<String, dynamic> json, Map<String, dynamic>? profile) {
     location: _string(json['location']),
     price: _integer(json['total_amount']),
     status: status,
+    backendStatus: _requiredString(json['status'], 'status'),
+    paidAmount: paidAmount,
     packageId: _string(json['booking_plan_id']),
+    packageSnapshot: _packageTerms(json, start, end),
     depositAmount: _integer(json['deposit_amount']),
+    depositPaidAt: _nullableString(json['deposit_paid_at']),
     rating: profile == null
         ? null
         : _decimal(_map(profile['rating'])['average_rating']),
@@ -209,6 +236,35 @@ Booking _booking(Map<String, dynamic> json, Map<String, dynamic>? profile) {
         ? null
         : _integer(_map(profile['rating'])['total_feedbacks']),
     galleryPublishedAt: _nullableString(json['gallery_published_at']),
+  );
+}
+
+PackageTerms? _packageTerms(
+  Map<String, dynamic> booking,
+  DateTime start,
+  DateTime end,
+) {
+  final snapshot = _optionalMap(booking['package_snapshot']);
+  final plan = _optionalMap(booking['booking_plan']);
+  if (snapshot.isEmpty && plan.isEmpty) return null;
+  final details = {...plan, ...snapshot};
+  final photoCount = _integerOrFallback(
+    details['photo_count'] ?? details['photoCount'],
+    fallback: _integerOrFallback(
+      details['retouched_photo_count'] ?? details['retouchedPhotoCount'],
+      fallback: 1,
+    ),
+  );
+  final durationMinutes = _integerOrFallback(
+    details['duration_minutes'] ?? details['durationMinutes'],
+    fallback: end.difference(start).inMinutes,
+  );
+  final packageName = _string(details['name']);
+  return PackageTerms(
+    name: packageName.isEmpty ? 'Gói chụp' : packageName,
+    photoCount: photoCount > 0 ? photoCount : 1,
+    durationHours: (durationMinutes > 0 ? durationMinutes : 60) / 60,
+    deliveryDays: _integer(details['delivery_days'] ?? details['deliveryDays']),
   );
 }
 
@@ -260,5 +316,19 @@ String _requiredString(Object? value, String field) {
 
 String _string(Object? value) => value?.toString() ?? '';
 String? _nullableString(Object? value) => value is String ? value : null;
-int _integer(Object? value) => value is num ? value.toInt() : 0;
+int _integer(Object? value) => value is num
+    ? value.toInt()
+    : value is String
+    ? int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? 0
+    : 0;
+int _integerOrFallback(Object? value, {required int fallback}) {
+  final parsed = _integer(value);
+  return parsed == 0 ? fallback : parsed;
+}
+
 double _decimal(Object? value) => value is num ? value.toDouble() : 0;
+Map<String, dynamic> _optionalMap(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return value.map((key, value) => MapEntry('$key', value));
+  return const {};
+}

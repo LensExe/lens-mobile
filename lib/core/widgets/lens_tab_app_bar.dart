@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/notifications/notification_bell.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
@@ -8,12 +9,14 @@ class LensTabAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String? subtitle;
   final Widget? trailing;
+  final bool showNotification;
 
   const LensTabAppBar({
     super.key,
     required this.title,
     this.subtitle,
     this.trailing,
+    this.showNotification = true,
   });
 
   static const double height = 76;
@@ -57,7 +60,11 @@ class LensTabAppBar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ),
-          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+          if (showNotification) ...[
+            const SizedBox(width: 2),
+            const NotificationBell(routePath: '/customer_home/notifications'),
+          ],
         ],
       ),
     );

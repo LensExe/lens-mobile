@@ -21,6 +21,7 @@ import 'package:lens_app/features/customer/payments/deposit_screen.dart';
 import 'package:lens_app/features/customer/reviews/reviews_screen.dart';
 import 'package:lens_app/features/customer/settings/settings_screen.dart';
 import 'package:lens_app/features/customer/wallet/wallet_screen.dart';
+import 'package:lens_app/features/notifications/notification_center_screen.dart';
 
 import 'customer_shell.dart';
 
@@ -91,6 +92,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/customer_home/messages/:id',
         builder: (context, state) => CustomerChatDetailScreen(
           conversationId: state.pathParameters['id']!,
+          isPhotographerId: true,
+        ),
+      ),
+      GoRoute(
+        path: '/customer_home/conversation/:id',
+        builder: (context, state) => CustomerChatDetailScreen(
+          conversationId: state.pathParameters['id']!,
         ),
       ),
       GoRoute(
@@ -139,6 +147,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/customer_home/settings/notifications',
         builder: (context, state) =>
             const SettingsScreen(section: SettingsSection.notifications),
+      ),
+      GoRoute(
+        path: '/customer_home/notifications',
+        builder: (context, state) => const NotificationCenterScreen(),
       ),
       GoRoute(
         path: '/customer_home/photographer/:id/book',
