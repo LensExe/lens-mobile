@@ -7,10 +7,12 @@ import '../data/repositories/api_auth_repository.dart';
 import '../data/repositories/api_auth_flow_repository.dart';
 import '../data/repositories/api_customer_reviews_repository.dart';
 import '../data/repositories/api_customer_wallet_repository.dart';
+import '../data/repositories/api_customer_notification_preferences_repository.dart';
 import '../core/network/auth_session_store.dart';
 import '../core/network/dio_client.dart';
 import '../domain/models/customer_wallet_model.dart';
 import '../domain/models/customer_review_model.dart';
+import '../domain/models/customer_notification_preferences.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return ApiAuthRepository(
@@ -78,6 +80,8 @@ class AuthUserNotifier extends Notifier<User?> {
     required String city,
     required String address,
     bool? saveAsDefault,
+    String? gender,
+    String? dateOfBirth,
   }) async {
     final repo = ref.read(authRepositoryProvider);
     final updated = await repo.updateProfile(
@@ -86,6 +90,8 @@ class AuthUserNotifier extends Notifier<User?> {
       city: city,
       address: address,
       saveAsDefault: saveAsDefault,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
     );
     setUser(updated);
     return updated;
@@ -93,6 +99,14 @@ class AuthUserNotifier extends Notifier<User?> {
 
   Future<User> refreshProfile() async {
     final updated = await ref.read(authRepositoryProvider).readCurrentProfile();
+    setUser(updated);
+    return updated;
+  }
+
+  Future<User> updateAvatar(String localPath) async {
+    final updated = await ref
+        .read(authRepositoryProvider)
+        .updateAvatar(localPath);
     setUser(updated);
     return updated;
   }
@@ -155,9 +169,7 @@ class CustomerReviewsNotifier
 
   @override
   Future<List<SubmittedCustomerReview>> build() async {
-    // Backend has no customer review-history endpoint. Keep only reviews
-    // confirmed by POST during this app session.
-    return [];
+    return ref.watch(customerReviewsRepositoryProvider).getMyReviews();
   }
 
   Future<void> submitReview({
@@ -206,6 +218,45 @@ final customerReviewsProvider =
       CustomerReviewsNotifier,
       List<SubmittedCustomerReview>
     >(() => CustomerReviewsNotifier());
+
+final customerNotificationPreferencesRepositoryProvider =
+    Provider<ApiCustomerNotificationPreferencesRepository>(
+      (ref) =>
+          ApiCustomerNotificationPreferencesRepository(ref.watch(dioProvider)),
+    );
+
+class CustomerNotificationPreferencesNotifier
+    extends AsyncNotifier<CustomerNotificationPreferences> {
+  @override
+  Future<CustomerNotificationPreferences> build() {
+    ref.watch(authUserProvider.select((user) => user?.id));
+    return ref
+        .watch(customerNotificationPreferencesRepositoryProvider)
+        .getPreferences();
+  }
+
+  Future<void> updatePreferences(
+    CustomerNotificationPreferences preferences,
+  ) async {
+    final previous = state.value;
+    if (previous == null) return;
+    try {
+      final updated = await ref
+          .read(customerNotificationPreferencesRepositoryProvider)
+          .updatePreferences(preferences);
+      state = AsyncData(updated);
+    } on Object {
+      state = AsyncData(previous);
+      rethrow;
+    }
+  }
+}
+
+final customerNotificationPreferencesProvider =
+    AsyncNotifierProvider<
+      CustomerNotificationPreferencesNotifier,
+      CustomerNotificationPreferences
+    >(() => CustomerNotificationPreferencesNotifier());
 
 // Legacy marketing preview has no Backend directory contract to load from.
 final photographersProvider = Provider<List<Photographer>>((ref) => const []);

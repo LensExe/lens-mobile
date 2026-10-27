@@ -18,7 +18,7 @@ class CustomerRecommendationsRepository {
         'customers/me/recommendations',
         queryParameters: {'limit': limit, 'offset': 0},
       );
-      final page = _map(response.data);
+      final page = _responseMap(response.data);
       final items = page['items'];
       if (items is! List) {
         throw const ApiException(
@@ -44,6 +44,17 @@ Map<String, dynamic> _map(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return value.map((key, value) => MapEntry('$key', value));
   throw const ApiException('Backend trả về dữ liệu gợi ý không đúng cấu trúc.');
+}
+
+Map<String, dynamic> _responseMap(Object? value) {
+  var payload = _map(value);
+  while (payload.containsKey('success') && payload.containsKey('data')) {
+    if (payload['success'] != true) {
+      throw const ApiException('Backend không xác nhận danh sách gợi ý.');
+    }
+    payload = _map(payload['data']);
+  }
+  return payload;
 }
 
 final customerRecommendationsRepositoryProvider =

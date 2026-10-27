@@ -10,6 +10,7 @@ import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../../../domain/models/customer_wallet_model.dart';
+import 'wallet_withdrawal_dialog.dart';
 import '../../../providers/data_providers.dart';
 
 class WalletScreen extends ConsumerWidget {
@@ -117,6 +118,44 @@ class WalletScreen extends ConsumerWidget {
                 icon: LucideIcons.wallet,
                 color: AppColors.lagoon,
               ),
+              if (wallet.availableBalance > 0) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: wallet.availableBalance < 10000
+                        ? null
+                        : () async {
+                            final request = await WalletWithdrawalDialog.show(
+                              context,
+                              availableBalance: wallet.availableBalance,
+                            );
+                            if (!context.mounted || request == null) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Đã gửi yêu cầu rút ${AppTypography.formatCurrency(request.amount)} ₫ đến Backend.',
+                                ),
+                              ),
+                            );
+                          },
+                    icon: const Icon(LucideIcons.banknoteArrowDown, size: 17),
+                    label: const Text('Yêu cầu rút tiền'),
+                  ),
+                ),
+                if (wallet.availableBalance < 10000)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      'Số tiền rút tối thiểu là 10.000 ₫.',
+                      textAlign: TextAlign.right,
+                      style: AppTypography.bodySm(
+                        fontSize: 11.5,
+                        color: AppColors.steel,
+                      ),
+                    ),
+                  ),
+              ],
               const SizedBox(height: 12),
               _BalanceCard(
                 label: 'Số dư đang giữ',

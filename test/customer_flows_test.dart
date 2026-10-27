@@ -9,7 +9,9 @@ import 'package:lens_app/data/repositories/mock_auth_repository.dart';
 import 'package:lens_app/data/repositories/mock_customer_reviews_repository.dart';
 import 'package:lens_app/data/repositories/mock_customer_wallet_repository.dart';
 import 'package:lens_app/data/repositories/api_customer_wallet_repository.dart';
+import 'package:lens_app/data/repositories/api_customer_reviews_repository.dart';
 import 'package:lens_app/domain/models/customer_wallet_model.dart';
+import 'package:lens_app/domain/models/customer_review_model.dart';
 import 'package:lens_app/data/repositories/mock_customer_messages_repository.dart';
 import 'package:lens_app/domain/models/models.dart' show Message, User;
 import 'package:lens_app/providers/data_providers.dart';
@@ -149,6 +151,9 @@ void main() {
         overrides: [
           customerWalletRepositoryProvider.overrideWithValue(
             _FixedWalletDataSource(backendWallet),
+          ),
+          customerReviewsRepositoryProvider.overrideWithValue(
+            const _EmptyCustomerReviewsDataSource(),
           ),
         ],
       );
@@ -451,6 +456,53 @@ class _FixedWalletDataSource implements CustomerWalletDataSource {
 
   @override
   Future<CustomerWallet> getWallet() async => wallet;
+
+  @override
+  Future<WalletWithdrawalRequest> requestWithdrawal({
+    required int amount,
+    required String reason,
+    required String bankCode,
+    required String accountNumber,
+    required String accountName,
+    required String idempotencyKey,
+  }) async => WalletWithdrawalRequest(
+    id: 'withdrawal-test',
+    amount: amount,
+    status: 'requested',
+  );
+}
+
+class _EmptyCustomerReviewsDataSource implements CustomerReviewsDataSource {
+  const _EmptyCustomerReviewsDataSource();
+
+  @override
+  Future<List<SubmittedCustomerReview>> getMyReviews() async => const [];
+
+  @override
+  Future<SubmittedCustomerReview> submitReview({
+    required String bookingId,
+    required String photographerId,
+    required String photographerName,
+    required String photographerAvatar,
+    required String style,
+    required String date,
+    required int rating,
+    required int punctualityRating,
+    required int attitudeRating,
+    required String comment,
+  }) async => SubmittedCustomerReview(
+    bookingId: bookingId,
+    photographerId: photographerId,
+    photographerName: photographerName,
+    photographerAvatar: photographerAvatar,
+    style: style,
+    date: date,
+    rating: rating.toDouble(),
+    punctualityRating: punctualityRating,
+    attitudeRating: attitudeRating,
+    comment: comment,
+    createdAt: DateTime.now(),
+  );
 }
 
 class _MissingApiProfileRepository implements PhotographerDetailRepository {

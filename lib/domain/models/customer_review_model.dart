@@ -24,4 +24,23 @@ class SubmittedCustomerReview {
     required this.comment,
     required this.createdAt,
   });
+
+  SubmittedCustomerReview copyWith({
+    String? photographerName,
+    String? photographerAvatar,
+    String? style,
+    String? date,
+  }) => SubmittedCustomerReview(
+    bookingId: bookingId,
+    photographerId: photographerId,
+    photographerName: photographerName ?? this.photographerName,
+    photographerAvatar: photographerAvatar ?? this.photographerAvatar,
+    style: style ?? this.style,
+    date: date ?? this.date,
+    rating: rating,
+    punctualityRating: punctualityRating,
+    attitudeRating: attitudeRating,
+    comment: comment,
+    createdAt: createdAt,
+  );
 }

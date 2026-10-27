@@ -148,8 +148,13 @@ class SessionInterceptor extends Interceptor {
       'auth/refresh',
       data: {'refresh_token': refreshToken},
     );
-    final data = response.data;
+    var data = response.data;
+    while (data is Map && data.containsKey('data')) {
+      if (data['success'] != true) return null;
+      data = data['data'];
+    }
     if (data is! Map) return null;
+    if (data['success'] == false) return null;
     final tokenData = data.map((key, value) => MapEntry('$key', value));
     await sessionStore.updateTokens(tokenData);
     return sessionStore.accessToken;

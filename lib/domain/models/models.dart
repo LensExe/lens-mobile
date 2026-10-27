@@ -83,6 +83,8 @@ class User {
   final String role; // 'client' or 'photographer'
   final String phone;
   final String city;
+  final String gender;
+  final String dateOfBirth;
   final String address;
   final String avatarUrl;
   final bool saveAsDefault;
@@ -95,6 +97,8 @@ class User {
     required this.role,
     this.phone = '',
     this.city = '',
+    this.gender = '',
+    this.dateOfBirth = '',
     this.address = '',
     this.avatarUrl = '',
     this.saveAsDefault = false,
@@ -108,6 +112,8 @@ class User {
     String? role,
     String? phone,
     String? city,
+    String? gender,
+    String? dateOfBirth,
     String? address,
     String? avatarUrl,
     bool? saveAsDefault,
@@ -120,6 +126,8 @@ class User {
       role: role ?? this.role,
       phone: phone ?? this.phone,
       city: city ?? this.city,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       address: address ?? this.address,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       saveAsDefault: saveAsDefault ?? this.saveAsDefault,

@@ -147,8 +147,8 @@ class Booking {
   final bool isStorageLocked;
   final String? galleryPublishedAt;
 
-  /// Tính số tiền còn lại phải thanh toán sau khi cọc (70%)
-  int get remainingAmount => price - depositAmount;
+  /// Số dư theo khoản Backend đã ghi nhận, không giả định khách chỉ trả tiền cọc.
+  int get remainingAmount => price > paidAmount ? price - paidAmount : 0;
 
   /// Keep booking lifecycle separate from payment progress. The backend stores
   /// `accepted` even when the customer has already paid the full amount.

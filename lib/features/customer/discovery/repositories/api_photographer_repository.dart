@@ -7,27 +7,26 @@ import '../models/photographer_model.dart';
 import '../utils/photographer_cover_resolver.dart';
 import 'photographer_repository.dart';
 
-List<String> _mapStyleToSlugs(String style) {
-  final normalized = foldVietnamese(style.trim().toLowerCase());
-  if (normalized.contains('chan dung')) return ['portrait', 'concept'];
-  if (normalized.contains('cuoi')) return ['wedding', 'pre-wedding'];
-  if (normalized.contains('thoi trang')) {
-    return ['fashion', 'streetwear', 'commercial'];
-  }
-  if (normalized.contains('su kien')) {
-    return ['event', 'corporate', 'commercial'];
-  }
-  if (normalized.contains('gia dinh')) return ['family', 'kids', 'maternity'];
-  if (normalized.contains('ngoai canh') || normalized.contains('bien')) {
-    return ['beach', 'outdoor'];
-  }
-  if (normalized.contains('han quoc')) return ['korean'];
-  if (normalized.contains('vintage') || normalized.contains('phim')) {
-    return ['vintage', 'film'];
-  }
-  if (normalized.contains('duong pho')) return ['streetwear', 'fashion'];
-  return [style.trim().toLowerCase()];
-}
+const _styleLabels = <String, String>{
+  'portrait': 'Chân dung',
+  'vintage': 'Đường phố',
+  'korean': 'Chân dung',
+  'wedding': 'Cưới',
+  'concept': 'Thời trang',
+  'pre-wedding': 'Cưới',
+  'beach': 'Du lịch',
+  'lifestyle': 'Gia đình',
+  'event': 'Sự kiện',
+  'corporate': 'Sản phẩm',
+  'family': 'Gia đình',
+  'outdoor': 'Du lịch',
+  'kids': 'Gia đình',
+  'streetwear': 'Đường phố',
+  'fashion': 'Thời trang',
+  'film': 'Đường phố',
+  'maternity': 'Gia đình',
+  'commercial': 'Sản phẩm',
+};
 
 class ApiPhotographerRepository implements PhotographerRepository {
   const ApiPhotographerRepository(this._dio);
@@ -43,15 +42,20 @@ class ApiPhotographerRepository implements PhotographerRepository {
   }) async {
     final location = criteria?.city?.trim();
     final rawKeyword = criteria?.searchQuery?.trim();
-    final style = criteria?.style?.trim();
     final minRating = criteria?.minRating;
 
     final hasLocation =
         location != null && location.isNotEmpty && location != 'Tất cả';
-    final hasKeyword = rawKeyword != null && rawKeyword.isNotEmpty;
-    final hasStyle = style != null && style.isNotEmpty && style != 'Tất cả';
     final hasRating = minRating != null;
-    final hasFilters = hasLocation || hasKeyword || hasStyle || hasRating;
+    final hasKeyword = rawKeyword != null && rawKeyword.isNotEmpty;
+    final hasFilters =
+        hasLocation ||
+        hasRating ||
+        hasKeyword ||
+        (criteria?.styles.isNotEmpty ?? false) ||
+        (criteria?.hasNarrowedPriceRange ?? false) ||
+        (criteria?.experienceBucket != null) ||
+        (criteria?.sort != null && criteria!.sort != 'featured');
 
     // Fast path: Default browse without active search or filter
     if (!hasFilters) {
@@ -61,105 +65,33 @@ class ApiPhotographerRepository implements PhotographerRepository {
           topRated ? 'photographers/top-rated' : 'photographers',
           queryParameters: query,
         );
-        final page = _map(response.data);
-        final rawItems = page['items'];
-        if (rawItems is! List) {
-          throw const ApiException(
-            'Backend trả về danh sách photographer không hợp lệ.',
-          );
-        }
-        final basePhotographers = rawItems
-            .map((item) => photographerFromApi(_map(item), topRated: topRated))
-            .toList();
-
-        final items = await Future.wait(
-          basePhotographers.map(
-            (p) => PhotographerCoverResolver.resolveWithCover(_dio, p),
-          ),
-        );
-
-        return PhotographerPage(
-          items: items,
-          total: _number(page['total']),
-          limit: _number(page['limit'], fallback: limit),
-          offset: _number(page['offset'], fallback: offset),
+        return await _pageFromResponse(
+          response.data,
+          topRated: topRated,
+          fallbackLimit: limit,
+          fallbackOffset: offset,
         );
       } on DioException catch (error) {
         throw ApiException.fromDio(error);
       }
     }
 
-    // Filter/Search path:
-    // To handle Vietnamese unaccented search ("minh khoi" vs "Minh Khôi") and style mappings accurately
-    // without being blocked by backend ILIKE limitations, we fetch all photographers (limit: 100) and perform
-    // comprehensive diacritic-insensitive & style-aware matching.
+    // The Web directory loads the full photographer list and applies its
+    // filters/sort locally. Mirror that behavior so combined filters and
+    // result counts remain correct even though the list API has no style,
+    // price, experience, or sort parameters.
     try {
-      final query = <String, Object>{'limit': 100, 'offset': 0};
-      final response = await _dio.get<dynamic>(
-        'photographers',
-        queryParameters: query,
-      );
-      final page = _map(response.data);
-      final rawItems = page['items'];
-      if (rawItems is! List) {
-        throw const ApiException(
-          'Backend trả về danh sách photographer không hợp lệ.',
-        );
-      }
-      final allPhotographers = rawItems
-          .map((item) => photographerFromApi(_map(item), topRated: false))
-          .toList();
+      final serverFilters = <String, Object>{
+        if (hasLocation) 'location': location,
+        if (hasRating) 'min_rating': minRating,
+      };
 
-      final filtered = allPhotographers.where((p) {
-        // Location filter
-        if (hasLocation) {
-          if (!foldVietnamese(p.city).contains(foldVietnamese(location))) {
-            return false;
-          }
-        }
-        // Rating filter
-        if (hasRating && p.rating < minRating) {
-          return false;
-        }
-        // Style filter
-        if (hasStyle) {
-          final targetSlugs = _mapStyleToSlugs(style);
-          final hasMatchingStyle = p.styles.any((s) {
-            final sLower = s.toLowerCase();
-            return targetSlugs.any((target) => sLower.contains(target));
-          });
-          if (!hasMatchingStyle) return false;
-        }
-        // Search query (keyword)
-        if (hasKeyword) {
-          final q = foldVietnamese(rawKeyword.toLowerCase());
-          final nameMatch = foldVietnamese(p.name.toLowerCase()).contains(q);
-          final cityMatch = foldVietnamese(p.city.toLowerCase()).contains(q);
-          final targetSlugs = _mapStyleToSlugs(rawKeyword);
-          final styleMatch = p.styles.any((s) {
-            final sLower = s.toLowerCase();
-            final sFolded = foldVietnamese(sLower);
-            return sFolded.contains(q) ||
-                targetSlugs.any((target) => sLower.contains(target));
-          });
-          if (!nameMatch && !cityMatch && !styleMatch) {
-            return false;
-          }
-        }
-        return true;
-      }).toList();
-
+      final photographers = await _fetchAllPhotographers(serverFilters);
+      final filtered = _applyLocalFilters(photographers, criteria);
       final total = filtered.length;
       final start = offset.clamp(0, total);
       final end = (offset + limit).clamp(0, total);
-      final pageItems = filtered.sublist(start, end);
-
-      final items = await Future.wait(
-        pageItems.map(
-          (p) => PhotographerCoverResolver.resolveWithCover(_dio, p),
-        ),
-      );
-
+      final items = await _resolveCovers(filtered.sublist(start, end));
       return PhotographerPage(
         items: items,
         total: total,
@@ -169,6 +101,155 @@ class ApiPhotographerRepository implements PhotographerRepository {
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
+  }
+
+  List<PhotographerModel> _applyLocalFilters(
+    List<PhotographerModel> photographers,
+    FilterCriteria? criteria,
+  ) {
+    if (criteria == null) return photographers;
+    final query = foldVietnamese(
+      criteria.searchQuery?.trim().toLowerCase() ?? '',
+    );
+    final selectedStyles = criteria.styles
+        .map((style) => foldVietnamese(style.trim().toLowerCase()))
+        .toSet();
+    final minPrice = criteria.priceMin;
+    final maxPrice = criteria.priceMax;
+
+    final filtered = photographers
+        .where((photographer) {
+          if (criteria.city != null &&
+              criteria.city != 'Tất cả' &&
+              photographer.city != criteria.city) {
+            return false;
+          }
+          if (criteria.minRating != null &&
+              photographer.rating < criteria.minRating!) {
+            return false;
+          }
+          if (query.isNotEmpty) {
+            final searchable = foldVietnamese(
+              '${photographer.name} ${photographer.city} ${photographer.styles.join(' ')}'
+                  .toLowerCase(),
+            );
+            if (!searchable.contains(query)) return false;
+          }
+          if (selectedStyles.isNotEmpty &&
+              !photographer.styles.any(
+                (style) => selectedStyles.contains(
+                  foldVietnamese(style.trim().toLowerCase()),
+                ),
+              )) {
+            return false;
+          }
+          if (criteria.hasNarrowedPriceRange &&
+              (photographer.pricePerSession < minPrice ||
+                  photographer.pricePerSession > maxPrice)) {
+            return false;
+          }
+          if (criteria.experienceBucket != null &&
+              !_matchesExperience(
+                photographer.experience,
+                criteria.experienceBucket!,
+              )) {
+            return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
+
+    final indexed = filtered.asMap().entries.toList();
+    indexed.sort((left, right) {
+      final a = left.value;
+      final b = right.value;
+      final comparison = switch (criteria.sort) {
+        'rating' => b.rating.compareTo(a.rating),
+        'price-asc' => a.pricePerSession.compareTo(b.pricePerSession),
+        'price-desc' => b.pricePerSession.compareTo(a.pricePerSession),
+        _ =>
+          (b.isFeatured ? 1 : 0).compareTo(a.isFeatured ? 1 : 0) != 0
+              ? (b.isFeatured ? 1 : 0).compareTo(a.isFeatured ? 1 : 0)
+              : b.rating.compareTo(a.rating),
+      };
+      return comparison == 0 ? left.key.compareTo(right.key) : comparison;
+    });
+    return indexed.map((entry) => entry.value).toList(growable: false);
+  }
+
+  bool _matchesExperience(Experience? experience, String bucket) {
+    if (experience == null) return false;
+    return switch (bucket) {
+      'lt1' => experience == Experience.under1Year,
+      '1-3' => experience == Experience.from1To3Years,
+      '3-5' => experience == Experience.from3To5Years,
+      '5+' => experience == Experience.over5Years,
+      _ => true,
+    };
+  }
+
+  Future<List<PhotographerModel>> _fetchAllPhotographers(
+    Map<String, Object> filters,
+  ) async {
+    const pageSize = 100;
+    final all = <PhotographerModel>[];
+    var offset = 0;
+    var total = 0;
+    do {
+      final response = await _dio.get<dynamic>(
+        'photographers',
+        queryParameters: {'limit': pageSize, 'offset': offset, ...filters},
+      );
+      final page = _mapResponse(response.data);
+      final rawItems = page['items'];
+      if (rawItems is! List) {
+        throw const ApiException(
+          'Backend trả về danh sách photographer không hợp lệ.',
+        );
+      }
+      final items = rawItems
+          .map((item) => photographerFromApi(_map(item)))
+          .toList(growable: false);
+      all.addAll(items);
+      total = _number(page['total']);
+      if (items.isEmpty) break;
+      offset += items.length;
+    } while (offset < total);
+    return all;
+  }
+
+  Future<List<PhotographerModel>> _resolveCovers(
+    List<PhotographerModel> photographers,
+  ) => Future.wait(
+    photographers.map(
+      (photographer) =>
+          PhotographerCoverResolver.resolveWithCover(_dio, photographer),
+    ),
+  );
+
+  Future<PhotographerPage> _pageFromResponse(
+    Object? response, {
+    bool topRated = false,
+    required int fallbackLimit,
+    required int fallbackOffset,
+  }) async {
+    final page = _mapResponse(response);
+    final rawItems = page['items'];
+    if (rawItems is! List) {
+      throw const ApiException(
+        'Backend trả về danh sách photographer không hợp lệ.',
+      );
+    }
+    final basePhotographers = rawItems
+        .map((item) => photographerFromApi(_map(item), topRated: topRated))
+        .toList(growable: false);
+    final items = await _resolveCovers(basePhotographers);
+    return PhotographerPage(
+      items: items,
+      total: _number(page['total']),
+      limit: _number(page['limit'], fallback: fallbackLimit),
+      offset: _number(page['offset'], fallback: fallbackOffset),
+    );
   }
 
   @override
@@ -194,6 +275,10 @@ PhotographerModel photographerFromApi(
   bool topRated = false,
 }) {
   final rating = _map(json['rating']);
+  final startingPlan = json['starting_plan'] is Map
+      ? _map(json['starting_plan'])
+      : const <String, dynamic>{};
+  final rawStartingPrice = startingPlan['price'] ?? json['starting_price'];
   final startedAt = json['started_career_at'];
   final experienceYears = startedAt is num
       ? DateTime.now().year - startedAt.toInt()
@@ -214,7 +299,7 @@ PhotographerModel photographerFromApi(
     city: json['location']?.toString() ?? '',
     rating: _decimal(rating['average_rating']),
     reviewCount: _number(rating['total_feedbacks']),
-    pricePerSession: 0,
+    pricePerSession: _decimal(rawStartingPrice),
     isFeatured: topRated,
     isVerified: json['is_verified'] == true,
     experience: experienceYears == null
@@ -227,7 +312,13 @@ PhotographerModel photographerFromApi(
         ? Experience.from3To5Years
         : Experience.over5Years,
     styles: (json['styles'] is List ? json['styles'] as List : const [])
-        .map((item) => item.toString())
+        .map(
+          (item) =>
+              _styleLabels[item.toString().trim().toLowerCase()] ??
+              item.toString().trim(),
+        )
+        .where((style) => style.isNotEmpty)
+        .toSet()
         .toList(),
     availableDates: const [],
   );
@@ -237,6 +328,19 @@ Map<String, dynamic> _map(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return value.map((key, value) => MapEntry('$key', value));
   throw const ApiException('Backend trả về dữ liệu không đúng cấu trúc.');
+}
+
+Map<String, dynamic> _mapResponse(Object? value) {
+  var payload = value;
+  while (payload is Map && payload.containsKey('data')) {
+    if (payload['success'] == false) {
+      throw const ApiException(
+        'Backend không xác nhận danh sách photographer.',
+      );
+    }
+    payload = payload['data'];
+  }
+  return _map(payload);
 }
 
 String _requiredString(Object? value, String field) {

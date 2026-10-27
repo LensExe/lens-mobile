@@ -16,6 +16,8 @@ abstract class AuthRepository {
     required String city,
     required String address,
     bool? saveAsDefault,
+    String? gender,
+    String? dateOfBirth,
   });
   Future<void> changePassword({
     required String currentPassword,

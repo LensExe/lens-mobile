@@ -7,3 +7,10 @@ import 'api_booking_repository.dart';
 final customerBookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return ApiBookingRepository(ref.watch(dioProvider));
 });
+
+final bookingCancellationPreviewProvider = FutureProvider.autoDispose
+    .family<BookingCancellationPreview, String>(
+      (ref, bookingId) => ref
+          .watch(customerBookingRepositoryProvider)
+          .getCancellationPreview(bookingId),
+    );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -11,6 +13,7 @@ import '../../../core/widgets/lens_text_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/customer_avatar.dart';
 import '../../../providers/data_providers.dart';
+import '../../../domain/models/customer_notification_preferences.dart';
 
 enum SettingsSection { profile, account, notifications }
 
@@ -26,7 +29,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _cityController;
+  String _gender = '';
+  String _dateOfBirth = '';
   bool _isSavingProfile = false;
+  bool _isUploadingAvatar = false;
   bool _isLoadingProfile = false;
   String? _profileLoadError;
   @override
@@ -36,6 +42,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _cityController = TextEditingController(text: user?.city ?? '');
+    _gender = user?.gender ?? '';
+    _dateOfBirth = user?.dateOfBirth ?? '';
     if (widget.section == SettingsSection.profile) {
       _isLoadingProfile = true;
       Future<void>.microtask(_refreshCurrentProfile);
@@ -49,11 +57,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _nameController.text = user.name;
       _phoneController.text = user.phone;
       _cityController.text = user.city;
+      _gender = user.gender;
+      _dateOfBirth = user.dateOfBirth;
       setState(() => _profileLoadError = null);
     } catch (error) {
       if (mounted) setState(() => _profileLoadError = error.toString());
     } finally {
       if (mounted) setState(() => _isLoadingProfile = false);
+    }
+  }
+
+  Future<void> _changeAvatar() async {
+    if (_isUploadingAvatar) return;
+    try {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 88,
+        maxWidth: 2400,
+      );
+      if (image == null || !mounted) return;
+      setState(() => _isUploadingAvatar = true);
+      await ref.read(authUserProvider.notifier).updateAvatar(image.path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã cập nhật ảnh đại diện.'),
+            backgroundColor: AppColors.emerald,
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không cập nhật được ảnh đại diện: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
     }
   }
 
@@ -79,7 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
       return;
     }
-    if (!RegExp(r'^(0|\+84)\d{8,10}$').hasMatch(phone)) {
+    if (phone.isNotEmpty && !RegExp(r'^(0|\+84)\d{8,10}$').hasMatch(phone)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Số điện thoại Việt Nam không hợp lệ')),
       );
@@ -102,6 +142,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             city: city,
             address: currentUser.address,
             saveAsDefault: currentUser.saveAsDefault,
+            gender: _gender,
+            dateOfBirth: _dateOfBirth,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -120,6 +162,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } finally {
       if (mounted) setState(() => _isSavingProfile = false);
     }
+  }
+
+  Future<void> _selectDateOfBirth() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final storedDate = DateTime.tryParse(_dateOfBirth);
+    final initialDate = storedDate != null && !storedDate.isAfter(today)
+        ? storedDate
+        : DateTime(now.year - 18, now.month, now.day);
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: today,
+      helpText: 'Chọn ngày sinh',
+    );
+    if (selected == null || !mounted) return;
+    setState(() => _dateOfBirth = DateFormat('yyyy-MM-dd').format(selected));
+  }
+
+  String _dateOfBirthLabel() {
+    final date = DateTime.tryParse(_dateOfBirth);
+    return date == null
+        ? 'Chọn ngày sinh'
+        : DateFormat('dd/MM/yyyy').format(date);
   }
 
   @override
@@ -214,34 +281,64 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.ember.withValues(alpha: 0.15),
-                        AppColors.ember.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.ember.withValues(alpha: 0.15),
+                            AppColors.ember.withValues(alpha: 0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.ember.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: _isUploadingAvatar
+                          ? const SizedBox.square(
+                              dimension: 26,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : CustomerAvatar(
+                              url: user?.avatarUrl ?? '',
+                              initials: initials,
+                              size: 80,
+                              fallbackStyle: AppTypography.headlineSm(
+                                color: AppColors.ember,
+                                fontSize: 26,
+                              ).copyWith(fontWeight: FontWeight.w800),
+                            ),
                     ),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.ember.withValues(alpha: 0.3),
-                      width: 2,
+                    Positioned(
+                      right: -4,
+                      bottom: -2,
+                      child: Material(
+                        color: AppColors.obsidian,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: _isUploadingAvatar ? null : _changeAvatar,
+                          customBorder: const CircleBorder(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Icon(
+                              LucideIcons.camera,
+                              color: AppColors.snow,
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  alignment: Alignment.center,
-                  child: CustomerAvatar(
-                    url: user?.avatarUrl ?? '',
-                    initials: initials,
-                    size: 80,
-                    fallbackStyle: AppTypography.headlineSm(
-                      color: AppColors.ember,
-                      fontSize: 26,
-                    ).copyWith(fontWeight: FontWeight.w800),
-                  ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
@@ -266,6 +363,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 controller: _phoneController,
                 hintText: '090 123 4567',
                 keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Ngày sinh',
+                style: AppTypography.bodyMd(color: AppColors.obsidian)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _selectDateOfBirth,
+                icon: const Icon(LucideIcons.calendarDays, size: 17),
+                label: Text(_dateOfBirthLabel()),
+                style: OutlinedButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                  minimumSize: const Size.fromHeight(48),
+                  foregroundColor: AppColors.obsidian,
+                  side: const BorderSide(color: AppColors.pebble),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppTokens.inputFieldRadius,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Giới tính',
+                style: AppTypography.bodyMd(color: AppColors.obsidian)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _gender,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppTokens.inputFieldRadius,
+                    ),
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(value: '', child: Text('Chưa chọn')),
+                  DropdownMenuItem(value: 'male', child: Text('Nam')),
+                  DropdownMenuItem(value: 'female', child: Text('Nữ')),
+                  DropdownMenuItem(value: 'other', child: Text('Khác')),
+                ],
+                onChanged: (value) => setState(() => _gender = value ?? ''),
               ),
               const SizedBox(height: 16),
               Text(
@@ -414,9 +558,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   // FLOW 18: Notification Preferences
-  Widget _buildNotifications(BuildContext context) => _backendCapabilityNote(
-    'Backend hiện chưa có API đọc hoặc cập nhật tùy chọn thông báo. Các lựa chọn chưa được lưu đã được ẩn.',
-  );
+  Widget _buildNotifications(BuildContext context) {
+    final preferences = ref.watch(customerNotificationPreferencesProvider);
+    return preferences.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(28),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Column(
+        children: [
+          _backendCapabilityNote('Không tải được tùy chọn thông báo: $error'),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () =>
+                ref.invalidate(customerNotificationPreferencesProvider),
+            child: const Text('Thử tải lại'),
+          ),
+        ],
+      ),
+      data: (value) => _NotificationPreferencesSettings(preferences: value),
+    );
+  }
 
   Widget _backendCapabilityNote(String text) => Container(
     padding: const EdgeInsets.all(16),
@@ -448,6 +610,109 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context) => const _ChangePasswordDialog(),
     );
   }
+}
+
+class _NotificationPreferencesSettings extends ConsumerStatefulWidget {
+  const _NotificationPreferencesSettings({required this.preferences});
+
+  final CustomerNotificationPreferences preferences;
+
+  @override
+  ConsumerState<_NotificationPreferencesSettings> createState() =>
+      _NotificationPreferencesSettingsState();
+}
+
+class _NotificationPreferencesSettingsState
+    extends ConsumerState<_NotificationPreferencesSettings> {
+  bool _isSaving = false;
+
+  Future<void> _save(CustomerNotificationPreferences updated) async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(customerNotificationPreferencesProvider.notifier)
+          .updatePreferences(updated);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không lưu được tùy chọn thông báo: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: AppColors.snow,
+      borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+      border: Border.all(color: AppColors.pebble),
+      boxShadow: const [AppTokens.surfaceShadow],
+    ),
+    child: Column(
+      children: [
+        _preference(
+          title: 'Cập nhật lịch đặt',
+          subtitle: 'Xác nhận, thay đổi và trạng thái booking.',
+          value: widget.preferences.bookingUpdates,
+          onChanged: (value) =>
+              _save(widget.preferences.copyWith(bookingUpdates: value)),
+        ),
+        const Divider(height: 1, indent: 16, endIndent: 16),
+        _preference(
+          title: 'Tin nhắn',
+          subtitle: 'Báo khi có tin nhắn mới trong cuộc hội thoại.',
+          value: widget.preferences.messages,
+          onChanged: (value) =>
+              _save(widget.preferences.copyWith(messages: value)),
+        ),
+        const Divider(height: 1, indent: 16, endIndent: 16),
+        _preference(
+          title: 'Ưu đãi và tin sản phẩm',
+          subtitle: 'Thông tin chương trình và tính năng mới.',
+          value: widget.preferences.promotions,
+          onChanged: (value) =>
+              _save(widget.preferences.copyWith(promotions: value)),
+        ),
+        const Divider(height: 1, indent: 16, endIndent: 16),
+        _preference(
+          title: 'Tóm tắt qua email',
+          subtitle: 'Email tổng hợp hoạt động định kỳ.',
+          value: widget.preferences.emailDigest,
+          onChanged: (value) =>
+              _save(widget.preferences.copyWith(emailDigest: value)),
+        ),
+        if (_isSaving) const LinearProgressIndicator(minHeight: 2),
+      ],
+    ),
+  );
+
+  Widget _preference({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) => SwitchListTile.adaptive(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    title: Text(
+      title,
+      style: AppTypography.bodyMd(color: AppColors.obsidian)
+          .copyWith(fontWeight: FontWeight.w600),
+    ),
+    subtitle: Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Text(
+        subtitle,
+        style: AppTypography.bodySm(color: AppColors.steel),
+      ),
+    ),
+    value: value,
+    activeThumbColor: AppColors.ember,
+    onChanged: _isSaving ? null : onChanged,
+  );
 }
 
 class _ChangePasswordDialog extends ConsumerStatefulWidget {

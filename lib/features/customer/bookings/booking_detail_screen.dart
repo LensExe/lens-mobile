@@ -161,9 +161,12 @@ class BookingDetailScreen extends ConsumerWidget {
         ),
         body: RefreshIndicator(
           color: AppColors.ember,
-          onRefresh: () => ref
-              .read(customerBookingsControllerProvider.notifier)
-              .loadBookings(),
+          onRefresh: () async {
+            await ref
+                .read(customerBookingsControllerProvider.notifier)
+                .loadBookings();
+            ref.invalidate(bookingPaidTotalProvider(booking.id));
+          },
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
@@ -402,12 +405,25 @@ class _BookingSummary extends StatelessWidget {
   }
 }
 
-class _BookingCost extends StatelessWidget {
+class _BookingCost extends ConsumerWidget {
   final Booking booking;
   const _BookingCost({required this.booking});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final paymentState = ref.watch(bookingPaidTotalProvider(booking.id));
+    final paidAmount = paymentState.value ?? booking.paidAmount;
+    final outstanding = paidAmount >= booking.price
+        ? 0
+        : booking.price - paidAmount;
+    final outstandingLabel = paymentState.isLoading
+        ? 'Đang xác minh số dư'
+        : paymentState.hasError
+        ? 'Chưa xác minh số dư'
+        : outstanding == 0
+        ? 'Đã thanh toán đủ'
+        : 'Còn phải thanh toán';
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -427,16 +443,31 @@ class _BookingCost extends StatelessWidget {
           _CostRow(label: 'Tổng giá gói', amount: booking.price),
           const SizedBox(height: 10),
           _CostRow(
-            label: 'Đã đặt cọc (30%)',
+            label: 'Tiền cọc theo booking (30%)',
             amount: booking.depositAmount,
+            highlightColor: AppColors.steel,
+          ),
+          const SizedBox(height: 10),
+          _CostRow(
+            label: 'Backend ghi nhận đã thanh toán',
+            amount: paidAmount,
             highlightColor: AppColors.emerald,
           ),
           const SizedBox(height: 10),
           _CostRow(
-            label: 'Còn lại cần thanh toán',
-            amount: booking.remainingAmount,
+            label: outstandingLabel,
+            amount: outstanding,
             isStrong: true,
           ),
+          if (paymentState.isLoading || paymentState.hasError) ...[
+            const SizedBox(height: 6),
+            Text(
+              paymentState.hasError
+                  ? 'Không tải được lịch sử thanh toán. Số dư sẽ được cập nhật sau khi kiểm tra lại.'
+                  : 'Đang đối soát lịch sử thanh toán từ Backend.',
+              style: AppTypography.bodySm(fontSize: 11, color: AppColors.steel),
+            ),
+          ],
           if ((booking.coinsRedeemed ?? 0) > 0) ...[
             const SizedBox(height: 10),
             _CostRow(
@@ -472,14 +503,30 @@ class _BookingActions extends ConsumerWidget {
         : null;
     final paidAmount = paidTotalState?.value ?? booking.paidAmount;
     final isFullyPaid = paidAmount >= booking.price;
+    final isCheckingPayment =
+        canPayRemaining &&
+        (paidTotalState?.isLoading == true || paidTotalState?.hasValue != true);
+    final paymentCheckFailed =
+        canPayRemaining && paidTotalState?.hasError == true;
+    final paymentAmountVerified =
+        canPayRemaining &&
+        paidTotalState?.hasValue == true &&
+        paidTotalState?.isLoading == false &&
+        paidTotalState?.hasError == false;
+    final outstanding = paidAmount >= booking.price
+        ? 0
+        : booking.price - paidAmount;
     final isWaitingForDelivery =
         booking.status == BookingStatus.inProgress ||
         booking.backendStatus == 'in_progress';
     final shouldOfferRemainingPayment =
-        canPayRemaining &&
-        (paidTotalState!.isLoading ||
-            paidTotalState.hasError ||
-            paidAmount < booking.price);
+        canPayRemaining && paymentAmountVerified && paidAmount < booking.price;
+
+    Widget retryPaymentCheck() => OutlinedButton.icon(
+      onPressed: () => ref.invalidate(bookingPaidTotalProvider(booking.id)),
+      icon: const Icon(LucideIcons.refreshCw, size: 17),
+      label: const Text('Kiểm tra lại thanh toán'),
+    );
 
     switch (booking.status) {
       case BookingStatus.awaiting_deposit:
@@ -529,16 +576,22 @@ class _BookingActions extends ConsumerWidget {
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
           title: 'Lịch chụp đã được xác nhận',
           message: shouldOfferRemainingPayment
-              ? 'Nhiếp ảnh gia đã nhận lịch. Hãy thanh toán phần còn lại theo số tiền Backend xác định. Nếu bạn đã chuyển khoản, mở thanh toán để kiểm tra trạng thái.'
+              ? 'Backend xác nhận còn ${AppTypography.formatCurrency(outstanding)} cần thanh toán.'
+              : paymentCheckFailed
+              ? 'Chưa xác minh được lịch sử thanh toán. Tạm ẩn nút thanh toán để tránh trả trùng.'
+              : isCheckingPayment
+              ? 'Đang xác minh các khoản đã thanh toán với Backend.'
               : 'Backend đã ghi nhận đủ khoản thanh toán cho booking này.',
           primaryAction: shouldOfferRemainingPayment
               ? PrimaryButton(
                   text:
-                      'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                      'Thanh toán còn lại · ${AppTypography.formatCurrency(outstanding)}',
                   height: 48,
                   onPressed: () =>
                       context.push('/customer_home/bookings/${booking.id}/pay'),
                 )
+              : paymentCheckFailed
+              ? retryPaymentCheck()
               : null,
           secondaryAction: TextButton(
             onPressed: () => _cancel(context, ref),
@@ -557,7 +610,7 @@ class _BookingActions extends ConsumerWidget {
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
           title: 'Buổi chụp đang được thực hiện',
           message: shouldOfferRemainingPayment
-              ? 'Bạn có thể thanh toán phần còn lại sau khi nhiếp ảnh gia đánh dấu buổi chụp đã hoàn tất.'
+              ? 'Backend xác nhận còn ${AppTypography.formatCurrency(outstanding)} cần thanh toán sau khi buổi chụp hoàn tất.'
               : isWaitingForDelivery && !isFullyPaid
               ? 'Buổi chụp đang diễn ra. Thanh toán phần còn lại sau khi nhiếp ảnh gia đánh dấu đã chụp.'
               : isFullyPaid
@@ -569,7 +622,7 @@ class _BookingActions extends ConsumerWidget {
               if (shouldOfferRemainingPayment) ...[
                 PrimaryButton(
                   text:
-                      'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                      'Thanh toán còn lại · ${AppTypography.formatCurrency(outstanding)}',
                   height: 48,
                   onPressed: () =>
                       context.push('/customer_home/bookings/${booking.id}/pay'),
@@ -631,23 +684,34 @@ class _BookingActions extends ConsumerWidget {
           title: 'Buổi chụp đã hoàn tất',
           message: booking.galleryPublishedAt == null
               ? shouldOfferRemainingPayment
-                    ? 'Thanh toán đủ phần còn lại để nhiếp ảnh gia có thể công bố gallery.'
+                    ? 'Backend xác nhận còn ${AppTypography.formatCurrency(outstanding)} cần thanh toán để nhiếp ảnh gia có thể công bố gallery.'
+                    : paymentCheckFailed
+                    ? 'Chưa xác minh được lịch sử thanh toán. Hãy kiểm tra lại trước khi thanh toán hoặc nghiệm thu ảnh.'
+                    : isCheckingPayment
+                    ? 'Đang xác minh khoản thanh toán với Backend.'
                     : 'Đã thanh toán đủ. Nhiếp ảnh gia có thể công bố gallery.'
               : 'Mở gallery đã được Backend công khai để xem ảnh và xác nhận đã nhận.',
           primaryAction:
-              shouldOfferRemainingPayment || booking.galleryPublishedAt != null
+              shouldOfferRemainingPayment ||
+                  paymentCheckFailed ||
+                  booking.galleryPublishedAt != null
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (shouldOfferRemainingPayment) ...[
                       PrimaryButton(
                         text:
-                            'Thanh toán còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                            'Thanh toán còn lại · ${AppTypography.formatCurrency(outstanding)}',
                         height: 48,
                         onPressed: () => context.push(
                           '/customer_home/bookings/${booking.id}/pay',
                         ),
                       ),
+                      if (booking.galleryPublishedAt != null)
+                        const SizedBox(height: 8),
+                    ],
+                    if (paymentCheckFailed) ...[
+                      retryPaymentCheck(),
                       if (booking.galleryPublishedAt != null)
                         const SizedBox(height: 8),
                     ],

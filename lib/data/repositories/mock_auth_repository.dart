@@ -102,6 +102,8 @@ class MockAuthRepository implements AuthRepository {
     required String city,
     required String address,
     bool? saveAsDefault,
+    String? gender,
+    String? dateOfBirth,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final current = MockDatabase.currentUser;
@@ -110,6 +112,8 @@ class MockAuthRepository implements AuthRepository {
       name: name,
       phone: phone,
       city: city,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
       address: address,
       saveAsDefault: saveAsDefault,
     );

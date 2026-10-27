@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
@@ -16,6 +17,7 @@ import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../bookings/controllers/customer_bookings_controller.dart';
 import '../bookings/models/booking_model.dart';
+import '../bookings/repositories/booking_gallery_repository.dart';
 import 'payment_method.dart';
 import 'payment_repository.dart';
 
@@ -51,35 +53,57 @@ class _BookingPaymentScreen extends ConsumerStatefulWidget {
       _BookingPaymentScreenState();
 }
 
-class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
+class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen>
+    with WidgetsBindingObserver {
   PaymentMethod _method = PaymentMethod.bank;
   PaymentIntent? _intent;
   bool _isSubmitting = false;
   bool _isRefreshing = false;
   bool _isRestoringPayment = true;
+  bool _successHandled = false;
+  bool _successRefreshInProgress = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Future.microtask(_restoreExistingPayment);
   }
 
-  bool _canPay(Booking booking) {
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    ref.invalidate(bookingPaidTotalProvider(widget.bookingId));
+    if (_intent != null && _intent!.status != 'paid') {
+      unawaited(_refreshPayment(showPendingStatus: false));
+    }
+  }
+
+  bool _canPay(Booking booking, int paidAmount) {
     if (widget.type == BookingPaymentType.deposit) {
       return booking.flowStatus == BookingStatus.awaiting_deposit &&
-          booking.paidAmount < booking.depositAmount;
+          paidAmount < booking.depositAmount;
     }
     return [
           BookingStatus.accepted,
           BookingStatus.confirmed,
           BookingStatus.shot,
         ].contains(booking.status) &&
-        booking.paidAmount < booking.price;
+        paidAmount < booking.price;
   }
 
   @override
   Widget build(BuildContext context) {
     final bookingsState = ref.watch(customerBookingsControllerProvider);
+    final paidTotalState = ref.watch(
+      bookingPaidTotalProvider(widget.bookingId),
+    );
     Booking? booking;
     for (final item in bookingsState.allBookings) {
       if (item.id == widget.bookingId) {
@@ -87,6 +111,26 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         break;
       }
     }
+
+    ref.listen<AsyncValue<int>>(bookingPaidTotalProvider(widget.bookingId), (
+      _,
+      next,
+    ) {
+      final currentBooking = booking;
+      final paidAmount = next.value;
+      if (currentBooking == null ||
+          next.isLoading ||
+          next.hasError ||
+          paidAmount == null) {
+        return;
+      }
+      final requiredAmount = widget.type == BookingPaymentType.deposit
+          ? currentBooking.depositAmount
+          : currentBooking.price;
+      if (paidAmount >= requiredAmount) {
+        unawaited(_handlePaymentConfirmed());
+      }
+    });
 
     if (booking == null) {
       return LensPage(
@@ -107,9 +151,16 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
       );
     }
 
+    final paidAmount = paidTotalState.value ?? booking.paidAmount;
+    final paymentStatusVerified =
+        paidTotalState.hasValue &&
+        !paidTotalState.isLoading &&
+        !paidTotalState.hasError;
     final amount = widget.type == BookingPaymentType.deposit
-        ? booking.depositAmount
-        : booking.remainingAmount;
+        ? (paidAmount >= booking.depositAmount
+              ? 0
+              : booking.depositAmount - paidAmount)
+        : (paidAmount >= booking.price ? 0 : booking.price - paidAmount);
     final heading = widget.type == BookingPaymentType.deposit
         ? 'Thanh toán đặt cọc'
         : 'Thanh toán phần còn lại';
@@ -159,15 +210,40 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
           children: [
             _PaymentSummary(booking: booking, amount: amount),
             const SizedBox(height: 14),
-            if (!_canPay(booking))
+            if (paidTotalState.hasError)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _StatusNotice(
+                    icon: LucideIcons.circleAlert,
+                    title: 'Chưa xác minh được thanh toán',
+                    message: 'Ứng dụng chưa tải được lịch sử thanh toán từ Backend. Tạm thời không tạo thêm yêu cầu để tránh thanh toán trùng.',
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => ref.invalidate(
+                      bookingPaidTotalProvider(widget.bookingId),
+                    ),
+                    icon: const Icon(LucideIcons.refreshCw, size: 17),
+                    label: const Text('Kiểm tra lại thanh toán'),
+                  ),
+                ],
+              )
+            else if (!paymentStatusVerified)
+              const _StatusNotice(
+                icon: LucideIcons.clock3,
+                title: 'Đang xác minh thanh toán',
+                message: 'Đợi Backend đối soát các khoản đã thanh toán trước khi tạo yêu cầu mới.',
+              )
+            else if (!_canPay(booking, paidAmount))
               _StatusNotice(
                 icon: LucideIcons.info,
-                title: _paymentIsComplete(booking)
+                title: _paymentIsComplete(booking, paidAmount)
                     ? 'Đã thanh toán đủ'
                     : widget.type == BookingPaymentType.deposit
                     ? 'Booking đã qua bước đặt cọc'
                     : 'Booking chưa ở trạng thái thanh toán này',
-                message: _paymentIsComplete(booking)
+                message: _paymentIsComplete(booking, paidAmount)
                     ? 'Backend đã ghi nhận khoản thanh toán này. Bạn không cần thanh toán thêm.'
                     : widget.type == BookingPaymentType.deposit
                     ? 'Tiền cọc đã được ghi nhận hoặc yêu cầu không còn chờ cọc. Hãy kiểm tra trạng thái booking.'
@@ -231,10 +307,10 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
     );
   }
 
-  bool _paymentIsComplete(Booking booking) =>
+  bool _paymentIsComplete(Booking booking, int paidAmount) =>
       widget.type == BookingPaymentType.deposit
-      ? booking.paidAmount >= booking.depositAmount
-      : booking.paidAmount >= booking.price;
+      ? paidAmount >= booking.depositAmount
+      : paidAmount >= booking.price;
 
   Widget _methodSelector() => Container(
     padding: const EdgeInsets.all(18),
@@ -289,9 +365,8 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
         }
       });
       if (intent.status == 'paid') {
-        await ref
-            .read(customerBookingsControllerProvider.notifier)
-            .loadBookings();
+        await _refreshBookingAfterPayment();
+        _showPaymentSuccess();
       }
     } on Object {
       // Payment history is a recovery aid. The user can still create or
@@ -302,7 +377,14 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
   }
 
   Future<void> _createPayment(Booking booking) async {
-    if (_isSubmitting || !_canPay(booking)) return;
+    final paidTotalState = ref.read(bookingPaidTotalProvider(booking.id));
+    if (_isSubmitting ||
+        paidTotalState.isLoading ||
+        paidTotalState.hasError ||
+        !paidTotalState.hasValue ||
+        !_canPay(booking, paidTotalState.value!)) {
+      return;
+    }
     setState(() => _isSubmitting = true);
     try {
       var intent = await ref
@@ -318,23 +400,8 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
       if (!mounted) return;
       setState(() => _intent = intent);
       if (intent.status == 'paid') {
-        await ref
-            .read(customerBookingsControllerProvider.notifier)
-            .loadBookings();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Thanh toán thành công! Đang chuyển đến lịch đặt...',
-              ),
-              backgroundColor: AppColors.emerald,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          Future.delayed(const Duration(milliseconds: 600), () {
-            if (mounted) context.go('/customer_home/bookings');
-          });
-        }
+        await _refreshBookingAfterPayment();
+        _showPaymentSuccess();
       }
     } catch (error) {
       if (mounted) {
@@ -349,7 +416,7 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
     }
   }
 
-  Future<void> _refreshPayment() async {
+  Future<void> _refreshPayment({bool showPendingStatus = true}) async {
     final current = _intent;
     if (current == null || _isRefreshing) return;
     setState(() => _isRefreshing = true);
@@ -361,24 +428,9 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
       if (!mounted) return;
       setState(() => _intent = updated);
       if (updated.status == 'paid') {
-        await ref
-            .read(customerBookingsControllerProvider.notifier)
-            .loadBookings();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Thanh toán thành công! Đang chuyển đến lịch đặt...',
-              ),
-              backgroundColor: AppColors.emerald,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          Future.delayed(const Duration(milliseconds: 600), () {
-            if (mounted) context.go('/customer_home/bookings');
-          });
-        }
-      } else {
+        await _refreshBookingAfterPayment();
+        _showPaymentSuccess();
+      } else if (showPendingStatus) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -401,6 +453,50 @@ class _BookingPaymentScreenState extends ConsumerState<_BookingPaymentScreen> {
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
     }
+  }
+
+  Future<void> _refreshBookingAfterPayment() async {
+    try {
+      await ref
+          .read(customerBookingsControllerProvider.notifier)
+          .loadBookings();
+    } on Object {
+      // The settled payment history is authoritative for the success message;
+      // a separate booking refresh failure should not hide that confirmation.
+    }
+    if (!mounted) return;
+    ref.invalidate(bookingPaidTotalProvider(widget.bookingId));
+    ref.invalidate(bookingGalleryProvider(widget.bookingId));
+  }
+
+  Future<void> _handlePaymentConfirmed() async {
+    if (!mounted || _successHandled || _successRefreshInProgress) return;
+    _successRefreshInProgress = true;
+    try {
+      await _refreshBookingAfterPayment();
+    } finally {
+      _successRefreshInProgress = false;
+    }
+    _showPaymentSuccess();
+  }
+
+  void _showPaymentSuccess() {
+    if (!mounted || _successHandled) return;
+    _successHandled = true;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Thanh toán thành công! Backend đã xác nhận giao dịch.',
+          ),
+          backgroundColor: AppColors.emerald,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) context.go('/customer_home/bookings');
+    });
   }
 
   Future<PaymentIntent> _loadCheckoutDetails(PaymentIntent intent) async {

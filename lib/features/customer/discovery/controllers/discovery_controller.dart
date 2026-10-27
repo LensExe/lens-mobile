@@ -49,7 +49,9 @@ class DiscoveryState {
     int count = 0;
     if (criteria.city != null && criteria.city != 'Tất cả') count++;
     if (criteria.minRating != null) count++;
-    if (criteria.style != null && criteria.style != 'Tất cả') count++;
+    if (criteria.styles.isNotEmpty) count++;
+    if (criteria.hasNarrowedPriceRange) count++;
+    if (criteria.experienceBucket != null) count++;
     return count;
   }
 }
@@ -79,11 +81,21 @@ class DiscoveryController extends Notifier<DiscoveryState> {
         topRated:
             state.criteria.searchQuery?.trim().isNotEmpty != true &&
             state.criteria.city?.trim().isNotEmpty != true &&
-            state.criteria.style?.trim().isNotEmpty != true &&
-            state.criteria.minRating == null,
+            state.criteria.styles.isEmpty &&
+            state.criteria.minRating == null &&
+            !state.criteria.hasNarrowedPriceRange &&
+            state.criteria.experienceBucket == null &&
+            state.criteria.sort == 'featured',
       );
 
       if (request != _requestNumber) return;
+      final pageCount = page.total == 0 ? 1 : (page.total + 8) ~/ 9;
+      final validPage = state.currentPage.clamp(1, pageCount).toInt();
+      if (validPage != state.currentPage) {
+        state = state.copyWith(currentPage: validPage);
+        _fetchCurrentPage();
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         photographers: page.items,
@@ -137,11 +149,31 @@ class DiscoveryController extends Notifier<DiscoveryState> {
 
   void applyQuery(Uri uri) {
     final query = uri.queryParameters;
+    final minPrice = double.tryParse(query['priceMin'] ?? '');
+    final maxPrice = double.tryParse(query['priceMax'] ?? '');
+    final normalizedMinPrice = (minPrice ?? FilterCriteria.defaultPriceMin)
+        .clamp(FilterCriteria.defaultPriceMin, FilterCriteria.defaultPriceMax)
+        .toDouble();
+    final normalizedMaxPrice = (maxPrice ?? FilterCriteria.defaultPriceMax)
+        .clamp(FilterCriteria.defaultPriceMin, FilterCriteria.defaultPriceMax)
+        .toDouble();
+    final hasValidPriceRange = normalizedMinPrice <= normalizedMaxPrice;
     final criteria = FilterCriteria(
       searchQuery: query['q'],
       city: query['city'],
-      style: query['style'],
+      styles: (query['styles'] ?? query['style'] ?? '')
+          .split(',')
+          .where((style) => style.trim().isNotEmpty)
+          .toList(),
       minRating: double.tryParse(query['rating'] ?? ''),
+      priceMin: hasValidPriceRange
+          ? normalizedMinPrice
+          : FilterCriteria.defaultPriceMin,
+      priceMax: hasValidPriceRange
+          ? normalizedMaxPrice
+          : FilterCriteria.defaultPriceMax,
+      experienceBucket: _validExperienceBucket(query['exp']),
+      sort: _validSort(query['sort']),
     );
     state = state.copyWith(
       criteria: criteria,
@@ -152,6 +184,14 @@ class DiscoveryController extends Notifier<DiscoveryState> {
 
   void retry() => _fetchCurrentPage();
 }
+
+String? _validExperienceBucket(String? value) =>
+    const {'lt1', '1-3', '3-5', '5+'}.contains(value) ? value : null;
+
+String _validSort(String? value) =>
+    const {'featured', 'rating', 'price-asc', 'price-desc'}.contains(value)
+    ? value!
+    : 'featured';
 
 final discoveryControllerProvider =
     NotifierProvider<DiscoveryController, DiscoveryState>(() {

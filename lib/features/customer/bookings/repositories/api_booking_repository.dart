@@ -91,6 +91,44 @@ class ApiBookingRepository implements BookingRepository {
   }
 
   @override
+  Future<BookingCancellationPreview> getCancellationPreview(
+    String bookingId,
+  ) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        'bookings/$bookingId/cancellation-preview',
+      );
+      final data = _responseMap(response.data);
+      final responseBookingId = _requiredString(
+        data['booking_id'],
+        'booking_id',
+      );
+      if (responseBookingId != bookingId) {
+        throw const ApiException('Backend trả về ước tính cho booking khác.');
+      }
+      final amount = data['refundable_amount_vnd'];
+      if (amount is! num || amount < 0) {
+        throw const ApiException(
+          'Backend trả về số tiền hoàn dự kiến không hợp lệ.',
+        );
+      }
+      final adminReview = data['refund_requires_admin_review'];
+      if (adminReview is! bool) {
+        throw const ApiException(
+          'Backend trả về trạng thái duyệt hoàn tiền không hợp lệ.',
+        );
+      }
+      return BookingCancellationPreview(
+        bookingId: responseBookingId,
+        refundableAmountVnd: amount.toInt(),
+        refundRequiresAdminReview: adminReview,
+      );
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  @override
   Future<Booking> createBookingFromInput(BookingCreateInput input) async {
     try {
       final response = await _dio.post<dynamic>(
