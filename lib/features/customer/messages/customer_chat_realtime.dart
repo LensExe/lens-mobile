@@ -165,15 +165,17 @@ class CustomerChatRealtimeClient with WidgetsBindingObserver {
   void _onNotificationEvent(dynamic value) {
     if (_disposed) return;
     ref.invalidate(notificationInboxProvider);
-    if (value is! Map || _string(value['type']) != 'payment_success') return;
+    if (value is! Map) return;
+    final type = _string(value['type']);
+    if (type != 'payment_success' && type != 'gallery_ready') return;
 
-    unawaited(
-      ref.read(customerBookingsControllerProvider.notifier).loadBookings(),
-    );
     final data = value['data'];
     if (data is! Map) return;
     final bookingId = _string(data['booking_id']);
     if (bookingId.isEmpty) return;
+    unawaited(
+      ref.read(customerBookingsControllerProvider.notifier).loadBookings(),
+    );
     ref.invalidate(bookingPaidTotalProvider(bookingId));
     ref.invalidate(bookingGalleryProvider(bookingId));
   }

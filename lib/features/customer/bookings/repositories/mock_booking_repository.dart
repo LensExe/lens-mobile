@@ -240,6 +240,12 @@ class MockBookingRepository implements BookingRepository {
   }
 
   @override
+  Future<BookingCancellationPreview> getCancellationPreview(String bookingId) =>
+      Future<BookingCancellationPreview>.error(
+        StateError('Demo repository không ước tính khoản hoàn tiền.'),
+      );
+
+  @override
   Future<void> updateBookingStatus(
     String bookingId,
     BookingStatus newStatus,

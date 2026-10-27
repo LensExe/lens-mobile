@@ -159,7 +159,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
                   const SizedBox(height: 8),
                   PrimaryButton(
                     text:
-                        'Thanh toán phần còn lại · ${AppTypography.formatCurrency(booking.remainingAmount)}',
+                        'Thanh toán phần còn lại · ${AppTypography.formatCurrency(booking.price - paidTotal)}',
                     height: 48,
                     onPressed: () => context.push(
                       '/customer_home/bookings/${widget.bookingId}/pay',

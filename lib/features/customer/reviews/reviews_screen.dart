@@ -29,7 +29,27 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
   Widget build(BuildContext context) {
     final bookingsState = ref.watch(customerBookingsControllerProvider);
     final reviewsState = ref.watch(customerReviewsProvider);
-    final reviews = reviewsState.value ?? [];
+    final reviews = (reviewsState.value ?? [])
+        .map((review) {
+          Booking? booking;
+          for (final item in bookingsState.allBookings) {
+            if (item.id == review.bookingId) {
+              booking = item;
+              break;
+            }
+          }
+          if (booking == null) return review;
+          return review.copyWith(
+            photographerName: booking.photographerName.isEmpty
+                ? review.photographerName
+                : booking.photographerName,
+            photographerAvatar:
+                booking.photographerAvatar ?? review.photographerAvatar,
+            style: booking.style.isEmpty ? review.style : booking.style,
+            date: booking.date.isEmpty ? review.date : booking.date,
+          );
+        })
+        .toList(growable: false);
 
     // Backend permits review creation only after the booking is completed.
     final reviewedBookingIds = reviews.map((r) => r.bookingId).toSet();
@@ -78,9 +98,13 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
       body: RefreshIndicator(
         color: AppColors.ember,
         onRefresh: () async {
-          await ref
-              .read(customerBookingsControllerProvider.notifier)
-              .loadBookings();
+          ref.invalidate(customerReviewsProvider);
+          await Future.wait([
+            ref
+                .read(customerBookingsControllerProvider.notifier)
+                .loadBookings(),
+            ref.read(customerReviewsProvider.future),
+          ]);
         },
         child: ListView(
           physics: const BouncingScrollPhysics(),
@@ -122,7 +146,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Chỉ booking ở trạng thái completed mới đủ điều kiện. Backend yêu cầu chấm điểm tổng thể, đúng giờ và thái độ. API hiện chưa có lịch sử review riêng của khách.',
+                      'Chỉ booking ở trạng thái completed mới đủ điều kiện. Backend lưu đánh giá tổng thể, đúng giờ và thái độ để đồng bộ lịch sử trên các thiết bị.',
                       style: AppTypography.bodySm(
                         fontSize: 12,
                         color: AppColors.steel,
@@ -141,6 +165,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
                     const Text('Không thể tải đánh giá. Vui lòng thử lại.'),
                     TextButton(
                       onPressed: () {
+                        ref.invalidate(customerReviewsProvider);
                         ref
                             .read(customerBookingsControllerProvider.notifier)
                             .loadBookings();
@@ -179,8 +204,8 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
             ] else ...[
               if (reviews.isEmpty)
                 const _ReviewEmpty(
-                  title: 'Chưa gửi đánh giá trong phiên này',
-                  message: 'Backend chưa cung cấp endpoint để tải lịch sử đánh giá của khách.',
+                  title: 'Bạn chưa có đánh giá đã gửi',
+                  message: 'Những đánh giá đã được Backend lưu sẽ xuất hiện tại đây.',
                 )
               else
                 ...reviews.map(

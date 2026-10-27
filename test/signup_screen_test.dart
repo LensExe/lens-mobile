@@ -18,7 +18,8 @@ class _MockAuthRepository implements AuthRepository {
     required String email,
     required String password,
     required String role,
-  })? onSignup;
+  })?
+  onSignup;
 
   @override
   Future<User> login({required String email, required String password}) async {
@@ -40,18 +41,8 @@ class _MockAuthRepository implements AuthRepository {
     if (errorToThrow != null) {
       throw errorToThrow!;
     }
-    onSignup?.call(
-      name: name,
-      email: email,
-      password: password,
-      role: role,
-    );
-    return User(
-      id: 'customer-new-1',
-      name: name,
-      email: email,
-      role: role,
-    );
+    onSignup?.call(name: name, email: email, password: password, role: role);
+    return User(id: 'customer-new-1', name: name, email: email, role: role);
   }
 
   @override
@@ -64,6 +55,8 @@ class _MockAuthRepository implements AuthRepository {
     required String city,
     required String address,
     bool? saveAsDefault,
+    String? gender,
+    String? dateOfBirth,
   }) async {
     throw UnimplementedError();
   }
@@ -99,20 +92,15 @@ Widget _createTestApp(AuthRepository repository) {
       ),
       GoRoute(
         path: '/customer_home/overview',
-        builder: (context, state) => const Scaffold(
-          body: Text('Overview Screen'),
-        ),
+        builder: (context, state) =>
+            const Scaffold(body: Text('Overview Screen')),
       ),
     ],
   );
 
   return ProviderScope(
-    overrides: [
-      authRepositoryProvider.overrideWithValue(repository),
-    ],
-    child: MaterialApp.router(
-      routerConfig: router,
-    ),
+    overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    child: MaterialApp.router(routerConfig: router),
   );
 }
 
@@ -150,34 +138,29 @@ void main() {
       String? submittedRole;
 
       final repo = _MockAuthRepository(
-        onSignup: ({
-          required String name,
-          required String email,
-          required String password,
-          required String role,
-        }) {
-          submittedName = name;
-          submittedEmail = email;
-          submittedPassword = password;
-          submittedRole = role;
-        },
+        onSignup:
+            ({
+              required String name,
+              required String email,
+              required String password,
+              required String role,
+            }) {
+              submittedName = name;
+              submittedEmail = email;
+              submittedPassword = password;
+              submittedRole = role;
+            },
       );
 
       await tester.pumpWidget(_createTestApp(repo));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'Nguyễn Văn A',
-      );
+      await tester.enterText(find.byType(TextFormField).at(0), 'Nguyễn Văn A');
       await tester.enterText(
         find.byType(TextFormField).at(1),
         'nguyenvana@example.com',
       );
-      await tester.enterText(
-        find.byType(TextFormField).at(2),
-        'Password123!',
-      );
+      await tester.enterText(find.byType(TextFormField).at(2), 'Password123!');
 
       await tester.tap(find.widgetWithText(PrimaryButton, 'Tạo tài khoản'));
       await tester.pump();
@@ -212,18 +195,12 @@ void main() {
       await tester.pumpWidget(_createTestApp(repo));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'Đã Tồn Tại',
-      );
+      await tester.enterText(find.byType(TextFormField).at(0), 'Đã Tồn Tại');
       await tester.enterText(
         find.byType(TextFormField).at(1),
         'existing@example.com',
       );
-      await tester.enterText(
-        find.byType(TextFormField).at(2),
-        'Password123!',
-      );
+      await tester.enterText(find.byType(TextFormField).at(2), 'Password123!');
 
       await tester.tap(find.widgetWithText(PrimaryButton, 'Tạo tài khoản'));
       await tester.pump();
@@ -256,18 +233,12 @@ void main() {
       await tester.pumpWidget(_createTestApp(repo));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'Trần B',
-      );
+      await tester.enterText(find.byType(TextFormField).at(0), 'Trần B');
       await tester.enterText(
         find.byType(TextFormField).at(1),
         'tranb@example.com',
       );
-      await tester.enterText(
-        find.byType(TextFormField).at(2),
-        'Password123!',
-      );
+      await tester.enterText(find.byType(TextFormField).at(2), 'Password123!');
 
       await tester.tap(find.widgetWithText(PrimaryButton, 'Tạo tài khoản'));
       await tester.pump();
@@ -300,18 +271,12 @@ void main() {
       await tester.pumpWidget(_createTestApp(repo));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextFormField).at(0),
-        'Error User',
-      );
+      await tester.enterText(find.byType(TextFormField).at(0), 'Error User');
       await tester.enterText(
         find.byType(TextFormField).at(1),
         'error@example.com',
       );
-      await tester.enterText(
-        find.byType(TextFormField).at(2),
-        'Password123!',
-      );
+      await tester.enterText(find.byType(TextFormField).at(2), 'Password123!');
 
       await tester.tap(find.widgetWithText(PrimaryButton, 'Tạo tài khoản'));
       await tester.pump();
@@ -319,7 +284,9 @@ void main() {
       // Verify friendly SnackBar
       expect(find.byType(SnackBar), findsOneWidget);
       expect(
-        find.text('Không thể kết nối đến hệ thống máy chủ. Vui lòng thử lại sau.'),
+        find.text(
+          'Không thể kết nối đến hệ thống máy chủ. Vui lòng thử lại sau.',
+        ),
         findsOneWidget,
       );
 

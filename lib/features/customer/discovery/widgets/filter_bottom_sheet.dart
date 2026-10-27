@@ -7,7 +7,8 @@ import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/widgets/primary_button.dart';
 import '../models/filter_criteria.dart';
 
-/// Search filters currently supported by GET /photographers.
+/// Customer discovery filters. Some criteria are applied locally because the
+/// photographer list endpoint does not expose dedicated query parameters.
 class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({
     super.key,
@@ -23,15 +24,17 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  static const _styles = [
+  static const _styleOptions = [
     'Chân dung',
     'Cưới',
-    'Thời trang',
     'Sự kiện',
+    'Thời trang',
+    'Sản phẩm',
     'Gia đình',
-    'Ngoại cảnh & Biển',
-    'Hàn Quốc',
-    'Vintage & Phim',
+    'Du lịch',
+    'Ẩm thực',
+    'Kiến trúc',
+    'Đường phố',
   ];
   static const _cities = [
     'Hà Nội',
@@ -41,9 +44,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     'Cần Thơ',
     'Hải Phòng',
   ];
-  late String? _style = widget.initialCriteria.style;
+  late final Set<String> _selectedStyles = {...widget.initialCriteria.styles};
   late String? _city = widget.initialCriteria.city;
   late double? _minRating = widget.initialCriteria.minRating;
+  late RangeValues _priceRange = RangeValues(
+    widget.initialCriteria.priceMin,
+    widget.initialCriteria.priceMax,
+  );
+  late String? _experienceBucket = widget.initialCriteria.experienceBucket;
 
   void _apply() {
     widget.onApply(
@@ -51,7 +59,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         city: _city,
         minRating: _minRating,
         searchQuery: widget.initialCriteria.searchQuery,
-        style: _style,
+        styles: _selectedStyles.toList(),
+        priceMin: _priceRange.start,
+        priceMax: _priceRange.end,
+        experienceBucket: _experienceBucket,
+        sort: widget.initialCriteria.sort,
       ),
     );
     Navigator.of(context).pop();
@@ -82,6 +94,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     style: AppTypography.headlineSm(fontSize: 18),
                   ),
                 ),
+                if (_hasActiveFilters)
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _selectedStyles.clear();
+                      _city = null;
+                      _minRating = null;
+                      _priceRange = const RangeValues(
+                        FilterCriteria.defaultPriceMin,
+                        FilterCriteria.defaultPriceMax,
+                      );
+                      _experienceBucket = null;
+                    }),
+                    child: const Text('Xoá lọc'),
+                  ),
                 IconButton(
                   tooltip: 'Đóng',
                   onPressed: () => Navigator.of(context).pop(),
@@ -96,22 +122,27 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               controller: controller,
               padding: const EdgeInsets.all(20),
               children: [
-                Text('Phong cách chụp', style: AppTypography.titleMd(fontSize: 15)),
+                Text(
+                  'Phong cách chụp',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _chip(
-                      'Tất cả',
-                      _style == null,
-                      () => setState(() => _style = null),
-                    ),
-                    for (final style in _styles)
-                      _chip(
+                    _chip('Tất cả', _selectedStyles.isEmpty, () {
+                      setState(_selectedStyles.clear);
+                    }),
+                    for (final style in _styleOptions)
+                      _multiChip(
                         style,
-                        _style == style,
-                        () => setState(() => _style = style),
+                        _selectedStyles.contains(style),
+                        () => setState(() {
+                          if (!_selectedStyles.add(style)) {
+                            _selectedStyles.remove(style);
+                          }
+                        }),
                       ),
                   ],
                 ),
@@ -150,20 +181,75 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       () => setState(() => _minRating = null),
                     ),
                     _chip(
-                      '4.0★ trở lên',
-                      _minRating == 4.0,
-                      () => setState(() => _minRating = 4.0),
-                    ),
-                    _chip(
                       '4.5★ trở lên',
                       _minRating == 4.5,
                       () => setState(() => _minRating = 4.5),
+                    ),
+                    _chip(
+                      '4.8★ trở lên',
+                      _minRating == 4.8,
+                      () => setState(() => _minRating = 4.8),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Kết quả hiển thị được cập nhật theo phong cách, khu vực và đánh giá.',
+                  'Mức giá / buổi',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
+                const SizedBox(height: 5),
+                RangeSlider(
+                  min: FilterCriteria.defaultPriceMin,
+                  max: FilterCriteria.defaultPriceMax,
+                  divisions: 118,
+                  values: _priceRange,
+                  labels: RangeLabels(
+                    _formatPrice(_priceRange.start),
+                    _priceRange.end >= FilterCriteria.defaultPriceMax
+                        ? '${_formatPrice(FilterCriteria.defaultPriceMax)}+'
+                        : _formatPrice(_priceRange.end),
+                  ),
+                  onChanged: (value) => setState(() => _priceRange = value),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatPrice(_priceRange.start),
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                    Text(
+                      _priceRange.end >= FilterCriteria.defaultPriceMax
+                          ? '${_formatPrice(FilterCriteria.defaultPriceMax)}+'
+                          : _formatPrice(_priceRange.end),
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text('Kinh nghiệm', style: AppTypography.titleMd(fontSize: 15)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip('Tất cả', _experienceBucket == null, () {
+                      setState(() => _experienceBucket = null);
+                    }),
+                    for (final option in _experienceOptions)
+                      _chip(
+                        option.$2,
+                        _experienceBucket == option.$1,
+                        () => setState(
+                          () => _experienceBucket =
+                              _experienceBucket == option.$1 ? null : option.$1,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Kết quả được lọc theo phong cách, khu vực, ngân sách, đánh giá và kinh nghiệm.',
                   style: AppTypography.bodySm(color: AppColors.steel),
                 ),
               ],
@@ -195,4 +281,46 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     side: BorderSide(color: selected ? AppColors.obsidian : AppColors.pebble),
     backgroundColor: AppColors.snow,
   );
+
+  Widget _multiChip(String label, bool selected, VoidCallback onTap) =>
+      FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+        selectedColor: AppColors.obsidian,
+        labelStyle: TextStyle(
+          color: selected ? AppColors.snow : AppColors.obsidian,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        side: BorderSide(
+          color: selected ? AppColors.obsidian : AppColors.pebble,
+        ),
+        backgroundColor: AppColors.snow,
+        checkmarkColor: AppColors.snow,
+      );
+
+  bool get _hasActiveFilters =>
+      _selectedStyles.isNotEmpty ||
+      _city != null ||
+      _minRating != null ||
+      _experienceBucket != null ||
+      _priceRange.start > FilterCriteria.defaultPriceMin ||
+      _priceRange.end < FilterCriteria.defaultPriceMax;
+}
+
+const _experienceOptions = [
+  ('lt1', 'Dưới 1 năm'),
+  ('1-3', '1 – 3 năm'),
+  ('3-5', '3 – 5 năm'),
+  ('5+', 'Trên 5 năm'),
+];
+
+String _formatPrice(double value) {
+  final digits = value.round().toString();
+  final grouped = digits.replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (match) => '.',
+  );
+  return '$grouped ₫';
 }

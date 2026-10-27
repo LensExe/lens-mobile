@@ -4,7 +4,8 @@ import 'photographer_repository.dart';
 import '../../../../core/utils/vietnamese_text.dart';
 
 class MockPhotographerRepository implements PhotographerRepository {
-  // Khi có REST API / GraphQL, chỉ cần tạo file ApiPhotographerRepository.dart implements PhotographerRepository và inject vào UI
+  // Demo repository for tests and previews; production providers inject
+  // ApiPhotographerRepository.
 
   final List<PhotographerModel> _mockData = [
     PhotographerModel(
@@ -312,15 +313,54 @@ class MockPhotographerRepository implements PhotographerRepository {
             .toList();
       }
 
-      // Filter by Style
-      if (criteria.style != null && criteria.style != 'Tất cả') {
-        final target = foldVietnamese(criteria.style!.toLowerCase());
+      // Filter by one or more selected styles using Web's OR semantics.
+      if (criteria.styles.isNotEmpty) {
+        final targets = criteria.styles
+            .map((style) => foldVietnamese(style.toLowerCase()))
+            .toSet();
         filteredList = filteredList
-            .where((p) => p.styles.any(
-                  (s) => foldVietnamese(s.toLowerCase()).contains(target),
-                ))
+            .where(
+              (p) => p.styles.any(
+                (style) =>
+                    targets.contains(foldVietnamese(style.toLowerCase())),
+              ),
+            )
             .toList();
       }
+
+      if (criteria.hasNarrowedPriceRange) {
+        filteredList = filteredList
+            .where(
+              (p) =>
+                  p.pricePerSession >= criteria.priceMin &&
+                  p.pricePerSession <= criteria.priceMax,
+            )
+            .toList();
+      }
+
+      if (criteria.experienceBucket != null) {
+        final target = switch (criteria.experienceBucket) {
+          'lt1' => Experience.under1Year,
+          '1-3' => Experience.from1To3Years,
+          '3-5' => Experience.from3To5Years,
+          '5+' => Experience.over5Years,
+          _ => null,
+        };
+        if (target != null) {
+          filteredList = filteredList
+              .where((photographer) => photographer.experience == target)
+              .toList();
+        }
+      }
+
+      filteredList.sort(
+        (a, b) => switch (criteria.sort) {
+          'rating' => b.rating.compareTo(a.rating),
+          'price-asc' => a.pricePerSession.compareTo(b.pricePerSession),
+          'price-desc' => b.pricePerSession.compareTo(a.pricePerSession),
+          _ => (b.isFeatured ? 1 : 0).compareTo(a.isFeatured ? 1 : 0),
+        },
+      );
     }
 
     return filteredList;

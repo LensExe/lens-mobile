@@ -56,6 +56,8 @@ void main() {
     expect(restoredStore.accessToken, 'access-1');
     expect(restoredStore.refreshToken, 'refresh-1');
     expect(restoredStore.session?.user.name, 'Khách Lens');
+    expect(restoredStore.session?.user.gender, 'female');
+    expect(restoredStore.session?.user.dateOfBirth, '1990-01-02');
 
     await restoredStore.clear();
     expect(AuthSessionStore(storage: storage).session, isNull);
@@ -79,6 +81,8 @@ void main() {
             'fullname': 'Nguyễn An',
             'email': 'an@example.test',
             'phone_number': '0901234567',
+            'gender': 'female',
+            'dob': '1990-01-02',
             'avatar_url': 'https://cdn.example.test/an.jpg',
           });
         }
@@ -101,6 +105,8 @@ void main() {
       expect(user.name, 'Nguyễn An');
       expect(user.email, 'an@example.test');
       expect(user.phone, '0901234567');
+      expect(user.gender, 'female');
+      expect(user.dateOfBirth, '1990-01-02');
       expect(user.avatarUrl, 'https://cdn.example.test/an.jpg');
       expect(user.city, 'Đà Nẵng');
       expect(store.session?.user.city, 'Đà Nẵng');
@@ -119,6 +125,8 @@ void main() {
         expect(request.data, {
           'fullname': 'Nguyễn An',
           'phone_number': '0901234567',
+          'gender': 'male',
+          'dob': '1991-02-03',
         });
       } else if (request.uri.path == '/v1/customers/me') {
         expect(request.data, {'location': 'Hà Nội'});
@@ -136,11 +144,15 @@ void main() {
       phone: '0901234567',
       city: 'Hà Nội',
       address: '',
+      gender: 'male',
+      dateOfBirth: '1991-02-03',
     );
 
     expect(user.name, 'Nguyễn An');
     expect(user.phone, '0901234567');
     expect(user.city, 'Hà Nội');
+    expect(user.gender, 'male');
+    expect(user.dateOfBirth, '1991-02-03');
     expect(requests.map((request) => request.uri.path), [
       '/v1/users/me',
       '/v1/customers/me',
@@ -154,26 +166,36 @@ void main() {
       requests.add(request);
       if (request.uri.path == '/v1/wallet') {
         return _response(200, {
-          'id': 'wallet-1',
-          'balance': '125000.00',
-          'frozen_balance': 35000,
+          'success': true,
+          'statusCode': 200,
+          'data': {
+            'id': 'wallet-1',
+            'balance': '125000.00',
+            'frozen_balance': 35000,
+          },
+          'timestamp': '2026-10-10T01:00:00.000Z',
         });
       }
       if (request.uri.path == '/v1/wallet/ledger') {
         return _response(200, {
-          'items': [
-            {
-              'id': 'ledger-1',
-              'entry_type': 'booking_escrow_hold',
-              'available_delta': 0,
-              'frozen_delta': 35000,
-              'description': 'Giữ tiền booking',
-              'created_at': '2026-10-10T01:00:00.000Z',
-            },
-          ],
-          'total': 1,
-          'limit': 100,
-          'offset': 0,
+          'success': true,
+          'statusCode': 200,
+          'data': {
+            'items': [
+              {
+                'id': 'ledger-1',
+                'entry_type': 'booking_escrow_hold',
+                'available_delta': 0,
+                'frozen_delta': 35000,
+                'description': 'Giữ tiền booking',
+                'created_at': '2026-10-10T01:00:00.000Z',
+              },
+            ],
+            'total': 1,
+            'limit': 100,
+            'offset': 0,
+          },
+          'timestamp': '2026-10-10T01:00:00.000Z',
         });
       }
       throw StateError('Unexpected request ${request.uri}');
@@ -191,6 +213,45 @@ void main() {
       '/v1/wallet/ledger',
     ]);
     expect(requests.last.queryParameters, {'limit': 100, 'offset': 0});
+  });
+
+  test('requests a wallet withdrawal with Backend validation fields', () async {
+    RequestOptions? request;
+    final dio = Dio(BaseOptions(baseUrl: _baseUrl));
+    dio.httpClientAdapter = _Adapter((options) async {
+      request = options;
+      return _response(200, {
+        'success': true,
+        'statusCode': 200,
+        'data': {'id': 'withdrawal-1', 'amount': 50000, 'status': 'requested'},
+        'timestamp': '2026-10-10T01:00:00.000Z',
+      });
+    });
+
+    final result = await ApiCustomerWalletRepository(dio).requestWithdrawal(
+      amount: 50000,
+      reason: '  Cần rút tiền  ',
+      bankCode: ' 970422 ',
+      accountNumber: ' 0123456789 ',
+      accountName: ' Nguyễn An ',
+      idempotencyKey: 'withdrawal-attempt-1',
+    );
+
+    expect(request?.method, 'POST');
+    expect(request?.uri.path, '/v1/wallet/withdrawals');
+    expect(request?.data, {
+      'amount': 50000,
+      'reason': 'Cần rút tiền',
+      'payout_destination': {
+        'bank_code': '970422',
+        'account_number': '0123456789',
+        'account_name': 'Nguyễn An',
+      },
+      'idempotency_key': 'withdrawal-attempt-1',
+    });
+    expect(result.id, 'withdrawal-1');
+    expect(result.amount, 50000);
+    expect(result.status, 'requested');
   });
 
   test('creates a review with the exact Backend request fields', () async {
@@ -261,11 +322,16 @@ void main() {
         refreshCalls++;
         await Future<void>.delayed(const Duration(milliseconds: 20));
         return _response(200, {
-          'access_token': 'access-2',
-          'refresh_token': 'refresh-2',
-          'expires_in': 1200,
-          'scope': 'api',
-          'token_type': 'Bearer',
+          'success': true,
+          'statusCode': 200,
+          'data': {
+            'access_token': 'access-2',
+            'refresh_token': 'refresh-2',
+            'expires_in': 1200,
+            'scope': 'api',
+            'token_type': 'Bearer',
+          },
+          'timestamp': '2026-10-10T01:00:00.000Z',
         });
       });
       dio.interceptors.add(
@@ -316,9 +382,14 @@ void main() {
         refreshCalls++;
         await Future<void>.delayed(const Duration(milliseconds: 10));
         return _response(200, {
-          'access_token': 'access-2',
-          'refresh_token': 'refresh-2',
-          'expires_in': 1200,
+          'success': true,
+          'statusCode': 200,
+          'data': {
+            'access_token': 'access-2',
+            'refresh_token': 'refresh-2',
+            'expires_in': 1200,
+          },
+          'timestamp': '2026-10-10T01:00:00.000Z',
         });
       });
       dio.interceptors.add(
@@ -356,9 +427,14 @@ void main() {
     refreshDio.httpClientAdapter = _Adapter((request) async {
       refreshCalls++;
       return _response(200, {
-        'access_token': 'access-2',
-        'refresh_token': 'refresh-2',
-        'expires_in': 1200,
+        'success': true,
+        'statusCode': 200,
+        'data': {
+          'access_token': 'access-2',
+          'refresh_token': 'refresh-2',
+          'expires_in': 1200,
+        },
+        'timestamp': '2026-10-10T01:00:00.000Z',
       });
     });
     dio.interceptors.add(
@@ -511,6 +587,8 @@ AuthSessionData _customerSession() => AuthSessionData.fromApiJson({
     'email': 'customer@example.test',
     'phone_number': '0900000000',
     'role': 'customer',
+    'gender': 'female',
+    'dob': '1990-01-02',
   },
 });
 

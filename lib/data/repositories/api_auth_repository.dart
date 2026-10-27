@@ -4,12 +4,14 @@ import '../../core/network/api_exception.dart';
 import '../../core/network/auth_session_store.dart';
 import '../../domain/models/models.dart';
 import 'auth_repository.dart';
+import 'api_media_upload_repository.dart';
 
 class ApiAuthRepository implements AuthRepository {
-  ApiAuthRepository(this._dio, this._sessionStore);
+  ApiAuthRepository(this._dio, this._sessionStore, {this.uploadDio});
 
   final Dio _dio;
   final AuthSessionStore _sessionStore;
+  final Dio? uploadDio;
 
   @override
   Future<User> login({required String email, required String password}) =>
@@ -45,7 +47,7 @@ class ApiAuthRepository implements AuthRepository {
   }) async {
     try {
       final response = await _dio.post<dynamic>(path, data: body);
-      final data = _asMap(response.data);
+      final data = _asMap(_unwrap(response.data));
       final session = AuthSessionData.fromApiJson(
         data,
         fallbackRole: fallbackRole,
@@ -116,6 +118,8 @@ class ApiAuthRepository implements AuthRepository {
         name: userJson['fullname']?.toString() ?? current.name,
         email: userJson['email']?.toString() ?? current.email,
         phone: userJson['phone_number']?.toString() ?? '',
+        gender: userJson['gender']?.toString() ?? current.gender,
+        dateOfBirth: userJson['dob']?.toString() ?? current.dateOfBirth,
         avatarUrl: userJson['avatar_url']?.toString() ?? '',
         city: customerJson['location']?.toString() ?? '',
       );
@@ -133,6 +137,8 @@ class ApiAuthRepository implements AuthRepository {
     required String city,
     required String address,
     bool? saveAsDefault,
+    String? gender,
+    String? dateOfBirth,
   }) async {
     final current = _sessionStore.session?.user;
     if (current == null) throw const ApiException('Vui lòng đăng nhập.');
@@ -146,6 +152,17 @@ class ApiAuthRepository implements AuthRepository {
         'Backend chưa có chức năng lưu địa chỉ mặc định.',
       );
     }
+    if (gender != null &&
+        gender.isNotEmpty &&
+        !const {'male', 'female', 'other'}.contains(gender)) {
+      throw const ApiException('Giới tính không được Backend hỗ trợ.');
+    }
+    if (dateOfBirth != null &&
+        dateOfBirth.isNotEmpty &&
+        (DateTime.tryParse(dateOfBirth) == null ||
+            !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateOfBirth))) {
+      throw const ApiException('Ngày sinh phải có định dạng YYYY-MM-DD.');
+    }
 
     final userBody = <String, String>{};
     if (name.trim().isNotEmpty && name.trim() != current.name) {
@@ -153,6 +170,14 @@ class ApiAuthRepository implements AuthRepository {
     }
     if (phone.trim().isNotEmpty && phone.trim() != current.phone) {
       userBody['phone_number'] = phone.trim();
+    }
+    if (gender != null && gender.isNotEmpty && gender != current.gender) {
+      userBody['gender'] = gender;
+    }
+    if (dateOfBirth != null &&
+        dateOfBirth.isNotEmpty &&
+        dateOfBirth != current.dateOfBirth) {
+      userBody['dob'] = dateOfBirth;
     }
     try {
       if (userBody.isNotEmpty) {
@@ -168,6 +193,10 @@ class ApiAuthRepository implements AuthRepository {
         name: name.trim().isEmpty ? current.name : name.trim(),
         phone: phone.trim().isEmpty ? current.phone : phone.trim(),
         city: city.trim().isEmpty ? current.city : city.trim(),
+        gender: gender == null || gender.isEmpty ? current.gender : gender,
+        dateOfBirth: dateOfBirth == null || dateOfBirth.isEmpty
+            ? current.dateOfBirth
+            : dateOfBirth,
       );
       await _sessionStore.updateUser(updated);
       return updated;
@@ -177,9 +206,22 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<User> updateAvatar(String localPath) async => throw const ApiException(
-    'Cập nhật avatar cần hoàn tất luồng upload media của Backend trước.',
-  );
+  Future<User> updateAvatar(String localPath) async {
+    final current = _sessionStore.session?.user;
+    if (current == null) throw const ApiException('Vui lòng đăng nhập.');
+    final avatarUrl = await ApiMediaUploadRepository(
+      _dio,
+      storageDio: uploadDio,
+    ).uploadPublicImage(localPath);
+    try {
+      await _dio.patch<dynamic>('users/me', data: {'avatar_url': avatarUrl});
+      final updated = current.copyWith(avatarUrl: avatarUrl);
+      await _sessionStore.updateUser(updated);
+      return updated;
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 
   @override
   Future<List<ActiveSession>> getActiveSessions() async =>
@@ -208,7 +250,23 @@ Map<String, dynamic> _asMap(Object? value) {
 Object? _unwrap(Object? value) {
   var result = value;
   while (result is Map && result.containsKey('data')) {
+    if (result['success'] == false) {
+      final message = result['message'];
+      throw ApiException(
+        message is String && message.trim().isNotEmpty
+            ? message.trim()
+            : 'Backend không xác thực yêu cầu đăng nhập.',
+      );
+    }
     result = result['data'];
+  }
+  if (result is Map && result['success'] == false) {
+    final message = result['message'];
+    throw ApiException(
+      message is String && message.trim().isNotEmpty
+          ? message.trim()
+          : 'Backend không xác thực yêu cầu đăng nhập.',
+    );
   }
   return result;
 }

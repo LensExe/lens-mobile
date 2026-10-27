@@ -4,7 +4,7 @@ import 'package:lens_app/features/customer/discovery/models/filter_criteria.dart
 import 'package:lens_app/features/customer/discovery/widgets/filter_bottom_sheet.dart';
 
 void main() {
-  testWidgets('applies only Backend-supported location and rating filters', (
+  testWidgets('applies multi-style, city, rating, and experience filters', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -44,12 +44,23 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-filter-sheet')));
     await tester.pumpAndSettle();
     expect(find.text('Bộ lọc tìm kiếm'), findsOneWidget);
-    await tester.tap(find.text('Hà Nội'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Áp dụng'));
+    await _tapVisible(tester, find.text('Chân dung').first);
+    await _tapVisible(tester, find.text('Cưới').first);
+    await _tapVisible(tester, find.text('Hà Nội'));
+    await _tapVisible(tester, find.text('4.8★ trở lên'));
+    await _tapVisible(tester, find.text('Trên 5 năm'));
+    await _tapVisible(tester, find.text('Áp dụng'));
     await tester.pumpAndSettle();
 
     expect(applied?.city, 'Hà Nội');
-    expect(applied?.minRating, isNull);
+    expect(applied?.styles, ['Chân dung', 'Cưới']);
+    expect(applied?.minRating, 4.8);
+    expect(applied?.experienceBucket, '5+');
   });
+}
+
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
 }

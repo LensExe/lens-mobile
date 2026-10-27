@@ -179,6 +179,7 @@ String _typeLabel(String type) => switch (type) {
   'welcome' => 'CHÀO MỪNG',
   'order_placed' => 'ĐẶT LỊCH',
   'payment_success' => 'THANH TOÁN',
+  'gallery_ready' => 'ẢNH BÀN GIAO',
   'promotion_started' => 'ƯU ĐÃI',
   _ => type.toUpperCase(),
 };

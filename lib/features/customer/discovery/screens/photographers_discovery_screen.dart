@@ -11,6 +11,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/lens_tab_app_bar.dart';
 import '../../../../providers/data_providers.dart';
 import '../controllers/discovery_controller.dart';
+import '../models/filter_criteria.dart';
 import '../models/photographer_model.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../widgets/photographer_feed_card.dart';
@@ -81,12 +82,24 @@ class _PhotographersDiscoveryScreenState
     if (criteria.city?.isNotEmpty == true && criteria.city != 'Tất cả') {
       params['city'] = criteria.city!;
     }
-    if (criteria.style?.isNotEmpty == true && criteria.style != 'Tất cả') {
-      params['style'] = criteria.style!;
+    if (criteria.styles.isNotEmpty) {
+      params['styles'] = criteria.styles.join(',');
     }
     if (criteria.minRating != null) {
       params['rating'] = criteria.minRating!.toString();
     }
+    if (criteria.hasNarrowedPriceRange) {
+      if (criteria.priceMin > FilterCriteria.defaultPriceMin) {
+        params['priceMin'] = criteria.priceMin.round().toString();
+      }
+      if (criteria.priceMax < FilterCriteria.defaultPriceMax) {
+        params['priceMax'] = criteria.priceMax.round().toString();
+      }
+    }
+    if (criteria.experienceBucket != null) {
+      params['exp'] = criteria.experienceBucket!;
+    }
+    if (criteria.sort != 'featured') params['sort'] = criteria.sort;
     if (state.currentPage > 1) params['page'] = state.currentPage.toString();
     final target = Uri(
       path: '/customer_home/discovery',
@@ -132,7 +145,6 @@ class _PhotographersDiscoveryScreenState
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            if (isGuest) SliverToBoxAdapter(child: _buildGuestPrompt(context)),
             SliverToBoxAdapter(child: _buildSearchAndFilters(state)),
             SliverToBoxAdapter(child: _buildResultsToolbar(state)),
             if (state.isLoading)
@@ -169,53 +181,6 @@ class _PhotographersDiscoveryScreenState
               if (state.totalCount > 9) _buildPagination(state),
             ],
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGuestPrompt(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppTokens.pageHorizontal,
-        8,
-        AppTokens.pageHorizontal,
-        0,
-      ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-        decoration: BoxDecoration(
-          color: AppColors.fog,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Đăng nhập để đặt lịch và trò chuyện với nhiếp ảnh gia.',
-              style: AppTypography.bodySm(color: AppColors.graphite),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => context.go('/login'),
-                  child: const Text('Đăng nhập'),
-                ),
-                const SizedBox(width: 4),
-                FilledButton.tonal(
-                  onPressed: () => context.go('/signup'),
-                  style: FilledButton.styleFrom(
-                    foregroundColor: AppColors.obsidian,
-                    backgroundColor: AppColors.pebble,
-                    padding: const EdgeInsets.symmetric(horizontal: 13),
-                  ),
-                  child: const Text('Đăng ký'),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -351,6 +316,7 @@ class _PhotographersDiscoveryScreenState
   }
 
   Widget _buildResultsToolbar(DiscoveryState state) {
+    final compactSort = MediaQuery.sizeOf(context).width < 380;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
@@ -372,6 +338,47 @@ class _PhotographersDiscoveryScreenState
           Text(
             'nhiếp ảnh gia',
             style: AppTypography.bodySm(color: AppColors.steel),
+          ),
+          const Spacer(),
+          PopupMenuButton<String>(
+            tooltip: 'Sắp xếp kết quả',
+            initialValue: state.criteria.sort,
+            onSelected: (sort) {
+              ref
+                  .read(discoveryControllerProvider.notifier)
+                  .updateFilters(state.criteria.copyWith(sort: sort));
+              _syncUrl();
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'featured', child: Text('Nổi bật')),
+              PopupMenuItem(value: 'rating', child: Text('Đánh giá cao')),
+              PopupMenuItem(value: 'price-asc', child: Text('Giá: thấp → cao')),
+              PopupMenuItem(
+                value: 'price-desc',
+                child: Text('Giá: cao → thấp'),
+              ),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.snow,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.pebble),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.arrowDownUp, size: 14),
+                  if (!compactSort) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      _sortLabel(state.criteria.sort),
+                      style: AppTypography.labelSm(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -535,6 +542,13 @@ class _PhotographersDiscoveryScreenState
     );
   }
 }
+
+String _sortLabel(String sort) => switch (sort) {
+  'rating' => 'Đánh giá cao',
+  'price-asc' => 'Giá thấp',
+  'price-desc' => 'Giá cao',
+  _ => 'Nổi bật',
+};
 
 class _PageButton extends StatelessWidget {
   final String label;
