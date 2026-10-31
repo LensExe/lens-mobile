@@ -16,6 +16,7 @@ import '../payments/payment_repository.dart';
 import 'widgets/booking_progress_stepper.dart';
 import 'widgets/booking_status_pill.dart';
 import 'widgets/cancel_booking_dialog.dart';
+import 'widgets/booking_report_panel.dart';
 
 class BookingDetailScreen extends ConsumerWidget {
   final String bookingId;
@@ -193,6 +194,8 @@ class BookingDetailScreen extends ConsumerWidget {
                 _EmbeddedGalleryPanel(booking: booking),
                 const SizedBox(height: 12),
               ],
+              BookingReportPanel(booking: booking),
+              const SizedBox(height: 12),
               _EscrowNotice(),
               const SizedBox(height: 12),
               _TimelineCard(booking: booking),
@@ -315,34 +318,6 @@ class _BookingSummary extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Số điện thoại liên hệ: 0912 345 678'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(9999),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: AppColors.fog,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.pebble.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      child: const Icon(
-                        LucideIcons.phone,
-                        color: AppColors.obsidian,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () => context.push(
                       '/customer_home/messages/${booking.photographerId}',

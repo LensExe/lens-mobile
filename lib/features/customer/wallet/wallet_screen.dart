@@ -11,6 +11,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../../../domain/models/customer_wallet_model.dart';
 import 'wallet_withdrawal_dialog.dart';
+import 'wallet_payout_destination_card.dart';
 import '../../../providers/data_providers.dart';
 
 class WalletScreen extends ConsumerWidget {
@@ -98,8 +99,10 @@ class WalletScreen extends ConsumerWidget {
         data: (wallet) => RefreshIndicator(
           color: AppColors.ember,
           onRefresh: () async {
-            final refreshed = ref.refresh(customerWalletProvider.future);
-            await refreshed;
+            await Future.wait([
+              ref.refresh(customerWalletProvider.future),
+              ref.refresh(customerPayoutDestinationProvider.future),
+            ]);
           },
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -126,9 +129,36 @@ class WalletScreen extends ConsumerWidget {
                     onPressed: wallet.availableBalance < 10000
                         ? null
                         : () async {
+                            CustomerPayoutDestination destination;
+                            try {
+                              destination = await ref.read(
+                                customerPayoutDestinationProvider.future,
+                              );
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    error is ApiException
+                                        ? error.message
+                                        : 'Không tải được tài khoản nhận tiền.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            if (!context.mounted) return;
+                            if (!destination.isConfigured) {
+                              await WalletPayoutDestinationDialog.show(
+                                context,
+                                current: destination,
+                              );
+                              return;
+                            }
                             final request = await WalletWithdrawalDialog.show(
                               context,
                               availableBalance: wallet.availableBalance,
+                              payoutDestination: destination,
                             );
                             if (!context.mounted || request == null) return;
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -163,6 +193,8 @@ class WalletScreen extends ConsumerWidget {
                 icon: LucideIcons.lockKeyhole,
                 color: AppColors.ember,
               ),
+              const SizedBox(height: 12),
+              const WalletPayoutDestinationCard(),
               const SizedBox(height: 22),
               Text(
                 'Lịch sử biến động ví',
@@ -312,6 +344,83 @@ class _LedgerRow extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (entry.bookingId != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(11),
+                    decoration: BoxDecoration(
+                      color: AppColors.fog,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.pebble),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.bookingPackageName ?? 'Booking liên quan',
+                          style: AppTypography.labelMd(
+                            fontSize: 12,
+                            color: AppColors.obsidian,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          [
+                            if (entry.bookingStatus != null)
+                              _bookingStatusLabel(entry.bookingStatus!),
+                            'Mã booking: ${entry.bookingId}',
+                          ].join(' · '),
+                          style: AppTypography.bodySm(
+                            fontSize: 10.5,
+                            color: AppColors.steel,
+                          ),
+                        ),
+                        if (entry.transactionCode != null ||
+                            entry.transactionStatus != null ||
+                            entry.paymentGateway != null) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            [
+                              if (entry.transactionCode != null)
+                                'GD ${entry.transactionCode}',
+                              if (entry.paymentGateway != null)
+                                entry.paymentGateway!,
+                              if (entry.transactionStatus != null)
+                                _transactionStatusLabel(
+                                  entry.transactionStatus!,
+                                ),
+                            ].join(' · '),
+                            style: AppTypography.bodySm(
+                              fontSize: 10.5,
+                              color: AppColors.steel,
+                            ),
+                          ),
+                        ],
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: () => context.push(
+                              '/customer_home/bookings/${entry.bookingId}',
+                            ),
+                            icon: const Icon(
+                              LucideIcons.arrowUpRight,
+                              size: 14,
+                            ),
+                            label: const Text('Mở booking'),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -324,6 +433,25 @@ class _LedgerRow extends StatelessWidget {
     final prefix = amount > 0 ? '+' : '';
     return '$prefix${AppTypography.formatCurrency(amount)} ₫';
   }
+
+  String _bookingStatusLabel(String status) => switch (status) {
+    'pending' => 'Chờ xác nhận',
+    'accepted' => 'Đã xác nhận',
+    'in_progress' => 'Đang thực hiện',
+    'shot' => 'Đã chụp',
+    'completed' => 'Hoàn thành',
+    'cancelled' => 'Đã huỷ',
+    'rejected' => 'Đã từ chối',
+    'expired' => 'Đã hết hạn',
+    _ => status,
+  };
+
+  String _transactionStatusLabel(String status) => switch (status) {
+    'paid' => 'Đã thanh toán',
+    'pending' => 'Đang xử lý',
+    'failed' => 'Thất bại',
+    _ => status,
+  };
 }
 
 BoxDecoration _cardDecoration() => BoxDecoration(

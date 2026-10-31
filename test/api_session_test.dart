@@ -189,6 +189,18 @@ void main() {
                 'frozen_delta': 35000,
                 'description': 'Giữ tiền booking',
                 'created_at': '2026-10-10T01:00:00.000Z',
+                'transaction': {
+                  'transaction_code': 'txn-booking-1',
+                  'status': 'paid',
+                  'payment_gateway': 'payos',
+                },
+                'booking': {
+                  'id': '123e4567-e89b-42d3-a456-426614174000',
+                  'status': 'accepted',
+                  'from': '2026-10-20T02:00:00.000Z',
+                  'to': '2026-10-20T04:00:00.000Z',
+                  'package_name': 'Gói chân dung',
+                },
               },
             ],
             'total': 1,
@@ -208,6 +220,13 @@ void main() {
     expect(wallet.transactions, hasLength(1));
     expect(wallet.transactions.single.availableDelta, 0);
     expect(wallet.transactions.single.frozenDelta, 35000);
+    expect(
+      wallet.transactions.single.bookingId,
+      '123e4567-e89b-42d3-a456-426614174000',
+    );
+    expect(wallet.transactions.single.transactionCode, 'txn-booking-1');
+    expect(wallet.transactions.single.paymentGateway, 'payos');
+    expect(wallet.transactions.single.bookingPackageName, 'Gói chân dung');
     expect(requests.map((request) => request.uri.path), [
       '/v1/wallet',
       '/v1/wallet/ledger',
@@ -215,43 +234,84 @@ void main() {
     expect(requests.last.queryParameters, {'limit': 100, 'offset': 0});
   });
 
-  test('requests a wallet withdrawal with Backend validation fields', () async {
-    RequestOptions? request;
+  test(
+    'requests a wallet withdrawal using the saved payout destination',
+    () async {
+      RequestOptions? request;
+      final dio = Dio(BaseOptions(baseUrl: _baseUrl));
+      dio.httpClientAdapter = _Adapter((options) async {
+        request = options;
+        return _response(200, {
+          'success': true,
+          'statusCode': 200,
+          'data': {
+            'id': 'withdrawal-1',
+            'amount': 50000,
+            'status': 'requested',
+          },
+          'timestamp': '2026-10-10T01:00:00.000Z',
+        });
+      });
+
+      final result = await ApiCustomerWalletRepository(dio).requestWithdrawal(
+        amount: 50000,
+        reason: '  Cần rút tiền  ',
+        idempotencyKey: 'withdrawal-attempt-1',
+      );
+
+      expect(request?.method, 'POST');
+      expect(request?.uri.path, '/v1/wallet/withdrawals');
+      expect(request?.data, {
+        'amount': 50000,
+        'reason': 'Cần rút tiền',
+        'idempotency_key': 'withdrawal-attempt-1',
+      });
+      expect(result.id, 'withdrawal-1');
+      expect(result.amount, 50000);
+      expect(result.status, 'requested');
+    },
+  );
+
+  test('loads and saves the masked wallet payout destination', () async {
+    final requests = <RequestOptions>[];
     final dio = Dio(BaseOptions(baseUrl: _baseUrl));
     dio.httpClientAdapter = _Adapter((options) async {
-      request = options;
+      requests.add(options);
       return _response(200, {
         'success': true,
         'statusCode': 200,
-        'data': {'id': 'withdrawal-1', 'amount': 50000, 'status': 'requested'},
+        'data': {
+          'is_configured': true,
+          'bank_code': '970422',
+          'account_name': 'Nguyễn An',
+          'account_number_masked': '••••6789',
+          'updated_at': '2026-10-10T01:00:00.000Z',
+        },
         'timestamp': '2026-10-10T01:00:00.000Z',
       });
     });
 
-    final result = await ApiCustomerWalletRepository(dio).requestWithdrawal(
-      amount: 50000,
-      reason: '  Cần rút tiền  ',
+    final repository = ApiCustomerWalletRepository(dio);
+    final existing = await repository.getPayoutDestination();
+    final saved = await repository.savePayoutDestination(
       bankCode: ' 970422 ',
       accountNumber: ' 0123456789 ',
       accountName: ' Nguyễn An ',
-      idempotencyKey: 'withdrawal-attempt-1',
     );
 
-    expect(request?.method, 'POST');
-    expect(request?.uri.path, '/v1/wallet/withdrawals');
-    expect(request?.data, {
-      'amount': 50000,
-      'reason': 'Cần rút tiền',
-      'payout_destination': {
-        'bank_code': '970422',
-        'account_number': '0123456789',
-        'account_name': 'Nguyễn An',
-      },
-      'idempotency_key': 'withdrawal-attempt-1',
+    expect(existing.isConfigured, isTrue);
+    expect(existing.accountNumberMasked, '••••6789');
+    expect(saved.accountName, 'Nguyễn An');
+    expect(requests.map((request) => request.method), ['GET', 'PUT']);
+    expect(requests.map((request) => request.uri.path), [
+      '/v1/wallet/payout-destination',
+      '/v1/wallet/payout-destination',
+    ]);
+    expect(requests.last.data, {
+      'bank_code': '970422',
+      'account_number': '0123456789',
+      'account_name': 'Nguyễn An',
     });
-    expect(result.id, 'withdrawal-1');
-    expect(result.amount, 50000);
-    expect(result.status, 'requested');
   });
 
   test('creates a review with the exact Backend request fields', () async {

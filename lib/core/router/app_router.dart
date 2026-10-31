@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lens_app/providers/data_providers.dart';
-import 'package:lens_app/features/splash/splash_screen.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
 import 'package:lens_app/features/auth/login_screen.dart';
 import 'package:lens_app/features/auth/signup_screen.dart';
@@ -37,12 +36,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     refreshListenable: refresh,
-    initialLocation: '/splash',
+    initialLocation: '/',
     redirect: (context, state) {
       final path = state.uri.path;
       final user = ref.read(authUserProvider);
       final publicRoute =
-          path == '/splash' ||
+          path == '/' ||
           path == '/login' ||
           path == '/signup' ||
           path == '/forgot-password' ||
@@ -61,8 +60,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashScreen(),
+        path: '/',
+        redirect: (context, state) =>
+            ref.read(authUserProvider)?.role == 'client'
+                ? '/customer_home/overview'
+                : '/customer_home/discovery',
       ),
       GoRoute(
         path: '/gallery',

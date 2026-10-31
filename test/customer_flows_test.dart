@@ -458,12 +458,33 @@ class _FixedWalletDataSource implements CustomerWalletDataSource {
   Future<CustomerWallet> getWallet() async => wallet;
 
   @override
-  Future<WalletWithdrawalRequest> requestWithdrawal({
-    required int amount,
-    required String reason,
+  Future<CustomerPayoutDestination> getPayoutDestination() async =>
+      const CustomerPayoutDestination(
+        isConfigured: true,
+        bankCode: '970422',
+        accountName: 'Nguyễn An',
+        accountNumberMasked: '••••6789',
+        updatedAt: null,
+      );
+
+  @override
+  Future<CustomerPayoutDestination> savePayoutDestination({
     required String bankCode,
     required String accountNumber,
     required String accountName,
+  }) async => CustomerPayoutDestination(
+    isConfigured: true,
+    bankCode: bankCode,
+    accountName: accountName,
+    accountNumberMasked:
+        '••••${accountNumber.substring(accountNumber.length - 4)}',
+    updatedAt: DateTime.now(),
+  );
+
+  @override
+  Future<WalletWithdrawalRequest> requestWithdrawal({
+    required int amount,
+    required String reason,
     required String idempotencyKey,
   }) async => WalletWithdrawalRequest(
     id: 'withdrawal-test',

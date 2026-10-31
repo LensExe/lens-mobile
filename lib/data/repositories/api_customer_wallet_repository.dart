@@ -7,12 +7,17 @@ import '../../domain/models/customer_wallet_model.dart';
 abstract class CustomerWalletDataSource {
   Future<CustomerWallet> getWallet();
 
-  Future<WalletWithdrawalRequest> requestWithdrawal({
-    required int amount,
-    required String reason,
+  Future<CustomerPayoutDestination> getPayoutDestination();
+
+  Future<CustomerPayoutDestination> savePayoutDestination({
     required String bankCode,
     required String accountNumber,
     required String accountName,
+  });
+
+  Future<WalletWithdrawalRequest> requestWithdrawal({
+    required int amount,
+    required String reason,
     required String idempotencyKey,
   });
 }
@@ -60,12 +65,40 @@ class ApiCustomerWalletRepository implements CustomerWalletDataSource {
   }
 
   @override
-  Future<WalletWithdrawalRequest> requestWithdrawal({
-    required int amount,
-    required String reason,
+  Future<CustomerPayoutDestination> getPayoutDestination() async {
+    try {
+      final response = await _dio.get<dynamic>('wallet/payout-destination');
+      return _payoutDestination(_responseMap(response.data));
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  @override
+  Future<CustomerPayoutDestination> savePayoutDestination({
     required String bankCode,
     required String accountNumber,
     required String accountName,
+  }) async {
+    try {
+      final response = await _dio.put<dynamic>(
+        'wallet/payout-destination',
+        data: {
+          'bank_code': bankCode.trim(),
+          'account_number': accountNumber.trim(),
+          'account_name': accountName.trim(),
+        },
+      );
+      return _payoutDestination(_responseMap(response.data));
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  @override
+  Future<WalletWithdrawalRequest> requestWithdrawal({
+    required int amount,
+    required String reason,
     required String idempotencyKey,
   }) async {
     try {
@@ -74,11 +107,6 @@ class ApiCustomerWalletRepository implements CustomerWalletDataSource {
         data: {
           'amount': amount,
           'reason': reason.trim(),
-          'payout_destination': {
-            'bank_code': bankCode.trim(),
-            'account_number': accountNumber.trim(),
-            'account_name': accountName.trim(),
-          },
           'idempotency_key': idempotencyKey,
         },
       );
@@ -108,6 +136,8 @@ WalletTransaction _ledgerEntry(Map<String, dynamic> json) {
   final entryType = _string(json['entry_type']);
   final description = _string(json['description']);
   final createdAt = DateTime.tryParse(_string(json['created_at']));
+  final transaction = _optionalMap(json['transaction']);
+  final booking = _optionalMap(json['booking']);
   return WalletTransaction(
     id: _string(json['id']),
     title: description.isEmpty ? _entryLabel(entryType) : description,
@@ -115,14 +145,37 @@ WalletTransaction _ledgerEntry(Map<String, dynamic> json) {
     date: createdAt == null
         ? ''
         : DateFormat('dd/MM/yyyy HH:mm').format(createdAt.toLocal()),
-    amount: availableDelta.abs() + frozenDelta.abs(),
+    amount: availableDelta != 0 ? availableDelta : frozenDelta,
     isPositive: availableDelta + frozenDelta >= 0,
     type: WalletTransactionType.ledgerEntry,
     entryType: entryType,
     availableDelta: availableDelta,
     frozenDelta: frozenDelta,
+    bookingId: _nullableString(booking['id']),
+    bookingStatus: _nullableString(booking['status']),
+    bookingFrom: _nullableString(booking['from']),
+    bookingTo: _nullableString(booking['to']),
+    bookingPackageName: _nullableString(booking['package_name']),
+    transactionCode: _nullableString(transaction['transaction_code']),
+    transactionStatus: _nullableString(transaction['status']),
+    paymentGateway: _nullableString(transaction['payment_gateway']),
   );
 }
+
+CustomerPayoutDestination _payoutDestination(Map<String, dynamic> json) =>
+    CustomerPayoutDestination(
+      isConfigured: json['is_configured'] == true,
+      bankCode: _nullableString(json['bank_code']),
+      accountName: _nullableString(json['account_name']),
+      accountNumberMasked: _nullableString(json['account_number_masked']),
+      updatedAt: DateTime.tryParse(_string(json['updated_at'])),
+    );
+
+Map<String, dynamic> _optionalMap(Object? value) =>
+    value is Map ? _asMap(value) : <String, dynamic>{};
+
+String? _nullableString(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;
 
 String _entryLabel(String value) => switch (value) {
   'topup' => 'Nạp ví',

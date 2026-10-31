@@ -9,17 +9,25 @@ import '../../../domain/models/customer_wallet_model.dart';
 import '../../../providers/data_providers.dart';
 
 class WalletWithdrawalDialog extends ConsumerStatefulWidget {
-  const WalletWithdrawalDialog({super.key, required this.availableBalance});
+  const WalletWithdrawalDialog({
+    super.key,
+    required this.availableBalance,
+    required this.payoutDestination,
+  });
 
   final int availableBalance;
+  final CustomerPayoutDestination payoutDestination;
 
   static Future<WalletWithdrawalRequest?> show(
     BuildContext context, {
     required int availableBalance,
+    required CustomerPayoutDestination payoutDestination,
   }) => showDialog<WalletWithdrawalRequest>(
     context: context,
-    builder: (context) =>
-        WalletWithdrawalDialog(availableBalance: availableBalance),
+    builder: (context) => WalletWithdrawalDialog(
+      availableBalance: availableBalance,
+      payoutDestination: payoutDestination,
+    ),
   );
 
   @override
@@ -32,9 +40,6 @@ class _WalletWithdrawalDialogState
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _reasonController = TextEditingController();
-  final _bankCodeController = TextEditingController();
-  final _accountNumberController = TextEditingController();
-  final _accountNameController = TextEditingController();
   late final String _idempotencyKey;
   bool _isSubmitting = false;
   String? _errorMessage;
@@ -51,9 +56,6 @@ class _WalletWithdrawalDialogState
   void dispose() {
     _amountController.dispose();
     _reasonController.dispose();
-    _bankCodeController.dispose();
-    _accountNumberController.dispose();
-    _accountNameController.dispose();
     super.dispose();
   }
 
@@ -80,6 +82,40 @@ class _WalletWithdrawalDialogState
                 ),
               ),
               const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.fog,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.pebble),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.payoutDestination.accountName ??
+                          'Tài khoản nhận tiền',
+                      style: AppTypography.labelMd(color: AppColors.obsidian),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      [
+                            widget.payoutDestination.bankCode,
+                            widget.payoutDestination.accountNumberMasked,
+                          ]
+                          .whereType<String>()
+                          .where((value) => value.isNotEmpty)
+                          .join(' · '),
+                      style: AppTypography.bodySm(
+                        fontSize: 11.5,
+                        color: AppColors.steel,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
@@ -99,52 +135,6 @@ class _WalletWithdrawalDialogState
                     _validateLength(value, min: 1, max: 1000, label: 'Lý do'),
                 onChanged: (_) => setState(() => _errorMessage = null),
               ),
-              TextFormField(
-                controller: _bankCodeController,
-                maxLength: 32,
-                decoration: const InputDecoration(
-                  labelText: 'Mã ngân hàng (BIN hoặc mã ngân hàng)',
-                ),
-                validator: (value) => _validateLength(
-                  value,
-                  min: 2,
-                  max: 32,
-                  label: 'Mã ngân hàng',
-                ),
-                onChanged: (_) => setState(() => _errorMessage = null),
-              ),
-              TextFormField(
-                controller: _accountNumberController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 34,
-                decoration: const InputDecoration(
-                  labelText: 'Số tài khoản nhận tiền',
-                ),
-                validator: (value) {
-                  final account = value?.trim() ?? '';
-                  if (!RegExp(r'^[0-9]{4,34}$').hasMatch(account)) {
-                    return 'Số tài khoản cần có từ 4 đến 34 chữ số.';
-                  }
-                  return null;
-                },
-                onChanged: (_) => setState(() => _errorMessage = null),
-              ),
-              TextFormField(
-                controller: _accountNameController,
-                maxLength: 120,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Tên chủ tài khoản',
-                ),
-                validator: (value) => _validateLength(
-                  value,
-                  min: 2,
-                  max: 120,
-                  label: 'Tên chủ tài khoản',
-                ),
-                onChanged: (_) => setState(() => _errorMessage = null),
-              ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 8),
                 Align(
@@ -159,7 +149,7 @@ class _WalletWithdrawalDialogState
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Yêu cầu sẽ được giữ số dư và chờ quản trị viên xử lý.',
+                  'Yêu cầu sẽ giữ số dư và chờ quản trị viên xử lý.',
                   style: AppTypography.bodySm(color: AppColors.steel),
                 ),
               ),
@@ -229,9 +219,6 @@ class _WalletWithdrawalDialogState
           .requestWithdrawal(
             amount: amount,
             reason: _reasonController.text.trim(),
-            bankCode: _bankCodeController.text.trim(),
-            accountNumber: _accountNumberController.text.trim(),
-            accountName: _accountNameController.text.trim(),
             idempotencyKey: _idempotencyKey,
           );
       if (!mounted) return;

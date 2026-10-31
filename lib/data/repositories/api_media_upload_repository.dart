@@ -11,12 +11,35 @@ class ApiMediaUploadRepository {
   final Dio _apiDio;
   final Dio _storageDio;
 
-  Future<String> uploadPublicImage(String localPath) async {
+  Future<String> uploadPublicImage(String localPath) => _uploadImage(
+    localPath,
+    visibility: 'public',
+    maxBytes: 104857600,
+    returnMediaId: false,
+  );
+
+  Future<String> uploadPrivateImage(String localPath) => _uploadImage(
+    localPath,
+    visibility: 'private',
+    maxBytes: 12 * 1024 * 1024,
+    returnMediaId: true,
+  );
+
+  Future<String> _uploadImage(
+    String localPath, {
+    required String visibility,
+    required int maxBytes,
+    required bool returnMediaId,
+  }) async {
     final file = File(localPath);
     final contentType = _contentType(localPath);
     final fileSize = await _fileSize(file);
-    if (fileSize < 1 || fileSize > 104857600) {
-      throw const ApiException('Ảnh phải có dung lượng từ 1 byte đến 100 MB.');
+    if (fileSize < 1 || fileSize > maxBytes) {
+      throw ApiException(
+        visibility == 'private'
+            ? 'Mỗi ảnh bằng chứng phải từ 1 byte đến 12 MB.'
+            : 'Ảnh phải có dung lượng từ 1 byte đến 100 MB.',
+      );
     }
 
     try {
@@ -25,7 +48,7 @@ class ApiMediaUploadRepository {
         data: {
           'content_type': contentType,
           'file_size': fileSize,
-          'visibility': 'public',
+          'visibility': visibility,
         },
       );
       final reservation = _responseMap(reservationResponse.data);
@@ -61,6 +84,7 @@ class ApiMediaUploadRepository {
         final uploadedMedia = _responseMap(mediaResponse.data);
         final status = uploadedMedia['status']?.toString().toLowerCase();
         if (status == 'ready') {
+          if (returnMediaId) return mediaId;
           final imageUrl = _string(
             uploadedMedia['preview_url'] ?? uploadedMedia['download_url'],
           );

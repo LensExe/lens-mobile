@@ -17,6 +17,14 @@ class WalletTransaction {
   final String entryType;
   final int availableDelta;
   final int frozenDelta;
+  final String? bookingId;
+  final String? bookingStatus;
+  final String? bookingFrom;
+  final String? bookingTo;
+  final String? bookingPackageName;
+  final String? transactionCode;
+  final String? transactionStatus;
+  final String? paymentGateway;
 
   const WalletTransaction({
     required this.id,
@@ -29,7 +37,31 @@ class WalletTransaction {
     this.entryType = '',
     this.availableDelta = 0,
     this.frozenDelta = 0,
+    this.bookingId,
+    this.bookingStatus,
+    this.bookingFrom,
+    this.bookingTo,
+    this.bookingPackageName,
+    this.transactionCode,
+    this.transactionStatus,
+    this.paymentGateway,
   });
+}
+
+class CustomerPayoutDestination {
+  const CustomerPayoutDestination({
+    required this.isConfigured,
+    required this.bankCode,
+    required this.accountName,
+    required this.accountNumberMasked,
+    required this.updatedAt,
+  });
+
+  final bool isConfigured;
+  final String? bankCode;
+  final String? accountName;
+  final String? accountNumberMasked;
+  final DateTime? updatedAt;
 }
 
 class CustomerWallet {

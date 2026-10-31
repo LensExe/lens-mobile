@@ -39,6 +39,7 @@ class AuthUserNotifier extends Notifier<User?> {
   void setUser(User? user) {
     state = user;
     ref.invalidate(customerWalletProvider);
+    ref.invalidate(customerPayoutDestinationProvider);
     ref.invalidate(customerReviewsProvider);
   }
 
@@ -154,6 +155,12 @@ class CustomerWalletNotifier extends AsyncNotifier<CustomerWallet> {
 final customerWalletProvider =
     AsyncNotifierProvider<CustomerWalletNotifier, CustomerWallet>(
       () => CustomerWalletNotifier(),
+    );
+
+final customerPayoutDestinationProvider =
+    FutureProvider<CustomerPayoutDestination>(
+      (ref) =>
+          ref.watch(customerWalletRepositoryProvider).getPayoutDestination(),
     );
 
 // --- Customer Reviews ---

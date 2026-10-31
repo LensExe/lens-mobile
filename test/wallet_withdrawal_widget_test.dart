@@ -34,8 +34,16 @@ void main() {
               builder: (context) => TextButton(
                 onPressed: () => showDialog<void>(
                   context: context,
-                  builder: (context) =>
-                      const WalletWithdrawalDialog(availableBalance: 100000),
+                  builder: (context) => const WalletWithdrawalDialog(
+                    availableBalance: 100000,
+                    payoutDestination: CustomerPayoutDestination(
+                      isConfigured: true,
+                      bankCode: '970422',
+                      accountName: 'Nguyễn An',
+                      accountNumberMasked: '••••6789',
+                      updatedAt: null,
+                    ),
+                  ),
                 ),
                 child: const Text('Mở yêu cầu rút tiền'),
               ),
@@ -56,17 +64,11 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), '50000');
     await tester.enterText(fields.at(1), 'Cần rút tiền');
-    await tester.enterText(fields.at(2), '970422');
-    await tester.enterText(fields.at(3), '0123456789');
-    await tester.enterText(fields.at(4), 'Nguyễn An');
     await tester.tap(find.text('Gửi yêu cầu'));
     await tester.pumpAndSettle();
 
     expect(repository.withdrawalCount, 1);
     expect(repository.lastAmount, 50000);
-    expect(repository.lastBankCode, '970422');
-    expect(repository.lastAccountNumber, '0123456789');
-    expect(repository.lastAccountName, 'Nguyễn An');
     expect(repository.lastIdempotencyKey, startsWith('mobile-withdrawal:'));
   });
 }
@@ -83,19 +85,37 @@ class _RecordingWalletDataSource implements CustomerWalletDataSource {
   Future<CustomerWallet> getWallet() async => const CustomerWallet();
 
   @override
-  Future<WalletWithdrawalRequest> requestWithdrawal({
-    required int amount,
-    required String reason,
+  Future<CustomerPayoutDestination> getPayoutDestination() async =>
+      const CustomerPayoutDestination(
+        isConfigured: true,
+        bankCode: '970422',
+        accountName: 'Nguyễn An',
+        accountNumberMasked: '••••6789',
+        updatedAt: null,
+      );
+
+  @override
+  Future<CustomerPayoutDestination> savePayoutDestination({
     required String bankCode,
     required String accountNumber,
     required String accountName,
+  }) async => CustomerPayoutDestination(
+    isConfigured: true,
+    bankCode: bankCode,
+    accountName: accountName,
+    accountNumberMasked:
+        '••••${accountNumber.substring(accountNumber.length - 4)}',
+    updatedAt: DateTime.now(),
+  );
+
+  @override
+  Future<WalletWithdrawalRequest> requestWithdrawal({
+    required int amount,
+    required String reason,
     required String idempotencyKey,
   }) async {
     withdrawalCount++;
     lastAmount = amount;
-    lastBankCode = bankCode;
-    lastAccountNumber = accountNumber;
-    lastAccountName = accountName;
     lastIdempotencyKey = idempotencyKey;
     return WalletWithdrawalRequest(
       id: 'withdrawal-1',
