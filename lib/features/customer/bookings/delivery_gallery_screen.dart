@@ -8,6 +8,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/lens_page.dart';
 import '../../../core/widgets/primary_button.dart';
+import 'booking_report_entry.dart';
 import '../../customer/payments/payment_repository.dart';
 import 'controllers/customer_bookings_controller.dart';
 import 'models/booking_model.dart';
@@ -95,6 +96,8 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
         ),
         children: [
           _BookingHeader(booking: booking),
+          const SizedBox(height: 14),
+          BookingReportEntry(bookingId: booking.id),
           const SizedBox(height: 14),
           galleryState.when(
             loading: () => const Padding(

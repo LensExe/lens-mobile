@@ -13,6 +13,7 @@ import '../../../core/widgets/primary_button.dart';
 import 'controllers/customer_bookings_controller.dart';
 import 'models/booking_model.dart';
 import '../payments/payment_repository.dart';
+import 'booking_report_entry.dart';
 import 'widgets/booking_progress_stepper.dart';
 import 'widgets/booking_status_pill.dart';
 import 'widgets/cancel_booking_dialog.dart';
@@ -186,6 +187,16 @@ class BookingDetailScreen extends ConsumerWidget {
               _BookingCost(booking: booking),
               const SizedBox(height: 12),
               _BookingActions(booking: booking),
+              if ([
+                BookingStatus.inProgress,
+                BookingStatus.held,
+                BookingStatus.shot,
+                BookingStatus.completed,
+                BookingStatus.released,
+              ].contains(booking.status)) ...[
+                const SizedBox(height: 12),
+                BookingReportEntry(bookingId: booking.id),
+              ],
               const SizedBox(height: 12),
               if (booking.status == BookingStatus.held ||
                   booking.status == BookingStatus.released ||
