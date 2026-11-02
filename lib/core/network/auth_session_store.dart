@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../domain/models/models.dart';
+import '../../features/auth/models/user_model.dart';
 import 'api_exception.dart';
 
 class AuthSessionData {

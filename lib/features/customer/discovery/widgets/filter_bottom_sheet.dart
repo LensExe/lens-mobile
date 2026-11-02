@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_tokens.dart';
-import '../../../../../core/theme/app_typography.dart';
-import '../../../../../core/widgets/primary_button.dart';
+import 'package:lens_app/core/theme/app_colors.dart';
+import 'package:lens_app/core/theme/app_tokens.dart';
+import 'package:lens_app/core/theme/app_typography.dart';
+import 'package:lens_app/core/widgets/primary_button.dart';
 import '../models/filter_criteria.dart';
 
 /// Customer discovery filters. Some criteria are applied locally because the

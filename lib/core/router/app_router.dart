@@ -3,28 +3,29 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lens_app/providers/data_providers.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
-import 'package:lens_app/features/auth/login_screen.dart';
-import 'package:lens_app/features/auth/signup_screen.dart';
-import 'package:lens_app/features/auth/forgot_password_screen.dart';
-import 'package:lens_app/features/auth/email_verification_screen.dart';
-import 'package:lens_app/features/customer/customer_home_screen.dart';
+import 'package:lens_app/features/auth/screens/login_screen.dart';
+import 'package:lens_app/features/auth/screens/signup_screen.dart';
+import 'package:lens_app/features/auth/screens/forgot_password_screen.dart';
+import 'package:lens_app/features/auth/screens/email_verification_screen.dart';
+import 'package:lens_app/features/customer/overview/screens/customer_home_screen.dart';
 import 'package:lens_app/features/customer/discovery/screens/photographers_discovery_screen.dart';
 import 'package:lens_app/features/customer/photographer_detail/screens/photographer_detail_screen.dart';
-import 'package:lens_app/features/customer/booking_screen.dart';
-import 'package:lens_app/features/shared/bookings_list_screen.dart';
-import 'package:lens_app/features/customer/bookings/booking_detail_screen.dart';
-import 'package:lens_app/features/customer/bookings/delivery_gallery_screen.dart';
-import 'package:lens_app/features/customer/messages/customer_conversations_screen.dart';
-import 'package:lens_app/features/customer/messages/customer_chat_detail_screen.dart';
-import 'package:lens_app/features/customer/payments/deposit_screen.dart';
-import 'package:lens_app/features/customer/reviews/reviews_screen.dart';
-import 'package:lens_app/features/customer/settings/settings_screen.dart';
-import 'package:lens_app/features/customer/wallet/wallet_screen.dart';
-import 'package:lens_app/features/notifications/notification_center_screen.dart';
+import 'package:lens_app/features/customer/booking_flow/screens/booking_wizard_screen.dart';
+import 'package:lens_app/features/customer/bookings/screens/bookings_list_screen.dart';
+import 'package:lens_app/features/customer/bookings/screens/booking_detail_screen.dart';
+import 'package:lens_app/features/customer/bookings/screens/delivery_gallery_screen.dart';
+import 'package:lens_app/features/customer/messages/screens/customer_conversations_screen.dart';
+import 'package:lens_app/features/customer/messages/screens/customer_chat_detail_screen.dart';
+import 'package:lens_app/features/customer/payments/screens/deposit_screen.dart';
+import 'package:lens_app/features/customer/payments/screens/payment_screen.dart';
+import 'package:lens_app/features/customer/reviews/screens/reviews_screen.dart';
+import 'package:lens_app/features/customer/settings/screens/settings_screen.dart';
+import 'package:lens_app/features/customer/wallet/screens/wallet_screen.dart';
+import 'package:lens_app/features/notifications/screens/notification_center_screen.dart';
 
 import 'customer_shell.dart';
 
-import 'package:lens_app/features/shared/more_tab_screen.dart';
+import 'package:lens_app/features/customer/settings/screens/more_tab_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -156,9 +157,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/customer_home/photographer/:id/book',
-        builder: (context, state) => BookingScreen(
-          id: state.pathParameters['id']!,
-          packageId: state.uri.queryParameters['package'],
+        builder: (context, state) => BookingWizardScreen(
+          photographerId: state.pathParameters['id']!,
+          initialPackageId: state.uri.queryParameters['package'],
         ),
       ),
       ShellRoute(

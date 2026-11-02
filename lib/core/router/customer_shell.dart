@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../features/customer/messages/api_customer_chat_repository.dart';
-import '../../features/customer/messages/customer_chat_realtime.dart';
+import '../../features/customer/messages/repositories/api_customer_chat_repository.dart';
+import '../../features/customer/messages/services/customer_chat_realtime.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';

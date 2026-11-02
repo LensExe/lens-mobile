@@ -1,0 +1,134 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/network/auth_session_store.dart';
+import '../../../core/network/dio_client.dart';
+import '../../customer/reviews/controllers/customer_reviews_controller.dart';
+import '../../customer/wallet/controllers/customer_wallet_controller.dart';
+import '../models/user_model.dart';
+import '../repositories/api_auth_flow_repository.dart';
+import '../repositories/api_auth_repository.dart';
+import '../repositories/auth_repository.dart';
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return ApiAuthRepository(
+    ref.watch(dioProvider),
+    ref.watch(authSessionStoreProvider),
+  );
+});
+
+final authFlowRepositoryProvider = Provider<ApiAuthFlowRepository>(
+  (ref) => ApiAuthFlowRepository(
+    ref.watch(dioProvider),
+    ref.watch(authSessionStoreProvider),
+    expectedRole: 'client',
+  ),
+);
+
+class AuthUserNotifier extends Notifier<User?> {
+  @override
+  User? build() {
+    ref.read(authSessionStoreProvider).onSessionExpired = () => setUser(null);
+    return ref.read(initialAuthUserProvider);
+  }
+
+  void setUser(User? user) {
+    state = user;
+    ref.invalidate(customerWalletProvider);
+    ref.invalidate(customerPayoutDestinationProvider);
+    ref.invalidate(customerReviewsProvider);
+  }
+
+  Future<User> login({required String email, required String password}) async {
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.login(email: email, password: password);
+    setUser(user);
+    return user;
+  }
+
+  Future<User> loginWithGoogleCode(String code) async {
+    final user = await ref
+        .read(authFlowRepositoryProvider)
+        .exchangeGoogleCode(code);
+    setUser(user);
+    return user;
+  }
+
+  Future<User> signup({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.signup(
+      name: name,
+      email: email,
+      password: password,
+      role: role,
+    );
+    setUser(user);
+    return user;
+  }
+
+  Future<User> updateProfile({
+    required String name,
+    required String phone,
+    required String city,
+    required String address,
+    bool? saveAsDefault,
+    String? gender,
+    String? dateOfBirth,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    final updated = await repo.updateProfile(
+      name: name,
+      phone: phone,
+      city: city,
+      address: address,
+      saveAsDefault: saveAsDefault,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
+    );
+    setUser(updated);
+    return updated;
+  }
+
+  Future<User> refreshProfile() async {
+    final updated = await ref.read(authRepositoryProvider).readCurrentProfile();
+    setUser(updated);
+    return updated;
+  }
+
+  Future<User> updateAvatar(String localPath) async {
+    final updated = await ref
+        .read(authRepositoryProvider)
+        .updateAvatar(localPath);
+    setUser(updated);
+    return updated;
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final repo = ref.read(authRepositoryProvider);
+    await repo.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  Future<void> logout() async {
+    final repo = ref.read(authRepositoryProvider);
+    try {
+      await repo.logout();
+    } finally {
+      setUser(null);
+    }
+  }
+}
+
+final authUserProvider = NotifierProvider<AuthUserNotifier, User?>(
+  () => AuthUserNotifier(),
+);
+

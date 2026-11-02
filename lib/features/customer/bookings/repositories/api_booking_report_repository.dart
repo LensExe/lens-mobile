@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../data/repositories/api_media_upload_repository.dart';
-import '../../../../domain/models/customer_booking_report_model.dart';
+import '../../../../core/network/api_media_upload_repository.dart';
+import '../models/customer_booking_report_model.dart';
 
 class ApiBookingReportRepository {
   const ApiBookingReportRepository(this._dio);

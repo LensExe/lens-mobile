@@ -7,7 +7,7 @@ Ngày chạy cuối: 2026-10-24.
 | `flutter pub get` | Pass | Đồng bộ dependencies của Flutter project; lần chạy thành công sau khi cho phép Flutter ghi SDK package cache ngoài workspace. |
 | `dart format` trên Dart files đã chỉnh sửa | Pass | Format repositories, providers, screens và tests; formatter không còn thay đổi sau lượt cuối. |
 | `flutter analyze` | Pass — `No issues found!` | Static analysis toàn bộ Lens-mobile. |
-| `flutter test test/filter_bottom_sheet_test.dart test/customer_flows_test.dart` | Pass — 10 tests | Filter sheet, customer route rendering/search/empty API states. Đã sửa sort toolbar overflow ở viewport 320 px. |
+| `flutter test test/features/customer/discovery/filter_bottom_sheet_test.dart test/integration/customer_flows_test.dart` | Pass — 10 tests | Filter sheet, customer route rendering/search/empty API states. Đã sửa sort toolbar overflow ở viewport 320 px. |
 | `flutter test` | Pass — 50 tests | Toàn bộ unit/widget/API fake-adapter tests trong `test/`, gồm wallet withdrawal, discovery filters/sort, profile, cancellation preview và Customer route rendering. |
 | `git diff --check` | Pass | Chạy sau cập nhật tài liệu; không có whitespace errors trong diff cuối. |
 

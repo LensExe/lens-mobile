@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../features/notifications/notification_bell.dart';
+import '../../features/notifications/widgets/notification_bell.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 

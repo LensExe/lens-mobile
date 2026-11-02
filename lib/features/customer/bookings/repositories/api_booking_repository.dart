@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/vietnam_time.dart';
 import '../models/booking_model.dart';
-import '../../payments/payment_repository.dart';
+import '../../payments/repositories/payment_repository.dart';
 import 'booking_repository.dart';
 
 class ApiBookingRepository implements BookingRepository {
