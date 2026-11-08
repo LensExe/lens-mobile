@@ -211,13 +211,6 @@ class ApiBookingRepository implements BookingRepository {
     }
     throw const ApiException('Backend không hỗ trợ thao tác trạng thái này.');
   }
-
-  @override
-  Future<void> payRemaining(String bookingId, int coinsRedeemed) async {
-    throw const ApiException(
-      'Thanh toán cần tạo payment intent và xác nhận trạng thái từ Backend; Lens Xu không được Backend hỗ trợ.',
-    );
-  }
 }
 
 Booking _booking(

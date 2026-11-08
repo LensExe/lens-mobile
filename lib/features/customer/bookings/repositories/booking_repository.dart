@@ -5,7 +5,6 @@ abstract class BookingRepository {
   Future<Booking?> getBookingById(String id);
   Future<BookingCancellationPreview> getCancellationPreview(String bookingId);
   Future<void> updateBookingStatus(String bookingId, BookingStatus newStatus);
-  Future<void> payRemaining(String bookingId, int coinsRedeemed);
   Future<void> createBooking(Booking booking);
 
   Future<Booking> createBookingFromInput(BookingCreateInput input);

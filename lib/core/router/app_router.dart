@@ -18,9 +18,9 @@ import 'package:lens_app/features/customer/messages/screens/customer_conversatio
 import 'package:lens_app/features/customer/messages/screens/customer_chat_detail_screen.dart';
 import 'package:lens_app/features/customer/payments/screens/deposit_screen.dart';
 import 'package:lens_app/features/customer/payments/screens/payment_screen.dart';
+import 'package:lens_app/features/customer/payments/screens/payment_return_screen.dart';
 import 'package:lens_app/features/customer/reviews/screens/reviews_screen.dart';
 import 'package:lens_app/features/customer/settings/screens/settings_screen.dart';
-import 'package:lens_app/features/customer/wallet/screens/wallet_screen.dart';
 import 'package:lens_app/features/notifications/screens/notification_center_screen.dart';
 
 import 'customer_shell.dart';
@@ -64,8 +64,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         redirect: (context, state) =>
             ref.read(authUserProvider)?.role == 'client'
-                ? '/customer_home/overview'
-                : '/customer_home/discovery',
+            ? '/customer_home/overview'
+            : '/customer_home/discovery',
       ),
       GoRoute(
         path: '/gallery',
@@ -125,12 +125,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             PaymentScreen(bookingId: state.pathParameters['id']!),
       ),
       GoRoute(
-        path: '/customer_home/reviews',
-        builder: (context, state) => const ReviewsScreen(),
+        path: '/return',
+        builder: (context, state) => PaymentReturnScreen(
+          bookingId: state.uri.queryParameters['bookingId'] ?? '',
+          paymentPurpose: state.uri.queryParameters['paymentPurpose'] ?? '',
+        ),
       ),
       GoRoute(
-        path: '/customer_home/wallet',
-        builder: (context, state) => const WalletScreen(),
+        path: '/customer_home/reviews',
+        builder: (context, state) => const ReviewsScreen(),
       ),
       GoRoute(
         path: '/customer_home/settings/profile',

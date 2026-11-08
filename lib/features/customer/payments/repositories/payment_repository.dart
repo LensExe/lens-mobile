@@ -6,30 +6,18 @@ import '../../../../core/network/dio_client.dart';
 
 enum BookingPaymentType { deposit, remaining }
 
-enum BookingPaymentMethod { gateway, wallet }
-
 class PaymentIntent {
   const PaymentIntent({
     required this.id,
     required this.status,
     required this.amount,
-    required this.currency,
     this.type,
-    this.paymentGateway,
-    this.checkoutUrl,
-    this.qrCode,
-    this.checkoutExpiresAt,
   });
 
   final String id;
   final String status;
   final int amount;
-  final String currency;
   final String? type;
-  final String? paymentGateway;
-  final String? checkoutUrl;
-  final String? qrCode;
-  final String? checkoutExpiresAt;
 
   bool get isSettled => status.toLowerCase() == 'paid';
 
@@ -37,12 +25,7 @@ class PaymentIntent {
     id: _requiredString(json['id'], 'id'),
     status: _requiredString(json['status'], 'status'),
     amount: _int(json['amount']),
-    currency: json['currency']?.toString() ?? 'VND',
     type: _nullableString(json['type']),
-    paymentGateway: _nullableString(json['payment_gateway']),
-    checkoutUrl: _nullableString(json['checkout_url']),
-    qrCode: _nullableString(json['qr_code']),
-    checkoutExpiresAt: _nullableString(json['checkout_expires_at']),
   );
 }
 
@@ -55,21 +38,24 @@ class BookingPaymentRepository {
   const BookingPaymentRepository(this._dio);
   final Dio _dio;
 
-  Future<PaymentIntent> createIntent({
+  Future<String> createMobileCheckoutHandoff({
     required String bookingId,
     required BookingPaymentType type,
-    required BookingPaymentMethod method,
   }) async {
-    final action = type == BookingPaymentType.deposit ? 'deposit' : 'remaining';
     try {
       final response = await _dio.post<dynamic>(
-        'bookings/$bookingId/payments/$action',
+        'mobile-checkout/handoff',
         data: {
-          'idempotency_key': 'lens-mobile:$bookingId:$action',
-          'payment_method': method.name,
+          'booking_id': bookingId,
+          'payment_purpose': type == BookingPaymentType.deposit
+              ? 'deposit'
+              : 'remaining',
         },
       );
-      return PaymentIntent.fromJson(_responseMap(response.data));
+      return _requiredString(
+        _responseMap(response.data)['checkout_url'],
+        'checkout_url',
+      );
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -88,24 +74,6 @@ class BookingPaymentRepository {
       return PaymentHistory(
         items: raw.map((item) => PaymentIntent.fromJson(_map(item))).toList(),
       );
-    } on DioException catch (error) {
-      throw ApiException.fromDio(error);
-    }
-  }
-
-  Future<PaymentIntent> getPayment(String paymentId) async {
-    try {
-      final response = await _dio.get<dynamic>('payments/$paymentId');
-      return PaymentIntent.fromJson(_responseMap(response.data));
-    } on DioException catch (error) {
-      throw ApiException.fromDio(error);
-    }
-  }
-
-  Future<PaymentIntent> getPaymentQr(String paymentId) async {
-    try {
-      final response = await _dio.get<dynamic>('payments/$paymentId/qr');
-      return PaymentIntent.fromJson(_responseMap(response.data));
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }

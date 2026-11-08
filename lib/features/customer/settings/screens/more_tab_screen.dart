@@ -151,13 +151,6 @@ class MoreTabScreen extends ConsumerWidget {
             title: 'KHÔNG GIAN CỦA TÔI',
             items: [
               _MenuItem(
-                icon: LucideIcons.walletCards,
-                iconColor: AppColors.ember,
-                title: 'Ví của tôi',
-                subtitle: 'Quản lý số dư LENS Xu & Nạp tiền',
-                onTap: () => context.push('/customer_home/wallet'),
-              ),
-              _MenuItem(
                 icon: LucideIcons.star,
                 iconColor: AppColors.warning,
                 title: 'Đánh giá đã gửi',

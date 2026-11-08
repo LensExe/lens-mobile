@@ -71,7 +71,7 @@ void main() {
     },
   );
 
-  test('creates the deposit intent with the Backend contract', () async {
+  test('creates a booking-bound mobile checkout handoff', () async {
     RequestOptions? captured;
     final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test/v1/'));
     dio.httpClientAdapter = _Adapter((request) async {
@@ -80,32 +80,27 @@ void main() {
         'success': true,
         'statusCode': 200,
         'data': {
-          'id': 'payment-id',
-          'status': 'pending',
-          'amount': '360000',
-          'currency': 'VND',
-          'type': 'deposit',
-          'payment_gateway': 'payos',
+          'checkout_url': 'https://portal.example.test/mobile-checkout/handoff?code=one-time-code',
         },
         'timestamp': '2026-10-10T03:01:00.000Z',
       });
     });
 
-    final intent = await BookingPaymentRepository(dio).createIntent(
+    final url = await BookingPaymentRepository(dio).createMobileCheckoutHandoff(
       bookingId: bookingId,
       type: BookingPaymentType.deposit,
-      method: BookingPaymentMethod.gateway,
     );
 
     expect(captured?.method, 'POST');
-    expect(captured?.uri.path, '/v1/bookings/$bookingId/payments/deposit');
+    expect(captured?.uri.path, '/v1/mobile-checkout/handoff');
     expect(captured?.data, {
-      'idempotency_key': 'lens-mobile:$bookingId:deposit',
-      'payment_method': 'gateway',
+      'booking_id': bookingId,
+      'payment_purpose': 'deposit',
     });
-    expect(intent.id, 'payment-id');
-    expect(intent.amount, 360000);
-    expect(intent.status, 'pending');
+    expect(
+      url,
+      'https://portal.example.test/mobile-checkout/handoff?code=one-time-code',
+    );
   });
 }
 

@@ -288,27 +288,6 @@ class MockBookingRepository implements BookingRepository {
       depositPaidAt: newStatus == BookingStatus.pending
           ? DateTime.now().toIso8601String()
           : booking.depositPaidAt,
-      coinsEarned: newStatus == BookingStatus.released
-          ? (booking.price * 0.05).round()
-          : booking.coinsEarned,
-    );
-  }
-
-  @override
-  Future<void> payRemaining(String bookingId, int coinsRedeemed) async {
-    await Future.delayed(const Duration(milliseconds: 250));
-    final index = _bookings.indexWhere((b) => b.id == bookingId);
-    if (index == -1) throw StateError('Không tìm thấy lịch đặt.');
-    final booking = _bookings[index];
-    if (booking.status != BookingStatus.confirmed ||
-        coinsRedeemed < 0 ||
-        coinsRedeemed > (booking.price * 0.2).floor() ||
-        coinsRedeemed > booking.remainingAmount) {
-      throw StateError('Không thể thanh toán lịch đặt này.');
-    }
-    _bookings[index] = booking.copyWith(
-      status: BookingStatus.held,
-      coinsRedeemed: coinsRedeemed,
     );
   }
 

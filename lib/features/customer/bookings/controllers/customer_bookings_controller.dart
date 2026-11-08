@@ -224,14 +224,6 @@ class CustomerBookingsController extends Notifier<CustomerBookingsState> {
     await loadBookings();
   }
 
-  Future<void> payRemaining(String bookingId, int coinsRedeemed) async {
-    if (!state.allBookings.any((booking) => booking.id == bookingId)) {
-      throw StateError('Lịch đặt không thuộc tài khoản của bạn.');
-    }
-    await _repo.payRemaining(bookingId, coinsRedeemed);
-    await loadBookings();
-  }
-
   Future<void> createBooking(Booking booking) async {
     if (booking.clientId != ref.read(authUserProvider)?.id) {
       throw StateError('Vui lòng đăng nhập với tài khoản khách hàng.');

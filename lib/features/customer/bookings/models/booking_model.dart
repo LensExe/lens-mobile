@@ -99,8 +99,6 @@ class Booking {
   final int depositAmount; // Tiền cọc = price * 0.3
   final String? depositPaidAt; // ISO datetime
   final String? depositDeadline; // ISO datetime (sau 30p nếu chưa cọc thì huỷ)
-  final int? coinsRedeemed; // Lens Xu đã dùng khấu trừ tiền mặt
-  final int? coinsEarned; // Lens Xu hoàn lại khi hoàn tất (cashback)
   final List<BookingCollaborator>? collaborators;
 
   // Thuộc tính phụ trợ phục vụ hiển thị
@@ -132,8 +130,6 @@ class Booking {
     required this.depositAmount,
     this.depositPaidAt,
     this.depositDeadline,
-    this.coinsRedeemed,
-    this.coinsEarned,
     this.collaborators,
     this.rating,
     this.reviewCount,
@@ -202,8 +198,6 @@ class Booking {
     int? depositAmount,
     String? depositPaidAt,
     String? depositDeadline,
-    int? coinsRedeemed,
-    int? coinsEarned,
     List<BookingCollaborator>? collaborators,
     double? rating,
     int? reviewCount,
@@ -235,8 +229,6 @@ class Booking {
       depositAmount: depositAmount ?? this.depositAmount,
       depositPaidAt: depositPaidAt ?? this.depositPaidAt,
       depositDeadline: depositDeadline ?? this.depositDeadline,
-      coinsRedeemed: coinsRedeemed ?? this.coinsRedeemed,
-      coinsEarned: coinsEarned ?? this.coinsEarned,
       collaborators: collaborators ?? this.collaborators,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,

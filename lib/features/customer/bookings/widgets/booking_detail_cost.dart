@@ -143,23 +143,8 @@ class BookingDetailCost extends ConsumerWidget {
               style: AppTypography.bodySm(fontSize: 11, color: AppColors.steel),
             ),
           ],
-          if ((booking.coinsRedeemed ?? 0) > 0) ...[
-            const SizedBox(height: 10),
-            BookingDetailCostRow(
-              label: 'Lens Xu đã dùng',
-              amount: -(booking.coinsRedeemed ?? 0),
-              highlightColor: AppColors.ember,
-            ),
-          ],
-          const SizedBox(height: 10),
-          BookingDetailCostRow(
-            label: 'Lens Xu hoàn lại tích luỹ (+5%)',
-            amount: (booking.price * 0.05).round(),
-            highlightColor: AppColors.emerald,
-          ),
         ],
       ),
     );
   }
 }
-

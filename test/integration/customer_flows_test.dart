@@ -4,24 +4,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lens_app/core/router/app_router.dart';
 import 'package:lens_app/core/widgets/primary_button.dart';
 import 'package:lens_app/core/utils/vietnamese_text.dart';
+
 import '../mocks/mock_database.dart';
 import '../mocks/mock_auth_repository.dart';
 import '../mocks/mock_customer_reviews_repository.dart';
-import '../mocks/mock_customer_wallet_repository.dart';
-import 'package:lens_app/features/customer/wallet/repositories/api_customer_wallet_repository.dart';
+
 import 'package:lens_app/features/customer/reviews/repositories/api_customer_reviews_repository.dart';
-import 'package:lens_app/features/customer/wallet/models/customer_wallet_model.dart';
 import 'package:lens_app/features/customer/reviews/models/customer_review_model.dart';
+
 import '../mocks/mock_customer_messages_repository.dart';
+
 import 'package:lens_app/domain/models/models.dart' show Message, User;
 import 'package:lens_app/providers/data_providers.dart';
 import 'package:lens_app/features/customer/bookings/models/booking_model.dart';
 import 'package:lens_app/features/customer/booking_flow/controllers/booking_wizard_controller.dart';
+
 import '../mocks/mock_booking_repository.dart';
+
 import 'package:lens_app/features/customer/discovery/models/filter_criteria.dart';
 import 'package:lens_app/features/customer/discovery/controllers/discovery_controller.dart';
 import 'package:lens_app/features/customer/discovery/repositories/discovery_repository_provider.dart';
+
 import '../mocks/mock_photographer_repository.dart';
+
 import 'package:lens_app/features/customer/discovery/repositories/photographer_repository.dart';
 import 'package:lens_app/features/customer/discovery/models/photographer_model.dart';
 import 'package:lens_app/core/network/api_config.dart';
@@ -113,10 +118,6 @@ void main() {
         ),
         throwsStateError,
       );
-      await expectLater(
-        repository.payRemaining(booking.id, 0),
-        throwsStateError,
-      );
       await repository.updateBookingStatus(booking.id, BookingStatus.pending);
       expect(
         (await repository.getBookingById(booking.id))!.depositPaidAt,
@@ -124,58 +125,32 @@ void main() {
       );
       await repository.updateBookingStatus(booking.id, BookingStatus.confirmed);
       await expectLater(
-        repository.payRemaining(booking.id, 300000),
-        throwsStateError,
-      );
-      await repository.payRemaining(booking.id, 100000);
-      final paid = (await repository.getBookingById(booking.id))!;
-      expect(paid.status, BookingStatus.held);
-      expect(paid.coinsRedeemed, 100000);
-      await expectLater(
         repository.updateBookingStatus(booking.id, BookingStatus.released),
         throwsStateError,
       );
     },
   );
 
-  test(
-    'wallet and review providers do not expose demo balances or review history',
-    () async {
-      MockDatabase.currentUser = null;
-      const backendWallet = CustomerWallet(
-        availableBalance: 123000,
-        frozenBalance: 45000,
-      );
-      final container = ProviderContainer(
-        retry: (_, _) => null,
-        overrides: [
-          customerWalletRepositoryProvider.overrideWithValue(
-            _FixedWalletDataSource(backendWallet),
-          ),
-          customerReviewsRepositoryProvider.overrideWithValue(
-            const _EmptyCustomerReviewsDataSource(),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      final user = User(
-        id: 'isolation-${DateTime.now().microsecondsSinceEpoch}',
-        name: 'Khách mới',
-        email: 'new@lens.test',
-        role: 'client',
-      );
-      container.read(authUserProvider.notifier).setUser(user);
-      expect(
-        (await container.read(customerWalletProvider.future)).availableBalance,
-        123000,
-      );
-      expect(
-        (await container.read(customerWalletProvider.future)).frozenBalance,
-        45000,
-      );
-      expect(await container.read(customerReviewsProvider.future), isEmpty);
-    },
-  );
+  test('review provider does not expose demo review history', () async {
+    MockDatabase.currentUser = null;
+    final container = ProviderContainer(
+      retry: (_, _) => null,
+      overrides: [
+        customerReviewsRepositoryProvider.overrideWithValue(
+          const _EmptyCustomerReviewsDataSource(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final user = User(
+      id: 'isolation-${DateTime.now().microsecondsSinceEpoch}',
+      name: 'Khách mới',
+      email: 'new@lens.test',
+      role: 'client',
+    );
+    container.read(authUserProvider.notifier).setUser(user);
+    expect(await container.read(customerReviewsProvider.future), isEmpty);
+  });
 
   test(
     'discovery and chat search match Vietnamese names without accents',
@@ -225,15 +200,6 @@ void main() {
           photographers: directory,
         ).getMyReviews(),
         hasLength(1),
-      );
-
-      final wallet = MockCustomerWalletRepository(accountId: accountId);
-      await wallet.addReviewReward(coins: 10000, photographerName: before.name);
-      expect(
-        (await MockCustomerWalletRepository(
-          accountId: accountId,
-        ).getWallet()).coinBalance,
-        10000,
       );
     },
   );
@@ -333,7 +299,7 @@ void main() {
         child: MaterialApp.router(routerConfig: router),
       ),
     );
-    router.go('/customer_home/wallet');
+    router.go('/customer_home/bookings');
     await tester.pump();
     await tester.pump();
     expect(
@@ -392,7 +358,6 @@ void main() {
       '/customer_home/bookings/bk-85102/deposit',
       '/customer_home/bookings/bk-85014/pay',
       '/customer_home/reviews',
-      '/customer_home/wallet',
       '/customer_home/settings/profile',
       '/customer_home/settings/account',
       '/customer_home/settings/notifications',
@@ -447,50 +412,6 @@ void main() {
     expect(discoveryState.errorMessage, contains('API_BASE_URL'));
     expect(tester.takeException(), isNull, reason: 'Explore API error state');
   });
-}
-
-class _FixedWalletDataSource implements CustomerWalletDataSource {
-  const _FixedWalletDataSource(this.wallet);
-
-  final CustomerWallet wallet;
-
-  @override
-  Future<CustomerWallet> getWallet() async => wallet;
-
-  @override
-  Future<CustomerPayoutDestination> getPayoutDestination() async =>
-      const CustomerPayoutDestination(
-        isConfigured: true,
-        bankCode: '970422',
-        accountName: 'Nguyễn An',
-        accountNumberMasked: '••••6789',
-        updatedAt: null,
-      );
-
-  @override
-  Future<CustomerPayoutDestination> savePayoutDestination({
-    required String bankCode,
-    required String accountNumber,
-    required String accountName,
-  }) async => CustomerPayoutDestination(
-    isConfigured: true,
-    bankCode: bankCode,
-    accountName: accountName,
-    accountNumberMasked:
-        '••••${accountNumber.substring(accountNumber.length - 4)}',
-    updatedAt: DateTime.now(),
-  );
-
-  @override
-  Future<WalletWithdrawalRequest> requestWithdrawal({
-    required int amount,
-    required String reason,
-    required String idempotencyKey,
-  }) async => WalletWithdrawalRequest(
-    id: 'withdrawal-test',
-    amount: amount,
-    status: 'requested',
-  );
 }
 
 class _EmptyCustomerReviewsDataSource implements CustomerReviewsDataSource {

@@ -138,7 +138,7 @@ class BookingDetailActions extends ConsumerWidget {
     switch (booking.status) {
       case BookingStatus.awaiting_deposit:
         return BookingDetailActionCard(
-          icon: LucideIcons.walletCards,
+          icon: LucideIcons.creditCard,
           iconColor: AppColors.ember,
           iconBgColor: AppColors.ember.withValues(alpha: 0.1),
           title: 'Chờ đặt cọc giữ lịch',
@@ -406,4 +406,3 @@ class BookingDetailActions extends ConsumerWidget {
     await CancelBookingDialog.show(context, booking);
   }
 }
-

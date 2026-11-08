@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/auth_session_store.dart';
 import '../../../core/network/dio_client.dart';
 import '../../customer/reviews/controllers/customer_reviews_controller.dart';
-import '../../customer/wallet/controllers/customer_wallet_controller.dart';
 import '../models/user_model.dart';
 import '../repositories/api_auth_flow_repository.dart';
 import '../repositories/api_auth_repository.dart';
@@ -33,8 +32,6 @@ class AuthUserNotifier extends Notifier<User?> {
 
   void setUser(User? user) {
     state = user;
-    ref.invalidate(customerWalletProvider);
-    ref.invalidate(customerPayoutDestinationProvider);
     ref.invalidate(customerReviewsProvider);
   }
 
@@ -131,4 +128,3 @@ class AuthUserNotifier extends Notifier<User?> {
 final authUserProvider = NotifierProvider<AuthUserNotifier, User?>(
   () => AuthUserNotifier(),
 );
-
