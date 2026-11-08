@@ -7,13 +7,25 @@ import 'package:lens_app/providers/data_providers.dart';
 
 import 'core/network/auth_session_store.dart';
 
+const _resetAuthSessionOnStartup = bool.fromEnvironment(
+  'LENS_RESET_AUTH_SESSION',
+);
+
 final _rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN', null);
   final sessionStore = AuthSessionStore();
-  await sessionStore.restore();
+  if (_resetAuthSessionOnStartup) {
+    await sessionStore.clear();
+  } else {
+    await sessionStore.restore();
+    final restoredUser = sessionStore.session?.user;
+    if (restoredUser != null && restoredUser.role != 'client') {
+      await sessionStore.clear();
+    }
+  }
 
   runApp(
     ProviderScope(
