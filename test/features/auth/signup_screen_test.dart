@@ -220,44 +220,43 @@ void main() {
     },
   );
 
-  testWidgets(
-    'handles Keycloak upstream errors by showing friendly message and no raw banner',
-    (tester) async {
-      final repo = _MockAuthRepository(
-        errorToThrow: const ApiException(
-          'Keycloak request failed with status 401',
-          statusCode: 502,
-        ),
-      );
+  testWidgets('shows a service error for Keycloak upstream failures', (
+    tester,
+  ) async {
+    final repo = _MockAuthRepository(
+      errorToThrow: const ApiException(
+        'Keycloak request failed with status 401',
+        statusCode: 502,
+      ),
+    );
 
-      await tester.pumpWidget(_createTestApp(repo));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_createTestApp(repo));
+    await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'Trần B');
-      await tester.enterText(
-        find.byType(TextFormField).at(1),
-        'tranb@example.com',
-      );
-      await tester.enterText(find.byType(TextFormField).at(2), 'Password123!');
+    await tester.enterText(find.byType(TextFormField).at(0), 'Trần B');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'tranb@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), 'Password123!');
 
-      await tester.tap(find.widgetWithText(PrimaryButton, 'Tạo tài khoản'));
-      await tester.pump();
+    await tester.tap(find.widgetWithText(PrimaryButton, 'Tạo tài khoản'));
+    await tester.pump();
 
-      // Verify friendly SnackBar is displayed
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(
-        find.text(
-          'Email này đã được sử dụng. Vui lòng đăng nhập hoặc sử dụng email khác.',
-        ),
-        findsOneWidget,
-      );
+    // Verify friendly SnackBar is displayed
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(
+      find.text(
+        'Hệ thống đang bảo trì hoặc gặp sự cố tạm thời. Vui lòng thử lại sau.',
+      ),
+      findsOneWidget,
+    );
 
-      // Verify no raw Keycloak text or 502 bad gateway on form UI
-      expect(find.textContaining('Keycloak'), findsNothing);
-      expect(find.textContaining('502'), findsNothing);
-      expect(find.textContaining('Bad Gateway'), findsNothing);
-    },
-  );
+    // Verify no raw Keycloak text or 502 bad gateway on form UI
+    expect(find.textContaining('Keycloak'), findsNothing);
+    expect(find.textContaining('502'), findsNothing);
+    expect(find.textContaining('Bad Gateway'), findsNothing);
+  });
 
   testWidgets(
     'masks unexpected internal exceptions into friendly user message without crashing UI',

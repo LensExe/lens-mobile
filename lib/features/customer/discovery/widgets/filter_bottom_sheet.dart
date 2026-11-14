@@ -52,6 +52,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     widget.initialCriteria.priceMax,
   );
   late String? _experienceBucket = widget.initialCriteria.experienceBucket;
+  late String _sort = widget.initialCriteria.sort;
 
   void _apply() {
     widget.onApply(
@@ -63,7 +64,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         priceMin: _priceRange.start,
         priceMax: _priceRange.end,
         experienceBucket: _experienceBucket,
-        sort: widget.initialCriteria.sort,
+        sort: _sort,
       ),
     );
     Navigator.of(context).pop();
@@ -71,9 +72,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) => DraggableScrollableSheet(
-    initialChildSize: 0.70,
-    minChildSize: 0.45,
-    maxChildSize: 0.92,
+    initialChildSize: 0.75,
+    minChildSize: 0.50,
+    maxChildSize: 0.95,
     expand: false,
     builder: (context, controller) => Container(
       decoration: const BoxDecoration(
@@ -105,6 +106,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         FilterCriteria.defaultPriceMax,
                       );
                       _experienceBucket = null;
+                      _sort = 'featured';
                     }),
                     child: const Text('Xoá lọc'),
                   ),
@@ -122,6 +124,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               controller: controller,
               padding: const EdgeInsets.all(20),
               children: [
+                Text(
+                  'Sắp xếp theo',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final option in _sortOptions)
+                      _chip(
+                        option.$2,
+                        _sort == option.$1,
+                        () => setState(() => _sort = option.$1),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 Text(
                   'Phong cách chụp',
                   style: AppTypography.titleMd(fontSize: 15),
@@ -255,12 +275,33 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: PrimaryButton(
-              text: 'Áp dụng',
-              height: AppTokens.primaryButtonHeight,
-              onPressed: _apply,
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.canvas,
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.pebble.withValues(alpha: 0.6),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.obsidian.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: PrimaryButton(
+                  text: 'Áp dụng',
+                  height: AppTokens.primaryButtonHeight,
+                  onPressed: _apply,
+                ),
+              ),
             ),
           ),
         ],
@@ -306,8 +347,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _minRating != null ||
       _experienceBucket != null ||
       _priceRange.start > FilterCriteria.defaultPriceMin ||
-      _priceRange.end < FilterCriteria.defaultPriceMax;
+      _priceRange.end < FilterCriteria.defaultPriceMax ||
+      _sort != 'featured';
 }
+
+const _sortOptions = [
+  ('featured', 'Nổi bật'),
+  ('rating', 'Đánh giá cao'),
+  ('price-asc', 'Giá: thấp → cao'),
+  ('price-desc', 'Giá: cao → thấp'),
+];
 
 const _experienceOptions = [
   ('lt1', 'Dưới 1 năm'),

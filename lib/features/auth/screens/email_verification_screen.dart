@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
@@ -123,8 +124,8 @@ class _EmailVerificationScreenState
                 if (!_verified) ...[
                   const SizedBox(height: 8),
                   const Text(
-                    'Theo Backend source hiện tại, phần gửi OTP qua email đang tắt. Nếu không nhận được mã, cần bật Notification/Mail service ở Backend.',
-                    style: TextStyle(color: Colors.deepOrange, height: 1.4),
+                    'Mã xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư chính hoặc thư mục rác (Spam).',
+                    style: TextStyle(color: AppColors.steel, height: 1.4),
                   ),
                 ],
                 if (_error != null) ...[

@@ -57,8 +57,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ? redirect
             : '/customer_home/overview';
         context.go(target);
-      } else {
-        context.go('/customer_home/discovery');
       }
     } catch (e) {
       if (!mounted) return;
@@ -80,9 +78,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Google trên ứng dụng LENS'),
+          title: const Text('Đăng nhập Google'),
           content: const Text(
-            'Backend đã cấp URL đăng nhập, nhưng chỉ có một callback frontend dùng chung. Cần callback/deep link để trả handoff code về đúng ứng dụng trước khi Mobile có thể nhận phiên đăng nhập.',
+            'Tính năng đăng nhập bằng Google đang được hoàn thiện. Vui lòng sử dụng email và mật khẩu để đăng nhập.',
           ),
           actions: [
             TextButton(

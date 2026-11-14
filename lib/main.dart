@@ -59,7 +59,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         _rootScaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
             content: Text(
-              'Không thể tải hồ sơ hiện tại từ Backend: $error',
+              'Không thể tải thông tin tài khoản: $error',
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),

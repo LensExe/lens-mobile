@@ -162,7 +162,7 @@ class Step3ReviewAgreementView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _PolicyBullet(
-                  text: 'Backend tạo yêu cầu đặt lịch ở trạng thái chờ nhiếp ảnh gia. Backend xác định số tiền và các bước thanh toán riêng.',
+                  text: 'Yêu cầu đặt lịch sẽ được gửi đến nhiếp ảnh gia để xác nhận lịch trình trước khi tiến hành thanh toán.',
                 ),
               ],
             ),

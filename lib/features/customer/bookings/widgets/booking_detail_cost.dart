@@ -124,7 +124,7 @@ class BookingDetailCost extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           BookingDetailCostRow(
-            label: 'Backend ghi nhận đã thanh toán',
+            label: 'Đã thanh toán',
             amount: paidAmount,
             highlightColor: AppColors.emerald,
           ),
@@ -139,7 +139,7 @@ class BookingDetailCost extends ConsumerWidget {
             Text(
               paymentState.hasError
                   ? 'Không tải được lịch sử thanh toán. Số dư sẽ được cập nhật sau khi kiểm tra lại.'
-                  : 'Đang đối soát lịch sử thanh toán từ Backend.',
+                  : 'Đang kiểm tra lịch sử thanh toán...',
               style: AppTypography.bodySm(fontSize: 11, color: AppColors.steel),
             ),
           ],

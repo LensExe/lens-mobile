@@ -167,7 +167,7 @@ class OverviewDiscoverySection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Không thể tải gợi ý từ Backend.',
+                      'Không thể tải danh sách gợi ý. Vui lòng thử lại.',
                       style: AppTypography.bodySm(color: AppColors.steel),
                     ),
                     TextButton(

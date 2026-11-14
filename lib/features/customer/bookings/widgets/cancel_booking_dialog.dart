@@ -66,7 +66,7 @@ class _CancelBookingDialogState extends ConsumerState<CancelBookingDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Kiểm tra ước tính khoản hoàn từ Backend trước khi gửi yêu cầu hủy.',
+            'Kiểm tra số tiền hoàn dự kiến trước khi gửi yêu cầu hủy lịch.',
             style: AppTypography.bodySm(color: AppColors.steel),
           ),
           const SizedBox(height: 12),
@@ -83,13 +83,13 @@ class _CancelBookingDialogState extends ConsumerState<CancelBookingDialog> {
                 style: AppTypography.bodySm(color: AppColors.steel),
               ),
               error: (error, stackTrace) => Text(
-                'Chưa tải được số tiền hoàn dự kiến. Backend sẽ tính khoản hoàn theo chính sách khi xử lý yêu cầu hủy.',
+                'Chưa tải được số tiền hoàn dự kiến. Khoản hoàn sẽ được tính theo chính sách hủy dịch vụ.',
                 style: AppTypography.bodySm(color: AppColors.steel),
               ),
               data: (preview) => Text(
                 'Số tiền đã thanh toán còn có thể yêu cầu hoàn: '
                 '${NumberFormat.decimalPattern('vi_VN').format(preview.refundableAmountVnd)} ₫. '
-                '${preview.refundRequiresAdminReview ? 'Yêu cầu hoàn tiền cần quản trị viên xem xét.' : 'Quyết định hoàn tiền sẽ theo Backend.'}',
+                '${preview.refundRequiresAdminReview ? 'Yêu cầu hoàn tiền sẽ được ban quản trị xét duyệt.' : 'Khoản hoàn sẽ được hoàn trả theo chính sách hủy lịch.'}',
                 style: AppTypography.bodySm(color: AppColors.obsidian),
               ),
             ),
@@ -102,7 +102,7 @@ class _CancelBookingDialogState extends ConsumerState<CancelBookingDialog> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               labelText: 'Lý do hủy',
-              hintText: 'Nhập lý do để gửi đến Backend',
+              hintText: 'Nhập lý do hủy lịch của bạn',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -175,7 +175,7 @@ class _CancelBookingDialogState extends ConsumerState<CancelBookingDialog> {
       if (!mounted) return;
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backend không thể hủy booking: $error')),
+        SnackBar(content: Text('Không thể hủy lịch hẹn: $error')),
       );
       return;
     }

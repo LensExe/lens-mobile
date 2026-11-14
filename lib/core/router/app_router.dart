@@ -41,6 +41,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final path = state.uri.path;
       final user = ref.read(authUserProvider);
+      if (user?.role == 'client' && (path == '/login' || path == '/signup')) {
+        final redirect = state.uri.queryParameters['redirect'];
+        if (redirect != null && redirect.startsWith('/customer_home/')) {
+          return redirect;
+        }
+        return '/customer_home/overview';
+      }
       final publicRoute =
           path == '/' ||
           path == '/login' ||

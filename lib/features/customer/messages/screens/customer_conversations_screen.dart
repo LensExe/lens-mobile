@@ -26,7 +26,7 @@ class _CustomerConversationsScreenState
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: const LensTabAppBar(title: 'Tin nhắn'),
+      appBar: const LensTabAppBar(),
       body: RefreshIndicator(
         color: AppColors.ember,
         onRefresh: () =>

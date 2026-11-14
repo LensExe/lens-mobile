@@ -79,7 +79,7 @@ class _Step2ContactLocationViewState extends State<Step2ContactLocationView> {
         Text('Địa điểm chụp', style: AppTypography.headlineSm(fontSize: 19)),
         const SizedBox(height: 8),
         Text(
-          'Backend lưu địa điểm dưới dạng một chuỗi vị trí cho yêu cầu đặt lịch.',
+          'Vui lòng nhập địa chỉ hoặc địa điểm cụ thể bạn muốn thực hiện buổi chụp.',
           style: AppTypography.bodySm(color: AppColors.steel),
         ),
         const SizedBox(height: 20),

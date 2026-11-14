@@ -165,7 +165,12 @@ class ApiPhotographerRepository implements PhotographerRepository {
       final b = right.value;
       final comparison = switch (criteria.sort) {
         'rating' => b.rating.compareTo(a.rating),
-        'price-asc' => a.pricePerSession.compareTo(b.pricePerSession),
+        'price-asc' => () {
+          if (a.pricePerSession <= 0 && b.pricePerSession <= 0) return 0;
+          if (a.pricePerSession <= 0) return 1;
+          if (b.pricePerSession <= 0) return -1;
+          return a.pricePerSession.compareTo(b.pricePerSession);
+        }(),
         'price-desc' => b.pricePerSession.compareTo(a.pricePerSession),
         _ =>
           (b.isFeatured ? 1 : 0).compareTo(a.isFeatured ? 1 : 0) != 0
@@ -274,7 +279,9 @@ PhotographerModel photographerFromApi(
   Map<String, dynamic> json, {
   bool topRated = false,
 }) {
-  final rating = _map(json['rating']);
+  final rating = json['rating'] is Map
+      ? _map(json['rating'])
+      : const <String, dynamic>{};
   final startingPlan = json['starting_plan'] is Map
       ? _map(json['starting_plan'])
       : const <String, dynamic>{};
@@ -290,10 +297,12 @@ PhotographerModel photographerFromApi(
   final cover = directCover.isNotEmpty
       ? directCover
       : (cachedCover != null && cachedCover.isNotEmpty ? cachedCover : '');
+  final rawName = (json['fullname'] ?? json['name'])?.toString().trim();
+  final name = (rawName != null && rawName.isNotEmpty) ? rawName : 'Nhiếp ảnh gia';
 
   return PhotographerModel(
     id: id,
-    name: _requiredString(json['fullname'], 'fullname'),
+    name: name,
     avatarUrl: json['avatar_url']?.toString() ?? '',
     coverImageUrl: cover,
     city: json['location']?.toString() ?? '',
@@ -348,6 +357,14 @@ String _requiredString(Object? value, String field) {
   throw ApiException('Backend không trả về trường $field hợp lệ.');
 }
 
-int _number(Object? value, {int fallback = 0}) =>
-    value is num ? value.toInt() : fallback;
-double _decimal(Object? value) => value is num ? value.toDouble() : 0;
+int _number(Object? value, {int fallback = 0}) {
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? fallback;
+  return fallback;
+}
+
+double _decimal(Object? value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0;
+  return 0;
+}

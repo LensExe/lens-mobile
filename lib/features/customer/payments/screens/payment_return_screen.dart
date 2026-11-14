@@ -57,10 +57,17 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
       final requiredAmount = widget.paymentPurpose == 'deposit'
           ? booking.depositAmount
           : booking.price;
+      if (requiredAmount <= 0) {
+        setState(() {
+          _verified = false;
+          _message = 'Số tiền cần thanh toán không hợp lệ. Vui lòng kiểm tra lại lịch đặt.';
+        });
+        return;
+      }
       if (paidTotal < requiredAmount) {
         setState(() {
           _verified = false;
-          _message = 'Backend chưa ghi nhận đủ khoản thanh toán. Hãy thử kiểm tra lại sau ít phút.';
+          _message = 'Hệ thống chưa ghi nhận đủ khoản thanh toán. Hãy thử kiểm tra lại sau ít phút.';
         });
         return;
       }
@@ -106,7 +113,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _checking
-                      ? 'Lens đang kiểm tra giao dịch với Backend.'
+                      ? 'Đang kiểm tra giao dịch thanh toán của bạn...'
                       : _message ?? 'Bạn có thể quay lại danh sách lịch đặt.',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyMd(color: AppColors.steel),

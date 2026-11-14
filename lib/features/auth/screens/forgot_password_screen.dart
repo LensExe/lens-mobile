@@ -130,7 +130,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         : switch (_step) {
             0 => 'Nhập email tài khoản để nhận mã xác minh.',
             1 => 'Nhập mã 6 chữ số cho tài khoản ${_email.text.trim()}.',
-            _ => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+            _ => 'Mật khẩu mới phải có ít nhất 8 ký tự.',
           };
 
     return Scaffold(
@@ -168,8 +168,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ],
                 if (_step > 0 && !_complete) ...[
                   const _MessageBox(
-                    message: 'Theo Backend source hiện tại, phần gửi OTP qua email đang tắt. Nếu không nhận được mã, cần bật Notification/Mail service ở Backend.',
-                    warning: true,
+                    message: 'Mã xác thực đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư chính hoặc thư mục rác (Spam).',
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -232,9 +231,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               labelText: 'Mật khẩu mới',
                               border: OutlineInputBorder(),
                             ),
-                            validator: (value) => (value ?? '').length >= 6
+                            validator: (value) => (value ?? '').length >= 8
                                 ? null
-                                : 'Mật khẩu cần ít nhất 6 ký tự',
+                                : 'Mật khẩu cần ít nhất 8 ký tự',
                           ),
                           const SizedBox(height: 14),
                           TextFormField(
@@ -293,12 +292,10 @@ class _MessageBox extends StatelessWidget {
   const _MessageBox({
     required this.message,
     this.error = false,
-    this.warning = false,
   });
 
   final String message;
   final bool error;
-  final bool warning;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -306,8 +303,6 @@ class _MessageBox extends StatelessWidget {
     decoration: BoxDecoration(
       color: error
           ? Colors.red.withValues(alpha: 0.08)
-          : warning
-          ? Colors.orange.withValues(alpha: 0.1)
           : Colors.green.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(12),
     ),
@@ -316,8 +311,6 @@ class _MessageBox extends StatelessWidget {
       style: TextStyle(
         color: error
             ? Colors.red.shade800
-            : warning
-            ? Colors.orange.shade900
             : Colors.green.shade800,
       ),
     ),

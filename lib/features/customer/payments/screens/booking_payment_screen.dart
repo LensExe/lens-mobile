@@ -84,8 +84,12 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
       final uri = Uri.tryParse(checkoutUrl);
       if (uri == null ||
           !uri.hasAuthority ||
-          !['https', 'http'].contains(uri.scheme)) {
-        throw StateError('Backend trả về đường dẫn thanh toán không hợp lệ.');
+          uri.host.isEmpty ||
+          (uri.scheme != 'https' &&
+              !(uri.scheme == 'http' &&
+                  const {'localhost', '127.0.0.1', '::1', '10.0.2.2'}
+                      .contains(uri.host.toLowerCase())))) {
+        throw StateError('Đường dẫn thanh toán không hợp lệ. Vui lòng thử lại.');
       }
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened) {
@@ -120,6 +124,13 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
       final requiredAmount = widget.type == BookingPaymentType.deposit
           ? booking.depositAmount
           : booking.price;
+      if (requiredAmount <= 0) {
+        setState(() {
+          _errorMessage =
+              'Số tiền cần thanh toán không hợp lệ. Vui lòng kiểm tra lại lịch đặt.';
+        });
+        return;
+      }
       if (paidTotal < requiredAmount) return;
 
       _paymentReceived = true;
@@ -179,7 +190,7 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
                 Text(
                   _checkoutOpened
                       ? 'Chọn QR/cổng thanh toán hoặc Ví Lens trên web. Sau khi thanh toán được xác nhận, bạn sẽ quay lại ứng dụng.'
-                      : 'Lens đang mở trang thanh toán bảo mật trên web.',
+                      : 'Đang chuẩn bị phiên thanh toán bảo mật trên web.',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyMd(color: AppColors.steel),
                 ),

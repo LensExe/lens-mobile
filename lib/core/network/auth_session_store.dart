@@ -30,7 +30,10 @@ class AuthSessionData {
       'refresh_token',
     );
     final expiresIn = _asInt(json['expires_in']);
-    final role = _normalizeRole(userData['role']?.toString() ?? fallbackRole);
+    final role =
+        _normalizeRole(userData['role']?.toString()) ??
+        _firstSupportedRole(json['roles']) ??
+        _normalizeRole(fallbackRole);
     if (role == null) {
       throw const ApiException(
         'Backend không trả về role hợp lệ cho tài khoản.',
@@ -241,6 +244,15 @@ String? _normalizeRole(String? value) => switch (value?.toLowerCase()) {
   'photographer' => 'photographer',
   _ => null,
 };
+
+String? _firstSupportedRole(Object? value) {
+  if (value is! Iterable) return null;
+  for (final role in value) {
+    final normalized = _normalizeRole(role?.toString());
+    if (normalized != null) return normalized;
+  }
+  return null;
+}
 
 final authSessionStoreProvider = Provider<AuthSessionStore>(
   (ref) => AuthSessionStore(),

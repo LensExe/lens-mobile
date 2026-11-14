@@ -224,9 +224,19 @@ Booking _booking(
   final end = VietnamTime.fromInstant(
     DateTime.parse(_requiredString(json['to'], 'to')),
   );
+  final totalAmount = _requiredPositiveAmount(json['total_amount'], 'total_amount');
+  final depositAmount = _requiredPositiveAmount(
+    json['deposit_amount'],
+    'deposit_amount',
+  );
+  if (depositAmount > totalAmount) {
+    throw const ApiException(
+      'Backend trả về tiền cọc lớn hơn tổng giá trị lịch đặt.',
+    );
+  }
   final status = switch (_requiredString(json['status'], 'status')) {
     'pending' =>
-      paidAmount >= _integer(json['deposit_amount'])
+      paidAmount >= depositAmount
           ? BookingStatus.pending
           : BookingStatus.awaiting_deposit,
     'accepted' => BookingStatus.accepted,
@@ -252,13 +262,13 @@ Booking _booking(
     timeSlot:
         '${DateFormat('HH:mm').format(start)} - ${DateFormat('HH:mm').format(end)}',
     location: _string(json['location']),
-    price: _integer(json['total_amount']),
+    price: totalAmount,
     status: status,
     backendStatus: _requiredString(json['status'], 'status'),
     paidAmount: paidAmount,
     packageId: _string(json['booking_plan_id']),
     packageSnapshot: _packageTerms(json, start, end),
-    depositAmount: _integer(json['deposit_amount']),
+    depositAmount: depositAmount,
     depositPaidAt: _nullableString(json['deposit_paid_at']),
     rating: profile == null
         ? null
@@ -352,6 +362,22 @@ int _integer(Object? value) => value is num
     : value is String
     ? int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? 0
     : 0;
+int _requiredPositiveAmount(Object? value, String field) {
+  int? amount;
+  if (value is int) {
+    amount = value;
+  } else if (value is num && value > 0 && value == value.toInt()) {
+    amount = value.toInt();
+  } else if (value is String) {
+    amount = int.tryParse(value.trim());
+  }
+  if (amount == null || amount <= 0) {
+    throw ApiException(
+      'Backend không trả về trường $field là số tiền dương hợp lệ.',
+    );
+  }
+  return amount;
+}
 int _integerOrFallback(Object? value, {required int fallback}) {
   final parsed = _integer(value);
   return parsed == 0 ? fallback : parsed;

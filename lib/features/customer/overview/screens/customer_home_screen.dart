@@ -86,11 +86,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final firstName = (user?.name ?? 'bạn').split(' ').first;
 
     return LensPage(
-      appBar: LensTabAppBar(
-        title: 'Không gian của bạn',
-        subtitle: '${_greeting()}, $firstName',
-        trailing: _buildProfileButton(context, firstName),
-      ),
+      appBar: const LensTabAppBar(),
       body: RefreshIndicator(
         color: AppColors.ember,
         onRefresh: () => ref
@@ -101,6 +97,30 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppTokens.pageHorizontal,
+                  16,
+                  AppTokens.pageHorizontal,
+                  6,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_greeting()}, $firstName',
+                      style: AppTypography.headlineMd(fontSize: 22),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Không gian quản lý lịch chụp và hoạt động của bạn',
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             SliverToBoxAdapter(
               child: OverviewMetricsRow(
                 bookings: bookings,
@@ -168,34 +188,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileButton(BuildContext context, String firstName) {
-    return Semantics(
-      button: true,
-      label: 'Mở tài khoản',
-      child: InkWell(
-        onTap: () => context.go('/customer_home/more'),
-        borderRadius: BorderRadius.circular(9999),
-        child: Container(
-          width: 42,
-          height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.pebble),
-            boxShadow: const [AppTokens.surfaceShadow],
-            color: AppColors.snow,
-          ),
-          child: Text(
-            firstName.isNotEmpty
-                ? firstName.substring(0, 1).toUpperCase()
-                : 'L',
-            style: AppTypography.titleMd(color: AppColors.obsidian),
-          ),
         ),
       ),
     );

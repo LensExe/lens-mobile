@@ -265,7 +265,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       children: [
         if (_profileLoadError != null) ...[
           _backendCapabilityNote(
-            'Không tải được hồ sơ hiện tại từ Backend: $_profileLoadError',
+            'Không thể tải thông tin hồ sơ: $_profileLoadError',
           ),
           const SizedBox(height: 14),
         ],
@@ -422,22 +422,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 controller: _cityController,
                 hintText: 'TP. Hồ Chí Minh, Hà Nội, Đà Nẵng...',
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.fog,
-                  borderRadius: BorderRadius.circular(
-                    AppTokens.inputFieldRadius,
-                  ),
-                ),
-                child: Text(
-                  'Backend hiện chưa hỗ trợ lưu địa chỉ chi tiết mặc định. '
-                  'Bạn có thể nhập địa chỉ riêng ở bước đặt lịch.',
-                  style: AppTypography.bodySm(color: AppColors.steel)
-                      .copyWith(height: 1.45),
-                ),
-              ),
               const SizedBox(height: 24),
               PrimaryButton(
                 text: 'Lưu thay đổi hồ sơ',
@@ -463,9 +447,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Họ tên, số điện thoại và tỉnh/thành phố được lưu với Backend '
-                  'và tự động điền vào bước đặt lịch. Địa chỉ chi tiết được nhập '
-                  'riêng cho từng booking.',
+                  'Họ tên, số điện thoại và khu vực của bạn sẽ được tự động điền '
+                  'vào bước đặt lịch. Địa chỉ chụp chi tiết sẽ được chọn riêng cho từng buổi chụp.',
                   style: AppTypography.bodySm(color: AppColors.steel)
                       .copyWith(height: 1.45),
                 ),
@@ -551,7 +534,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 18),
 
         _backendCapabilityNote(
-          'Backend hiện chưa cung cấp API xem hoặc thu hồi các phiên đăng nhập khác.',
+          'Tính năng quản lý các phiên đăng nhập khác sẽ sớm ra mắt.',
         ),
       ],
     );

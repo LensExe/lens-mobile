@@ -110,13 +110,13 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
               icon: LucideIcons.lockKeyhole,
               title: 'Gallery chưa thể xem',
               message:
-                  'Backend chưa cho phép truy cập gallery này hoặc gallery chưa được publish. Chi tiết: $error',
+                  'Chưa thể truy cập bộ ảnh này hoặc nhiếp ảnh gia chưa công bố. Vui lòng thử lại sau.',
             ),
             data: (gallery) => gallery.items.isEmpty
                 ? _MessageCard(
                     icon: LucideIcons.images,
                     title: 'Gallery chưa có ảnh',
-                    message: 'Backend chưa trả về ảnh được bàn giao cho booking này.',
+                    message: 'Nhiếp ảnh gia đang chuẩn bị ảnh và sẽ sớm bàn giao tại đây.',
                   )
                 : _GalleryGrid(
                     items: gallery.items,
@@ -135,7 +135,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
                   _MessageCard(
                     icon: LucideIcons.circleAlert,
                     title: 'Chưa xác minh khoản thanh toán',
-                    message: 'Ứng dụng chưa kiểm tra được lịch sử thanh toán từ Backend. Hãy thử tải lại trước khi xác nhận nhận ảnh.',
+                    message: 'Chưa thể xác nhận thông tin thanh toán. Vui lòng thử tải lại trước khi xác nhận nhận ảnh.',
                   ),
                   OutlinedButton.icon(
                     onPressed: () => ref.invalidate(
@@ -154,7 +154,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
                     icon: LucideIcons.creditCard,
                     title: 'Booking chưa được thanh toán đủ',
                     message:
-                        'Backend ghi nhận ${AppTypography.formatCurrency(paidTotal)} / ${AppTypography.formatCurrency(booking.price)} VND đã thanh toán.',
+                        'Đã thanh toán: ${AppTypography.formatCurrency(paidTotal)} / ${AppTypography.formatCurrency(booking.price)} VND.',
                   ),
                   const SizedBox(height: 8),
                   PrimaryButton(
@@ -184,7 +184,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
           ],
           const SizedBox(height: 12),
           Text(
-            'Chỉ ảnh và trạng thái do Backend trả về mới hiển thị. Link tải là link có thời hạn do Backend cấp.',
+            'Link tải ảnh có thời hạn sử dụng. Vui lòng tải các bức ảnh yêu thích về thiết bị của bạn sớm.',
             style: AppTypography.bodySm(fontSize: 12, color: AppColors.steel),
           ),
         ],
@@ -210,7 +210,7 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Backend không thể tải ảnh này: $error')),
+          SnackBar(content: Text('Không thể tải ảnh: $error')),
         );
       }
     } finally {
@@ -227,13 +227,13 @@ class _DeliveryGalleryScreenState extends ConsumerState<DeliveryGalleryScreen> {
           .confirmReceipt(widget.bookingId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Backend đã xác nhận nhận ảnh.')),
+        const SnackBar(content: Text('Đã xác nhận nhận ảnh thành công!')),
       );
       context.go('/customer_home/bookings');
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Backend chưa thể xác nhận nhận ảnh: $error')),
+          SnackBar(content: Text('Chưa thể xác nhận nhận ảnh: $error')),
         );
       }
     } finally {

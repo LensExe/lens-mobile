@@ -183,12 +183,12 @@ class BookingDetailActions extends ConsumerWidget {
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
           title: 'Lịch chụp đã được xác nhận',
           message: shouldOfferRemainingPayment
-              ? 'Backend xác nhận còn ${AppTypography.formatCurrency(outstanding)} cần thanh toán.'
+              ? 'Số tiền còn lại cần thanh toán là ${AppTypography.formatCurrency(outstanding)}.'
               : paymentCheckFailed
               ? 'Chưa xác minh được lịch sử thanh toán. Tạm ẩn nút thanh toán để tránh trả trùng.'
               : isCheckingPayment
-              ? 'Đang xác minh các khoản đã thanh toán với Backend.'
-              : 'Backend đã ghi nhận đủ khoản thanh toán cho booking này.',
+              ? 'Đang kiểm tra trạng thái thanh toán...'
+              : 'Bạn đã hoàn tất thanh toán cho buổi chụp này.',
           primaryAction: shouldOfferRemainingPayment
               ? PrimaryButton(
                   text:
@@ -217,12 +217,12 @@ class BookingDetailActions extends ConsumerWidget {
           iconBgColor: AppColors.emerald.withValues(alpha: 0.1),
           title: 'Buổi chụp đang được thực hiện',
           message: shouldOfferRemainingPayment
-              ? 'Backend xác nhận còn ${AppTypography.formatCurrency(outstanding)} cần thanh toán sau khi buổi chụp hoàn tất.'
+              ? 'Số tiền còn lại ${AppTypography.formatCurrency(outstanding)} sẽ được thanh toán sau khi buổi chụp hoàn tất.'
               : isWaitingForDelivery && !isFullyPaid
               ? 'Buổi chụp đang diễn ra. Thanh toán phần còn lại sau khi nhiếp ảnh gia đánh dấu đã chụp.'
               : isFullyPaid
-              ? 'Backend đã ghi nhận đủ khoản thanh toán. Gallery sẽ xuất hiện sau khi photographer công bố ảnh.'
-              : 'Khoản thanh toán còn lại cần hoàn tất trước khi photographer công bố gallery.',
+              ? 'Bạn đã hoàn tất thanh toán. Bộ ảnh sẽ sẵn sàng sau khi nhiếp ảnh gia hoàn thành chỉnh sửa và đăng tải.'
+              : 'Khoản thanh toán còn lại cần hoàn tất trước khi nhiếp ảnh gia công bố bộ ảnh.',
           primaryAction: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -291,13 +291,13 @@ class BookingDetailActions extends ConsumerWidget {
           title: 'Buổi chụp đã hoàn tất',
           message: booking.galleryPublishedAt == null
               ? shouldOfferRemainingPayment
-                    ? 'Backend xác nhận còn ${AppTypography.formatCurrency(outstanding)} cần thanh toán để nhiếp ảnh gia có thể công bố gallery.'
+                    ? 'Vui lòng thanh toán số tiền còn lại (${AppTypography.formatCurrency(outstanding)}) để mở khóa toàn bộ ảnh trong gallery.'
                     : paymentCheckFailed
                     ? 'Chưa xác minh được lịch sử thanh toán. Hãy kiểm tra lại trước khi thanh toán hoặc nghiệm thu ảnh.'
                     : isCheckingPayment
-                    ? 'Đang xác minh khoản thanh toán với Backend.'
-                    : 'Đã thanh toán đủ. Nhiếp ảnh gia có thể công bố gallery.'
-              : 'Mở gallery đã được Backend công khai để xem ảnh và xác nhận đã nhận.',
+                    ? 'Đang kiểm tra giao dịch thanh toán...'
+                    : 'Đã thanh toán đủ. Nhiếp ảnh gia có thể công bố bộ ảnh.'
+              : 'Bộ ảnh đã sẵn sàng! Mở gallery để xem và lưu lại ảnh của bạn.',
           primaryAction:
               shouldOfferRemainingPayment ||
                   paymentCheckFailed ||
@@ -379,7 +379,7 @@ class BookingDetailActions extends ConsumerWidget {
           iconColor: AppColors.crimson,
           iconBgColor: Color(0x1AE11D48),
           title: 'Yêu cầu bị từ chối',
-          message: 'Backend đã ghi nhận trạng thái từ chối cho booking này.',
+          message: 'Nhiếp ảnh gia không thể nhận lịch hẹn này. Bạn có thể chọn thời gian khác hoặc tìm nhiếp ảnh gia phù hợp.',
         );
 
       case BookingStatus.expired:
@@ -388,7 +388,7 @@ class BookingDetailActions extends ConsumerWidget {
           iconColor: AppColors.steel,
           iconBgColor: AppColors.fog,
           title: 'Yêu cầu đã hết hạn',
-          message: 'Backend đã đóng yêu cầu booking này.',
+          message: 'Yêu cầu đặt lịch đã hết hạn phản hồi và tự động đóng.',
         );
     }
   }

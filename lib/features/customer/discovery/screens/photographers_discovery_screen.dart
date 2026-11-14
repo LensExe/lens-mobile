@@ -43,9 +43,13 @@ class _PhotographersDiscoveryScreenState
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final uri = GoRouterState.of(context).uri;
-      if (uri.queryParameters.isNotEmpty) {
-        ref.read(discoveryControllerProvider.notifier).applyQuery(uri);
+      try {
+        final uri = GoRouterState.of(context).uri;
+        if (uri.queryParameters.isNotEmpty) {
+          ref.read(discoveryControllerProvider.notifier).applyQuery(uri);
+        }
+      } catch (_) {
+        // In case GoRouter is not available
       }
       final criteria = ref.read(discoveryControllerProvider).criteria;
       if (criteria.searchQuery != null && criteria.searchQuery!.isNotEmpty) {
@@ -73,40 +77,44 @@ class _PhotographersDiscoveryScreenState
 
   void _syncUrl() {
     if (!mounted) return;
-    final state = ref.read(discoveryControllerProvider);
-    final criteria = state.criteria;
-    final params = <String, String>{};
-    if (criteria.searchQuery?.trim().isNotEmpty == true) {
-      params['q'] = criteria.searchQuery!.trim();
-    }
-    if (criteria.city?.isNotEmpty == true && criteria.city != 'Tất cả') {
-      params['city'] = criteria.city!;
-    }
-    if (criteria.styles.isNotEmpty) {
-      params['styles'] = criteria.styles.join(',');
-    }
-    if (criteria.minRating != null) {
-      params['rating'] = criteria.minRating!.toString();
-    }
-    if (criteria.hasNarrowedPriceRange) {
-      if (criteria.priceMin > FilterCriteria.defaultPriceMin) {
-        params['priceMin'] = criteria.priceMin.round().toString();
+    try {
+      final state = ref.read(discoveryControllerProvider);
+      final criteria = state.criteria;
+      final params = <String, String>{};
+      if (criteria.searchQuery?.trim().isNotEmpty == true) {
+        params['q'] = criteria.searchQuery!.trim();
       }
-      if (criteria.priceMax < FilterCriteria.defaultPriceMax) {
-        params['priceMax'] = criteria.priceMax.round().toString();
+      if (criteria.city?.isNotEmpty == true && criteria.city != 'Tất cả') {
+        params['city'] = criteria.city!;
       }
-    }
-    if (criteria.experienceBucket != null) {
-      params['exp'] = criteria.experienceBucket!;
-    }
-    if (criteria.sort != 'featured') params['sort'] = criteria.sort;
-    if (state.currentPage > 1) params['page'] = state.currentPage.toString();
-    final target = Uri(
-      path: '/customer_home/discovery',
-      queryParameters: params.isEmpty ? null : params,
-    ).toString();
-    if (GoRouterState.of(context).uri.toString() != target) {
-      context.replace(target);
+      if (criteria.styles.isNotEmpty) {
+        params['styles'] = criteria.styles.join(',');
+      }
+      if (criteria.minRating != null) {
+        params['rating'] = criteria.minRating!.toString();
+      }
+      if (criteria.hasNarrowedPriceRange) {
+        if (criteria.priceMin > FilterCriteria.defaultPriceMin) {
+          params['priceMin'] = criteria.priceMin.round().toString();
+        }
+        if (criteria.priceMax < FilterCriteria.defaultPriceMax) {
+          params['priceMax'] = criteria.priceMax.round().toString();
+        }
+      }
+      if (criteria.experienceBucket != null) {
+        params['exp'] = criteria.experienceBucket!;
+      }
+      if (criteria.sort != 'featured') params['sort'] = criteria.sort;
+      if (state.currentPage > 1) params['page'] = state.currentPage.toString();
+      final target = Uri(
+        path: '/customer_home/discovery',
+        queryParameters: params.isEmpty ? null : params,
+      ).toString();
+      if (GoRouterState.of(context).uri.toString() != target) {
+        context.replace(target);
+      }
+    } catch (_) {
+      // In case GoRouter is not available
     }
   }
 
@@ -114,6 +122,8 @@ class _PhotographersDiscoveryScreenState
     final currentCriteria = ref.read(discoveryControllerProvider).criteria;
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => FilterBottomSheet(
@@ -137,8 +147,6 @@ class _PhotographersDiscoveryScreenState
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: LensTabAppBar(
-        title: 'Khám phá',
-        subtitle: 'Tìm phong cách hình ảnh bạn yêu thích.',
         showNotification: !isGuest,
       ),
       body: SafeArea(
@@ -191,14 +199,27 @@ class _PhotographersDiscoveryScreenState
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
-        22,
+        16,
         AppTokens.pageHorizontal,
         8,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: AnimatedContainer(
+          Text(
+            'Khám phá',
+            style: AppTypography.headlineMd(fontSize: 22),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Tìm phong cách hình ảnh bạn yêu thích.',
+            style: AppTypography.bodySm(color: AppColors.steel),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               height: 56,
               decoration: BoxDecoration(
@@ -312,11 +333,15 @@ class _PhotographersDiscoveryScreenState
           ),
         ],
       ),
-    );
+    ],
+  ),
+);
   }
 
   Widget _buildResultsToolbar(DiscoveryState state) {
     final compactSort = MediaQuery.sizeOf(context).width < 380;
+    final isSortActive = state.criteria.sort != 'featured';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppTokens.pageHorizontal,
@@ -349,37 +374,69 @@ class _PhotographersDiscoveryScreenState
                   .updateFilters(state.criteria.copyWith(sort: sort));
               _syncUrl();
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'featured', child: Text('Nổi bật')),
-              PopupMenuItem(value: 'rating', child: Text('Đánh giá cao')),
-              PopupMenuItem(value: 'price-asc', child: Text('Giá: thấp → cao')),
-              PopupMenuItem(
-                value: 'price-desc',
-                child: Text('Giá: cao → thấp'),
-              ),
+            itemBuilder: (context) => [
+              _buildSortMenuItem('featured', 'Nổi bật', state.criteria.sort),
+              _buildSortMenuItem('rating', 'Đánh giá cao', state.criteria.sort),
+              _buildSortMenuItem('price-asc', 'Giá: thấp → cao', state.criteria.sort),
+              _buildSortMenuItem('price-desc', 'Giá: cao → thấp', state.criteria.sort),
             ],
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.snow,
+                color: isSortActive ? AppColors.obsidian : AppColors.snow,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.pebble),
+                border: Border.all(
+                  color: isSortActive ? AppColors.obsidian : AppColors.pebble,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.arrowDownUp, size: 14),
+                  Icon(
+                    LucideIcons.arrowDownUp,
+                    size: 14,
+                    color: isSortActive ? AppColors.snow : AppColors.obsidian,
+                  ),
                   if (!compactSort) ...[
                     const SizedBox(width: 6),
                     Text(
                       _sortLabel(state.criteria.sort),
-                      style: AppTypography.labelSm(),
+                      style: AppTypography.labelSm(
+                        color: isSortActive
+                            ? AppColors.snow
+                            : AppColors.obsidian,
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildSortMenuItem(
+    String value,
+    String label,
+    String currentSort,
+  ) {
+    final isSelected = value == currentSort;
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected ? AppColors.ember : AppColors.obsidian,
+            ),
+          ),
+          if (isSelected)
+            const Icon(LucideIcons.check, size: 16, color: AppColors.ember),
         ],
       ),
     );

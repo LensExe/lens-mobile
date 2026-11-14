@@ -112,7 +112,7 @@ class BookingWizardController extends Notifier<BookingWizardState> {
       if (request != _availabilityRequest) return;
       state = state.copyWith(
         availabilityMap: const {},
-        errorMessage: 'Không thể tải lịch trống từ Backend: $error',
+        errorMessage: 'Không thể tải lịch trống: $error',
       );
     }
   }

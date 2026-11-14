@@ -352,7 +352,7 @@ class _BookingReviewDialogState extends ConsumerState<BookingReviewDialog> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'Backend đã ghi nhận đánh giá cho ${booking.photographerName}.',
+            'Cảm ơn bạn đã gửi đánh giá cho ${booking.photographerName}!',
           ),
           backgroundColor: AppColors.emerald,
         ),

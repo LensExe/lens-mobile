@@ -29,10 +29,7 @@ class MoreTabScreen extends ConsumerWidget {
 
     return LensPage(
       backgroundColor: AppColors.canvas,
-      appBar: const LensTabAppBar(
-        title: 'Tài khoản & Thiết lập',
-        subtitle: 'Hồ sơ, bảo mật và tuỳ chọn',
-      ),
+      appBar: const LensTabAppBar(),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppTokens.pageHorizontal,
@@ -174,7 +171,7 @@ class MoreTabScreen extends ConsumerWidget {
               _MenuItem(
                 icon: LucideIcons.shieldCheck,
                 title: 'Tài khoản & bảo mật',
-                subtitle: 'Mật khẩu bảo vệ và xác thực 2FA',
+                  subtitle: 'Email xác minh và mật khẩu tài khoản',
                 onTap: () => context.push('/customer_home/settings/account'),
               ),
               _MenuItem(
@@ -190,17 +187,8 @@ class MoreTabScreen extends ConsumerWidget {
 
           // Section 3: Hỗ trợ & Chính sách
           _MenuSection(
-            title: 'HỖ TRỢ & BẢO MẬT',
+          title: 'CHÍNH SÁCH',
             items: [
-              _MenuItem(
-                icon: LucideIcons.headphones,
-                title: 'Trung tâm trợ giúp Lens Care',
-                subtitle: 'Hỗ trợ khách hàng 24/7 và giải quyết khiếu nại',
-                onTap: () => _showMessage(
-                  context,
-                  'Tổng đài Lens Care sẽ kết nối trong giây lát.',
-                ),
-              ),
               _MenuItem(
                 icon: LucideIcons.fileText,
                 title: 'Chính sách bảo vệ quyền lợi Escrow',

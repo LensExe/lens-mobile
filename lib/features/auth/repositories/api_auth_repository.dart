@@ -18,7 +18,7 @@ class ApiAuthRepository implements AuthRepository {
       _authenticate('auth/login', {
         'email': email.trim(),
         'password': password,
-      });
+      }, expectedRole: 'client', authContext: AuthErrorContext.login);
 
   @override
   Future<User> signup({
@@ -32,18 +32,26 @@ class ApiAuthRepository implements AuthRepository {
       'photographer' => 'photographer',
       _ => throw const ApiException('Role đăng ký không được Backend hỗ trợ.'),
     };
-    return _authenticate('auth/register', {
-      'role': backendRole,
-      'fullname': name.trim(),
-      'email': email.trim(),
-      'password': password,
-    }, fallbackRole: backendRole);
+    return _authenticate(
+      'auth/register',
+      {
+        'role': backendRole,
+        'fullname': name.trim(),
+        'email': email.trim(),
+        'password': password,
+      },
+      fallbackRole: backendRole,
+      expectedRole: backendRole == 'customer' ? 'client' : 'photographer',
+      authContext: AuthErrorContext.signup,
+    );
   }
 
   Future<User> _authenticate(
     String path,
     Map<String, Object?> body, {
     String? fallbackRole,
+    String? expectedRole,
+    required AuthErrorContext authContext,
   }) async {
     try {
       final response = await _dio.post<dynamic>(path, data: body);
@@ -52,10 +60,27 @@ class ApiAuthRepository implements AuthRepository {
         data,
         fallbackRole: fallbackRole,
       );
+      if (expectedRole != null && session.user.role != expectedRole) {
+        final actualRole = session.user.role == 'photographer'
+            ? 'nhiếp ảnh gia'
+            : 'khách hàng';
+        final expectedRoleLabel = expectedRole == 'photographer'
+            ? 'nhiếp ảnh gia'
+            : 'khách hàng';
+        throw ApiException(
+          'Tài khoản này thuộc vai trò $actualRole. Vui lòng dùng tài khoản $expectedRoleLabel trong ứng dụng phù hợp.',
+        );
+      }
       await _sessionStore.save(session);
       return session.user;
     } on DioException catch (error) {
-      throw ApiException.fromDio(error);
+      throw ApiException.fromDio(error, authContext: authContext);
+    } on ApiException catch (error) {
+      throw ApiException.fromMessage(
+        error.message,
+        statusCode: error.statusCode,
+        authContext: authContext,
+      );
     }
   }
 
@@ -144,18 +169,18 @@ class ApiAuthRepository implements AuthRepository {
     if (current == null) throw const ApiException('Vui lòng đăng nhập.');
     if (address.trim() != current.address.trim()) {
       throw const ApiException(
-        'Backend chưa có trường địa chỉ chi tiết trong hồ sơ Customer.',
+        'Địa chỉ chi tiết sẽ được nhập riêng ở bước đặt lịch.',
       );
     }
     if (saveAsDefault != null && saveAsDefault != current.saveAsDefault) {
       throw const ApiException(
-        'Backend chưa có chức năng lưu địa chỉ mặc định.',
+        'Chức năng lưu địa chỉ mặc định hiện chưa được hỗ trợ.',
       );
     }
     if (gender != null &&
         gender.isNotEmpty &&
         !const {'male', 'female', 'other'}.contains(gender)) {
-      throw const ApiException('Giới tính không được Backend hỗ trợ.');
+      throw const ApiException('Lựa chọn giới tính không hợp lệ.');
     }
     if (dateOfBirth != null &&
         dateOfBirth.isNotEmpty &&
@@ -226,18 +251,18 @@ class ApiAuthRepository implements AuthRepository {
   @override
   Future<List<ActiveSession>> getActiveSessions() async =>
       throw const ApiException(
-        'Backend hiện chưa có endpoint quản lý các phiên đăng nhập.',
+        'Tính năng quản lý phiên đăng nhập hiện chưa được hỗ trợ.',
       );
 
   @override
   Future<void> revokeSession(String sessionId) async =>
       throw const ApiException(
-        'Backend hiện chưa có endpoint thu hồi từng phiên đăng nhập.',
+        'Tính năng thu hồi phiên đăng nhập hiện chưa được hỗ trợ.',
       );
 
   @override
   Future<void> revokeAllOtherSessions() async => throw const ApiException(
-    'Backend hiện chưa có endpoint thu hồi các phiên đăng nhập khác.',
+    'Tính năng thu hồi các phiên đăng nhập khác hiện chưa được hỗ trợ.',
   );
 }
 

@@ -44,6 +44,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-filter-sheet')));
     await tester.pumpAndSettle();
     expect(find.text('Bộ lọc tìm kiếm'), findsOneWidget);
+    await _tapVisible(tester, find.text('Giá: cao → thấp'));
     await _tapVisible(tester, find.text('Chân dung').first);
     await _tapVisible(tester, find.text('Cưới').first);
     await _tapVisible(tester, find.text('Hà Nội'));
@@ -52,6 +53,7 @@ void main() {
     await _tapVisible(tester, find.text('Áp dụng'));
     await tester.pumpAndSettle();
 
+    expect(applied?.sort, 'price-desc');
     expect(applied?.city, 'Hà Nội');
     expect(applied?.styles, ['Chân dung', 'Cưới']);
     expect(applied?.minRating, 4.8);

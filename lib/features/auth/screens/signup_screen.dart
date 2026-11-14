@@ -108,23 +108,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       final msg = exception.message;
       final code = exception.statusCode;
 
-      if (code == 409 ||
-          msg.contains('409') ||
-          msg.contains('Keycloak request failed with status 401') ||
-          msg.toLowerCase().contains('already exists') ||
-          msg.toLowerCase().contains('user exists') ||
-          msg.toLowerCase().contains('đã tồn tại')) {
+      if (code == 409 || ApiException.isExplicitAccountConflictMessage(msg)) {
         return 'Email này đã được sử dụng. Vui lòng đăng nhập hoặc sử dụng email khác.';
       }
 
-      if (code == 400 ||
-          code == 422 ||
-          msg.contains('Keycloak request failed with status 400') ||
-          msg.toLowerCase().contains('invalid')) {
+      if (code == 401) {
+        return 'Email này đã có tài khoản nhưng mật khẩu không khớp. Vui lòng đăng nhập hoặc dùng chức năng quên mật khẩu.';
+      }
+
+      if (code == 400 || code == 422) {
         return 'Thông tin đăng ký không hợp lệ. Vui lòng kiểm tra lại.';
       }
 
-      if (msg.contains('Keycloak') ||
+      if (msg.toLowerCase().contains('keycloak request failed') ||
           (code != null && code >= 500)) {
         return 'Hệ thống đang bảo trì hoặc gặp sự cố tạm thời. Vui lòng thử lại sau.';
       }

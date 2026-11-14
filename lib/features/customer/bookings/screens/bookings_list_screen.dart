@@ -38,7 +38,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
     if (state.errorMessage != null && state.allBookings.isEmpty) {
       return Scaffold(
         backgroundColor: AppColors.canvas,
-        appBar: const LensTabAppBar(title: 'Lịch chụp của tôi'),
+        appBar: const LensTabAppBar(),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -85,27 +85,28 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: LensTabAppBar(
-        title: 'Lịch chụp của tôi',
-        subtitle: '$totalCount tổng lịch chụp · $needsActionCount cần xử lý',
-        trailing: IconButton(
-          tooltip: 'Tải lại',
-          onPressed: controller.loadBookings,
-          icon: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.snow,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.pebble),
-              boxShadow: const [AppTokens.surfaceShadow],
-            ),
-            child: const Icon(
-              LucideIcons.refreshCw,
-              size: 16,
-              color: AppColors.obsidian,
+        actions: [
+          IconButton(
+            tooltip: 'Tải lại',
+            onPressed: controller.loadBookings,
+            icon: Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.snow,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.pebble),
+                boxShadow: const [AppTokens.surfaceShadow],
+              ),
+              child: const Icon(
+                LucideIcons.refreshCw,
+                size: 15,
+                color: AppColors.obsidian,
+              ),
             ),
           ),
-        ),
+        ],
       ),
       body: RefreshIndicator(
         color: AppColors.ember,
@@ -115,6 +116,30 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppTokens.pageHorizontal,
+                  16,
+                  AppTokens.pageHorizontal,
+                  8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lịch chụp của tôi',
+                      style: AppTypography.headlineMd(fontSize: 22),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$totalCount tổng lịch chụp · $needsActionCount cần xử lý',
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             // 1. Search Bar (Flow 9)
             SliverToBoxAdapter(
               child: Padding(

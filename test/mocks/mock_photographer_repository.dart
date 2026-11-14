@@ -356,7 +356,12 @@ class MockPhotographerRepository implements PhotographerRepository {
       filteredList.sort(
         (a, b) => switch (criteria.sort) {
           'rating' => b.rating.compareTo(a.rating),
-          'price-asc' => a.pricePerSession.compareTo(b.pricePerSession),
+          'price-asc' => () {
+            if (a.pricePerSession <= 0 && b.pricePerSession <= 0) return 0;
+            if (a.pricePerSession <= 0) return 1;
+            if (b.pricePerSession <= 0) return -1;
+            return a.pricePerSession.compareTo(b.pricePerSession);
+          }(),
           'price-desc' => b.pricePerSession.compareTo(a.pricePerSession),
           _ => (b.isFeatured ? 1 : 0).compareTo(a.isFeatured ? 1 : 0),
         },

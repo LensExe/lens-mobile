@@ -146,7 +146,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Chỉ booking ở trạng thái completed mới đủ điều kiện. Backend lưu đánh giá tổng thể, đúng giờ và thái độ để đồng bộ lịch sử trên các thiết bị.',
+                      'Bạn có thể gửi đánh giá sau khi buổi chụp hoàn thành. Đánh giá của bạn giúp nâng cao chất lượng dịch vụ và hỗ trợ cộng đồng LENS.',
                       style: AppTypography.bodySm(
                         fontSize: 12,
                         color: AppColors.steel,
@@ -189,7 +189,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
               if (reviewable.isEmpty)
                 const ReviewEmptyState(
                   title: 'Chưa có buổi chụp nào cần đánh giá',
-                  message: 'Sau khi Backend chuyển booking sang completed, bạn có thể gửi đánh giá cho nhiếp ảnh gia.',
+                  message: 'Sau khi buổi chụp hoàn thành, bạn có thể gửi đánh giá cho nhiếp ảnh gia tại đây.',
                 )
               else
                 ...reviewable.map(
@@ -205,7 +205,7 @@ class _ReviewsScreenState extends ConsumerState<ReviewsScreen> {
               if (reviews.isEmpty)
                 const ReviewEmptyState(
                   title: 'Bạn chưa có đánh giá đã gửi',
-                  message: 'Những đánh giá đã được Backend lưu sẽ xuất hiện tại đây.',
+                  message: 'Những đánh giá bạn đã gửi sẽ xuất hiện tại đây.',
                 )
               else
                 ...reviews.map(
