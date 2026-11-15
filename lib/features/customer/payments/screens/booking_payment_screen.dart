@@ -87,9 +87,15 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
           uri.host.isEmpty ||
           (uri.scheme != 'https' &&
               !(uri.scheme == 'http' &&
-                  const {'localhost', '127.0.0.1', '::1', '10.0.2.2'}
-                      .contains(uri.host.toLowerCase())))) {
-        throw StateError('Đường dẫn thanh toán không hợp lệ. Vui lòng thử lại.');
+                  const {
+                    'localhost',
+                    '127.0.0.1',
+                    '::1',
+                    '10.0.2.2',
+                  }.contains(uri.host.toLowerCase())))) {
+        throw StateError(
+          'Đường dẫn thanh toán không hợp lệ. Vui lòng thử lại.',
+        );
       }
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened) {
@@ -99,11 +105,22 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
       setState(() => _checkoutOpened = true);
     } catch (error) {
       if (mounted) {
-        setState(() => _errorMessage = error.toString());
+        setState(() => _errorMessage = _checkoutErrorMessage(error));
       }
     } finally {
       if (mounted) setState(() => _isOpeningCheckout = false);
     }
+  }
+
+  String _checkoutErrorMessage(Object error) {
+    final message = error.toString().replaceFirst(
+      RegExp(r'^(Exception|ApiException):\s*'),
+      '',
+    );
+    if (message.toLowerCase().contains('no route matched with those values')) {
+      return 'Dịch vụ thanh toán hiện chưa khả dụng. Vui lòng thử lại sau.';
+    }
+    return message;
   }
 
   Future<void> _verifyPayment() async {
@@ -126,8 +143,7 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
           : booking.price;
       if (requiredAmount <= 0) {
         setState(() {
-          _errorMessage =
-              'Số tiền cần thanh toán không hợp lệ. Vui lòng kiểm tra lại lịch đặt.';
+          _errorMessage = 'Số tiền cần thanh toán không hợp lệ. Vui lòng kiểm tra lại lịch đặt.';
         });
         return;
       }
@@ -190,7 +206,11 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen>
                 Text(
                   _checkoutOpened
                       ? 'Chọn QR/cổng thanh toán hoặc Ví Lens trên web. Sau khi thanh toán được xác nhận, bạn sẽ quay lại ứng dụng.'
-                      : 'Đang chuẩn bị phiên thanh toán bảo mật trên web.',
+                      : _errorMessage != null
+                      ? 'Chưa thể mở trang thanh toán.'
+                      : _isOpeningCheckout
+                      ? 'Đang chuẩn bị phiên thanh toán bảo mật trên web.'
+                      : 'Trang thanh toán bảo mật sẽ mở trong trình duyệt.',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyMd(color: AppColors.steel),
                 ),

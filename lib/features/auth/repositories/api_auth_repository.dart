@@ -15,10 +15,12 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<User> login({required String email, required String password}) =>
-      _authenticate('auth/login', {
-        'email': email.trim(),
-        'password': password,
-      }, expectedRole: 'client', authContext: AuthErrorContext.login);
+      _authenticate(
+        'auth/login',
+        {'email': email.trim(), 'password': password},
+        expectedRole: 'client',
+        authContext: AuthErrorContext.login,
+      );
 
   @override
   Future<User> signup({

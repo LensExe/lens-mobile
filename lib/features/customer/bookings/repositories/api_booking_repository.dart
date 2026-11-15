@@ -224,7 +224,10 @@ Booking _booking(
   final end = VietnamTime.fromInstant(
     DateTime.parse(_requiredString(json['to'], 'to')),
   );
-  final totalAmount = _requiredPositiveAmount(json['total_amount'], 'total_amount');
+  final totalAmount = _requiredPositiveAmount(
+    json['total_amount'],
+    'total_amount',
+  );
   final depositAmount = _requiredPositiveAmount(
     json['deposit_amount'],
     'deposit_amount',
@@ -378,6 +381,7 @@ int _requiredPositiveAmount(Object? value, String field) {
   }
   return amount;
 }
+
 int _integerOrFallback(Object? value, {required int fallback}) {
   final parsed = _integer(value);
   return parsed == 0 ? fallback : parsed;

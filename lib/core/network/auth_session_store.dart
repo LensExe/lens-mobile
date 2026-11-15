@@ -32,6 +32,7 @@ class AuthSessionData {
     final expiresIn = _asInt(json['expires_in']);
     final role =
         _normalizeRole(userData['role']?.toString()) ??
+        _firstSupportedRole(userData['roles']) ??
         _firstSupportedRole(json['roles']) ??
         _normalizeRole(fallbackRole);
     if (role == null) {

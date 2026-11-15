@@ -146,9 +146,7 @@ class _PhotographersDiscoveryScreenState
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: LensTabAppBar(
-        showNotification: !isGuest,
-      ),
+      appBar: LensTabAppBar(showNotification: !isGuest),
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -206,10 +204,7 @@ class _PhotographersDiscoveryScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Khám phá',
-            style: AppTypography.headlineMd(fontSize: 22),
-          ),
+          Text('Khám phá', style: AppTypography.headlineMd(fontSize: 22)),
           const SizedBox(height: 2),
           Text(
             'Tìm phong cách hình ảnh bạn yêu thích.',
@@ -220,122 +215,122 @@ class _PhotographersDiscoveryScreenState
             children: [
               Expanded(
                 child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.snow,
-                borderRadius: BorderRadius.circular(17),
-                border: Border.all(
-                  color: _isSearchFocused
-                      ? AppColors.obsidian
-                      : AppColors.pebble,
-                  width: _isSearchFocused ? 1.2 : 0.8,
-                ),
-                boxShadow: _isSearchFocused
-                    ? const [AppTokens.surfaceShadow]
-                    : null,
-              ),
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                onChanged: _onSearchChanged,
-                textInputAction: TextInputAction.search,
-                style: AppTypography.bodyMd(color: AppColors.obsidian),
-                decoration: InputDecoration(
-                  hintText: 'Tên nhiếp ảnh gia hoặc phong cách',
-                  hintStyle: AppTypography.bodySm(color: AppColors.ash),
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.only(left: 15, right: 11),
-                    child: Icon(
-                      LucideIcons.search,
-                      color: AppColors.obsidian,
-                      size: 19,
-                    ),
-                  ),
-                  prefixIconConstraints: const BoxConstraints(minWidth: 48),
-                  suffixIcon: _searchController.text.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Xóa tìm kiếm',
-                          onPressed: () {
-                            _searchController.clear();
-                            ref
-                                .read(discoveryControllerProvider.notifier)
-                                .search('');
-                            _syncUrl();
-                            setState(() {});
-                          },
-                          icon: const Icon(
-                            LucideIcons.x,
-                            size: 17,
-                            color: AppColors.steel,
-                          ),
-                        ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 17),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Semantics(
-            button: true,
-            label: state.activeFilterCount == 0
-                ? 'Mở bộ lọc'
-                : 'Mở bộ lọc, đang áp dụng ${state.activeFilterCount}',
-            child: Material(
-              color: AppColors.obsidian,
-              borderRadius: BorderRadius.circular(17),
-              child: InkWell(
-                onTap: _openFilterBottomSheet,
-                borderRadius: BorderRadius.circular(17),
-                child: SizedBox(
-                  width: 56,
+                  duration: const Duration(milliseconds: 180),
                   height: 56,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(
-                        LucideIcons.slidersHorizontal,
-                        color: AppColors.snow,
-                        size: 19,
+                  decoration: BoxDecoration(
+                    color: AppColors.snow,
+                    borderRadius: BorderRadius.circular(17),
+                    border: Border.all(
+                      color: _isSearchFocused
+                          ? AppColors.obsidian
+                          : AppColors.pebble,
+                      width: _isSearchFocused ? 1.2 : 0.8,
+                    ),
+                    boxShadow: _isSearchFocused
+                        ? const [AppTokens.surfaceShadow]
+                        : null,
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: _onSearchChanged,
+                    textInputAction: TextInputAction.search,
+                    style: AppTypography.bodyMd(color: AppColors.obsidian),
+                    decoration: InputDecoration(
+                      hintText: 'Tên nhiếp ảnh gia hoặc phong cách',
+                      hintStyle: AppTypography.bodySm(color: AppColors.ash),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(left: 15, right: 11),
+                        child: Icon(
+                          LucideIcons.search,
+                          color: AppColors.obsidian,
+                          size: 19,
+                        ),
                       ),
-                      if (state.activeFilterCount > 0)
-                        Positioned(
-                          top: 6,
-                          right: 6,
-                          child: Container(
-                            width: 17,
-                            height: 17,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: AppColors.ember,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              state.activeFilterCount.toString(),
-                              style: AppTypography.numeric(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.snow,
+                      prefixIconConstraints: const BoxConstraints(minWidth: 48),
+                      suffixIcon: _searchController.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Xóa tìm kiếm',
+                              onPressed: () {
+                                _searchController.clear();
+                                ref
+                                    .read(discoveryControllerProvider.notifier)
+                                    .search('');
+                                _syncUrl();
+                                setState(() {});
+                              },
+                              icon: const Icon(
+                                LucideIcons.x,
+                                size: 17,
+                                color: AppColors.steel,
                               ),
                             ),
-                          ),
-                        ),
-                    ],
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 17),
+                    ),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Semantics(
+                button: true,
+                label: state.activeFilterCount == 0
+                    ? 'Mở bộ lọc'
+                    : 'Mở bộ lọc, đang áp dụng ${state.activeFilterCount}',
+                child: Material(
+                  color: AppColors.obsidian,
+                  borderRadius: BorderRadius.circular(17),
+                  child: InkWell(
+                    onTap: _openFilterBottomSheet,
+                    borderRadius: BorderRadius.circular(17),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          const Icon(
+                            LucideIcons.slidersHorizontal,
+                            color: AppColors.snow,
+                            size: 19,
+                          ),
+                          if (state.activeFilterCount > 0)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                width: 17,
+                                height: 17,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.ember,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  state.activeFilterCount.toString(),
+                                  style: AppTypography.numeric(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.snow,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    ],
-  ),
-);
+    );
   }
 
   Widget _buildResultsToolbar(DiscoveryState state) {
@@ -377,8 +372,16 @@ class _PhotographersDiscoveryScreenState
             itemBuilder: (context) => [
               _buildSortMenuItem('featured', 'Nổi bật', state.criteria.sort),
               _buildSortMenuItem('rating', 'Đánh giá cao', state.criteria.sort),
-              _buildSortMenuItem('price-asc', 'Giá: thấp → cao', state.criteria.sort),
-              _buildSortMenuItem('price-desc', 'Giá: cao → thấp', state.criteria.sort),
+              _buildSortMenuItem(
+                'price-asc',
+                'Giá: thấp → cao',
+                state.criteria.sort,
+              ),
+              _buildSortMenuItem(
+                'price-desc',
+                'Giá: cao → thấp',
+                state.criteria.sort,
+              ),
             ],
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
