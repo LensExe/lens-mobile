@@ -64,12 +64,14 @@ class ApiAuthFlowRepository {
     });
   }
 
-  /// Starts the Backend OAuth flow. The server uses one configured frontend
-  /// callback URI, so mobile cannot finish the handoff without app-specific
-  /// callback routing.
+  /// Starts the Backend OAuth flow and routes its one-time handoff to the
+  /// customer mobile app.
   Future<Uri> getGoogleAuthorizationUrl() async {
     try {
-      final response = await _dio.get<dynamic>('keycloak/google/login');
+      final response = await _dio.get<dynamic>(
+        'keycloak/google/login',
+        queryParameters: const {'client': 'client_mobile'},
+      );
       final payload = _payload(response.data);
       final value = payload['authorization_url'];
       final uri = value is String ? Uri.tryParse(value) : null;
@@ -85,8 +87,7 @@ class ApiAuthFlowRepository {
   }
 
   /// Exchanges the one-time code produced by /keycloak/google/callback.
-  /// Mobile can call this after receiving the handoff code. The current
-  /// Backend contract does not select a callback URI per app.
+  /// Call this after the app receives the handoff code from its deep link.
   Future<User> exchangeGoogleCode(String code) async {
     try {
       final response = await _dio.get<dynamic>(

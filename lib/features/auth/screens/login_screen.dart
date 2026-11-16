@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -74,26 +75,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _startGoogleLogin() async {
     if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
     try {
-      await ref.read(authFlowRepositoryProvider).getGoogleAuthorizationUrl();
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Google trên ứng dụng LENS'),
-          content: const Text(
-            'Backend đã cấp URL đăng nhập, nhưng chỉ có một callback frontend dùng chung. Cần callback/deep link để trả handoff code về đúng ứng dụng trước khi Mobile có thể nhận phiên đăng nhập.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Đã hiểu'),
-            ),
-          ],
-        ),
-      );
+      final authorizationUrl = await ref
+          .read(authFlowRepositoryProvider)
+          .getGoogleAuthorizationUrl();
+      if (!await launchUrl(
+        authorizationUrl,
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception(
+          'Không thể mở trang đăng nhập Google trên thiết bị này.',
+        );
+      }
     } catch (error) {
-      if (mounted) _showMessage(error.toString());
+      if (mounted) _showMessage(error.toString().replaceAll('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
