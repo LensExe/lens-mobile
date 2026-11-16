@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lens_app/providers/data_providers.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
 import 'package:lens_app/features/auth/screens/login_screen.dart';
+import 'package:lens_app/features/auth/screens/google_auth_callback_screen.dart';
 import 'package:lens_app/features/auth/screens/signup_screen.dart';
 import 'package:lens_app/features/auth/screens/forgot_password_screen.dart';
 import 'package:lens_app/features/auth/screens/email_verification_screen.dart';
@@ -51,6 +52,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final publicRoute =
           path == '/' ||
           path == '/login' ||
+          path == '/callback' ||
           path == '/signup' ||
           path == '/forgot-password' ||
           path == '/gallery' ||
@@ -82,6 +84,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) =>
             LoginScreen(redirect: state.uri.queryParameters['redirect']),
+      ),
+      GoRoute(
+        path: '/callback',
+        builder: (context, state) => GoogleAuthCallbackScreen(
+          code: state.uri.queryParameters['code'] ?? '',
+        ),
       ),
       GoRoute(
         path: '/signup',
