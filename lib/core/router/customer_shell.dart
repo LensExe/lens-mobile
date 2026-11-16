@@ -1,31 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../theme/app_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-class CustomerShell extends StatelessWidget {
+import '../../features/customer/messages/repositories/api_customer_chat_repository.dart';
+import '../../features/customer/messages/services/customer_chat_realtime.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_tokens.dart';
+import '../theme/app_typography.dart';
+import '../widgets/glass_container.dart';
+
+class CustomerShell extends ConsumerWidget {
   final Widget child;
 
   const CustomerShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(customerChatRealtimeClientProvider);
+    final unread =
+        ref
+            .watch(customerConversationsProvider)
+            .asData
+            ?.value
+            .fold<int>(
+              0,
+              (sum, conversation) => sum + conversation.unreadCount,
+            ) ??
+        0;
+    final selectedIndex = _calculateSelectedIndex(context);
+    const destinations = [
+      _NavDestination(LucideIcons.search, 'Khám phá'),
+      _NavDestination(LucideIcons.house, 'Tổng quan'),
+      _NavDestination(LucideIcons.calendarDays, 'Lịch đặt'),
+      _NavDestination(LucideIcons.messageCircle, 'Tin nhắn'),
+      _NavDestination(LucideIcons.menu, 'Khác'),
+    ];
+
     return Scaffold(
+      extendBody: true,
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _calculateSelectedIndex(context),
-        onTap: (int index) => _onItemTapped(index, context),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.obsidian,
-        unselectedItemColor: AppColors.steel,
-        backgroundColor: AppColors.snow,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(LucideIcons.search), label: 'Khám phá'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: 'Tổng quan'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.calendar), label: 'Lịch đặt'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.messageSquare), label: 'Tin nhắn'),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.menu), label: 'Khác'),
-        ],
+      bottomNavigationBar: GlassContainer.translucentBar(
+        isTop: true,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 7, 8, 3),
+            child: Row(
+              children: [
+                for (var index = 0; index < destinations.length; index++)
+                  Expanded(
+                    child: _CustomerNavItem(
+                      destination: destinations[index],
+                      selected: selectedIndex == index,
+                      unreadCount: index == 3 ? unread : 0,
+                      onTap: () => _onItemTapped(index, context),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -37,7 +72,7 @@ class CustomerShell extends StatelessWidget {
     if (location.startsWith('/customer_home/bookings')) return 2;
     if (location.startsWith('/customer_home/messages')) return 3;
     if (location.startsWith('/customer_home/more')) return 4;
-    return 0; // Default to Discovery
+    return 0;
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -58,5 +93,106 @@ class CustomerShell extends StatelessWidget {
         context.go('/customer_home/more');
         break;
     }
+  }
+}
+
+class _NavDestination {
+  final IconData icon;
+  final String label;
+
+  const _NavDestination(this.icon, this.label);
+}
+
+class _CustomerNavItem extends StatelessWidget {
+  final _NavDestination destination;
+  final bool selected;
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const _CustomerNavItem({
+    required this.destination,
+    required this.selected,
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = selected ? AppColors.obsidian : AppColors.steel;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: destination.label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          height: 54,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    width: 36,
+                    height: 27,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.ember.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppTokens.pillRadius),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      destination.icon,
+                      size: 19,
+                      color: selected ? AppColors.ember : iconColor,
+                    ),
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: -4,
+                      right: -5,
+                      child: Container(
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          color: AppColors.ember,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          unreadCount > 99 ? '99+' : '$unreadCount',
+                          style: AppTypography.numeric(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.snow,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              Text(
+                destination.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelSm(
+                  color: iconColor,
+                  fontSize: 10,
+                ).copyWith(fontWeight: selected ? FontWeight.w700 : null),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

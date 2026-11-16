@@ -1,0 +1,253 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/primary_button.dart';
+import '../controllers/booking_wizard_controller.dart';
+import '../widgets/booking_stepper_header.dart';
+import '../widgets/step1_package_schedule_view.dart';
+import '../widgets/step2_contact_location_view.dart';
+import '../widgets/step3_review_agreement_view.dart';
+
+class BookingWizardScreen extends ConsumerStatefulWidget {
+  final String photographerId;
+  final String? initialPackageId;
+
+  const BookingWizardScreen({
+    super.key,
+    required this.photographerId,
+    this.initialPackageId,
+  });
+
+  @override
+  ConsumerState<BookingWizardScreen> createState() =>
+      _BookingWizardScreenState();
+}
+
+class _BookingWizardScreenState extends ConsumerState<BookingWizardScreen> {
+  DateTime? _lastSubmitTime;
+  Timer? _armTimer;
+  bool _confirmArmed = false;
+
+  @override
+  void dispose() {
+    _armTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armConfirmation() {
+    _armTimer?.cancel();
+    setState(() => _confirmArmed = false);
+    _armTimer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _confirmArmed = true);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_initializeBooking);
+  }
+
+  @override
+  void didUpdateWidget(covariant BookingWizardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.photographerId != widget.photographerId ||
+        oldWidget.initialPackageId != widget.initialPackageId) {
+      Future.microtask(_initializeBooking);
+    }
+  }
+
+  void _initializeBooking() {
+    if (!mounted) return;
+    ref.invalidate(bookingWizardControllerProvider);
+    ref
+        .read(bookingWizardControllerProvider.notifier)
+        .init(widget.photographerId, packageId: widget.initialPackageId);
+  }
+
+  void _onNext() {
+    final controller = ref.read(bookingWizardControllerProvider.notifier);
+    final state = ref.read(bookingWizardControllerProvider);
+
+    if (state.currentStep == 0) {
+      if (!state.isStep1Valid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng chọn đầy đủ gói chụp và khung giờ bắt đầu'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      controller.nextStep();
+    } else if (state.currentStep == 1) {
+      if (!state.isStep2Valid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng nhập địa điểm chụp.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      controller.nextStep();
+      _armConfirmation();
+    } else if (state.currentStep == 2) {
+      _onSubmit();
+    }
+  }
+
+  void _onBack() {
+    final controller = ref.read(bookingWizardControllerProvider.notifier);
+    final state = ref.read(bookingWizardControllerProvider);
+
+    if (state.currentStep > 0) {
+      controller.prevStep();
+    } else {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/customer_home/discovery');
+      }
+    }
+  }
+
+  Future<void> _onSubmit() async {
+    if (!_confirmArmed) return;
+    // Chống bấm đúp nhanh 400ms theo tài liệu nghiệp vụ
+    final now = DateTime.now();
+    if (_lastSubmitTime != null &&
+        now.difference(_lastSubmitTime!).inMilliseconds < 400) {
+      return;
+    }
+    _lastSubmitTime = now;
+
+    final controller = ref.read(bookingWizardControllerProvider.notifier);
+    final state = ref.read(bookingWizardControllerProvider);
+
+    if (!state.agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Vui lòng đồng ý với điều khoản đặt lịch và chính sách đặt cọc',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final booking = await controller.submitBooking();
+    if (!mounted) return;
+
+    if (booking != null) {
+      // Chuyển thẳng sang Bước 4: Màn hình Đặt cọc dùng chung với booking detail.
+      context.go('/customer_home/bookings/${booking.id}/deposit');
+    } else {
+      final error =
+          ref.read(bookingWizardControllerProvider).errorMessage ??
+          'Không thể tạo đơn đặt lịch, vui lòng thử lại';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(bookingWizardControllerProvider);
+    final controller = ref.read(bookingWizardControllerProvider.notifier);
+
+    bool isCtaEnabled = false;
+    String ctaText = 'Tiếp tục';
+
+    if (state.currentStep == 0) {
+      isCtaEnabled = state.isStep1Valid;
+      ctaText = 'Tiếp tục: Điền thông tin';
+    } else if (state.currentStep == 1) {
+      isCtaEnabled = state.isStep2Valid;
+      ctaText = 'Tiếp tục: Xem lại & Cam kết';
+    } else if (state.currentStep == 2) {
+      isCtaEnabled =
+          _confirmArmed && state.agreedToTerms && !state.isSubmitting;
+      ctaText = 'Tiếp tục thanh toán cọc';
+    }
+
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Top Stepper Header
+            BookingStepperHeader(
+              currentStep: state.currentStep,
+              onBack: _onBack,
+            ),
+
+            // Step Content
+            Expanded(
+              child: IndexedStack(
+                index: state.currentStep,
+                children: [
+                  Step1PackageScheduleView(
+                    state: state,
+                    onSelectPackage: controller.selectPackage,
+                    onSelectDate: controller.selectDate,
+                    onSelectTimeSlot: controller.selectTimeSlot,
+                  ),
+                  Step2ContactLocationView(
+                    state: state,
+                    onNameChanged: controller.updateContactName,
+                    onPhoneChanged: controller.updateContactPhone,
+                    onCityChanged: controller.updateCity,
+                    onAddressChanged: controller.updateAddressDetail,
+                    onNoteChanged: controller.updateNote,
+                    onSaveDefaultChanged: controller.toggleSaveAsDefault,
+                  ),
+                  Step3ReviewAgreementView(
+                    state: state,
+                    onJumpToStep: controller.goToStep,
+                    onToggleAgreement: controller.toggleAgreedToTerms,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          bottomInset > 0 ? bottomInset + 4 : 16,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: AppColors.pebble, width: 1.0),
+          ),
+          boxShadow: [AppTokens.surfaceShadow],
+        ),
+        child: PrimaryButton(
+          text: ctaText,
+          isLoading: state.isSubmitting,
+          onPressed: isCtaEnabled ? _onNext : null,
+          height: AppTokens.primaryButtonHeight, // 52px
+        ),
+      ),
+    );
+  }
+}

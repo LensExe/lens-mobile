@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_tokens.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../models/photographer_detail_model.dart';
 
 class PortfolioTabView extends StatelessWidget {
@@ -36,7 +39,9 @@ class PortfolioTabView extends StatelessWidget {
             ),
     );
 
-    final regularItems = items.where((item) => item.id != featuredItem.id).toList();
+    final regularItems = items
+        .where((item) => item.id != featuredItem.id)
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -59,18 +64,19 @@ class PortfolioTabView extends StatelessWidget {
                   onTap: () => onStyleSelected(style),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFF5A00) : const Color(0xFFEEEEEF),
-                      borderRadius: BorderRadius.circular(9999),
+                      color: isSelected ? AppColors.obsidian : AppColors.fog,
+                      borderRadius: BorderRadius.circular(AppTokens.pillRadius),
                     ),
                     child: Center(
                       child: Text(
                         style,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF5F5E60),
-                          fontSize: 11.5,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        style: AppTypography.labelSm(
+                          color: isSelected ? AppColors.snow : AppColors.steel,
                         ),
                       ),
                     ),
@@ -101,7 +107,9 @@ class PortfolioTabView extends StatelessWidget {
     return GestureDetector(
       onTap: () => onItemTap?.call(item),
       child: Container(
-        height: 300,
+        height: (MediaQuery.sizeOf(context).width * .88)
+            .clamp(300.0, 390.0)
+            .toDouble(),
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
@@ -120,7 +128,8 @@ class PortfolioTabView extends StatelessWidget {
             CachedNetworkImage(
               imageUrl: item.imageUrl,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: const Color(0xFFE8E8E9)),
+              placeholder: (context, url) =>
+                  Container(color: const Color(0xFFE8E8E9)),
               errorWidget: (context, url, error) => Container(
                 color: const Color(0xFFE8E8E9),
                 child: const Icon(LucideIcons.image, color: Color(0xFF5F5E60)),
@@ -149,58 +158,30 @@ class PortfolioTabView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (item.subtitle.isNotEmpty)
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.88),
-                              borderRadius: BorderRadius.circular(9999),
-                            ),
-                            child: Text(
-                              item.subtitle,
-                              style: const TextStyle(
-                                color: Color(0xFF1A1C1D),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      if (item.cameraGear.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(9999),
-                            border: Border.all(color: Colors.white24, width: 0.5),
-                          ),
-                          child: Text(
-                            item.cameraGear,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
+                  if (item.style.isNotEmpty) ...[
+                    Text(
+                      item.style.toUpperCase(),
+                      style: AppTypography.labelSm(color: AppColors.snow),
+                    ),
+                    const SizedBox(height: 5),
+                  ],
                   Text(
                     item.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2,
-                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.headlineSm(color: AppColors.snow),
                   ),
+                  if (item.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySm(
+                        color: AppColors.snow.withValues(alpha: .88),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -243,10 +224,14 @@ class PortfolioTabView extends StatelessWidget {
                 CachedNetworkImage(
                   imageUrl: item.imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: const Color(0xFFE8E8E9)),
+                  placeholder: (context, url) =>
+                      Container(color: const Color(0xFFE8E8E9)),
                   errorWidget: (context, url, error) => Container(
                     color: const Color(0xFFE8E8E9),
-                    child: const Icon(LucideIcons.image, color: Color(0xFF5F5E60)),
+                    child: const Icon(
+                      LucideIcons.image,
+                      color: Color(0xFF5F5E60),
+                    ),
                   ),
                 ),
                 Container(
@@ -282,11 +267,9 @@ class PortfolioTabView extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        item.cameraGear,
-                        style: const TextStyle(
-                          color: Color(0xFFE8E8E9),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                        item.style.isNotEmpty ? item.style : item.subtitle,
+                        style: AppTypography.bodySm(
+                          color: AppColors.snow.withValues(alpha: .88),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

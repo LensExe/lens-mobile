@@ -1,61 +1,63 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/filter_criteria.dart';
 import '../models/photographer_model.dart';
-import '../repositories/mock_photographer_repository.dart';
 import '../repositories/photographer_repository.dart';
-
-final discoveryRepositoryProvider = Provider<PhotographerRepository>((ref) {
-  return MockPhotographerRepository();
-});
+import '../repositories/discovery_repository_provider.dart';
 
 class DiscoveryState {
   final bool isLoading;
   final List<PhotographerModel> photographers;
   final FilterCriteria criteria;
-  final SortOption sortOption;
   final int currentPage;
   final bool hasNextPage;
+  final int totalCount;
+  final String? errorMessage;
 
   DiscoveryState({
     this.isLoading = true,
     this.photographers = const [],
     required this.criteria,
-    this.sortOption = SortOption.featured,
     this.currentPage = 1,
     this.hasNextPage = false,
+    this.totalCount = 0,
+    this.errorMessage,
   });
 
   DiscoveryState copyWith({
     bool? isLoading,
     List<PhotographerModel>? photographers,
     FilterCriteria? criteria,
-    SortOption? sortOption,
     int? currentPage,
     bool? hasNextPage,
+    int? totalCount,
+    String? errorMessage,
+    bool clearError = false,
   }) {
     return DiscoveryState(
       isLoading: isLoading ?? this.isLoading,
       photographers: photographers ?? this.photographers,
       criteria: criteria ?? this.criteria,
-      sortOption: sortOption ?? this.sortOption,
       currentPage: currentPage ?? this.currentPage,
       hasNextPage: hasNextPage ?? this.hasNextPage,
+      totalCount: totalCount ?? this.totalCount,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
-  
+
   int get activeFilterCount {
     int count = 0;
     if (criteria.city != null && criteria.city != 'Tất cả') count++;
-    if (criteria.minPrice != null || criteria.maxPrice != null) count++;
-    if (criteria.availableDate != null) count++;
     if (criteria.minRating != null) count++;
-    if (criteria.experience != null) count++;
     if (criteria.styles.isNotEmpty) count++;
+    if (criteria.hasNarrowedPriceRange) count++;
+    if (criteria.experienceBucket != null) count++;
     return count;
   }
 }
 
 class DiscoveryController extends Notifier<DiscoveryState> {
+  int _requestNumber = 0;
   @override
   DiscoveryState build() {
     // Initial state
@@ -65,28 +67,56 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     return initialState;
   }
 
-  PhotographerRepository get _repository => ref.read(discoveryRepositoryProvider);
+  PhotographerRepository get _repository =>
+      ref.read(discoveryRepositoryProvider);
 
   Future<void> _fetchCurrentPage() async {
-    state = state.copyWith(isLoading: true);
+    final request = ++_requestNumber;
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final allResults = await _repository.getPhotographers(
+      final page = await _repository.getPhotographersPage(
         criteria: state.criteria,
-        sort: state.sortOption,
+        limit: 9,
+        offset: (state.currentPage - 1) * 9,
+        topRated:
+            state.criteria.searchQuery?.trim().isNotEmpty != true &&
+            state.criteria.city?.trim().isNotEmpty != true &&
+            state.criteria.styles.isEmpty &&
+            state.criteria.minRating == null &&
+            !state.criteria.hasNarrowedPriceRange &&
+            state.criteria.experienceBucket == null &&
+            state.criteria.sort == 'featured',
       );
-      
+
+      if (request != _requestNumber) return;
+      final pageCount = page.total == 0 ? 1 : (page.total + 8) ~/ 9;
+      final validPage = state.currentPage.clamp(1, pageCount).toInt();
+      if (validPage != state.currentPage) {
+        state = state.copyWith(currentPage: validPage);
+        _fetchCurrentPage();
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
-        photographers: allResults,
-        hasNextPage: false,
+        photographers: page.items,
+        totalCount: page.total,
+        hasNextPage: page.offset + page.items.length < page.total,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      if (request != _requestNumber) return;
+      state = state.copyWith(
+        isLoading: false,
+        photographers: const [],
+        errorMessage: 'Không thể tải danh sách nhiếp ảnh gia: $e',
+      );
     }
   }
 
   void goToPage(int page) {
-    if (page < 1) return;
+    if (page < 1 ||
+        (state.totalCount > 0 && (page - 1) * 9 >= state.totalCount)) {
+      return;
+    }
     state = state.copyWith(currentPage: page);
     _fetchCurrentPage();
   }
@@ -113,26 +143,57 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     _fetchCurrentPage();
   }
 
-  void updateSort(SortOption sortOption) {
-    state = state.copyWith(sortOption: sortOption, currentPage: 1);
-    _fetchCurrentPage();
-  }
-
-  void toggleStyle(String style) {
-    final currentStyles = List<String>.from(state.criteria.styles);
-    if (currentStyles.contains(style)) {
-      currentStyles.remove(style);
-    } else {
-      currentStyles.add(style);
-    }
-    updateFilters(state.criteria.copyWith(styles: currentStyles));
-  }
-
   void search(String query) {
     updateFilters(state.criteria.copyWith(searchQuery: query));
   }
+
+  void applyQuery(Uri uri) {
+    final query = uri.queryParameters;
+    final minPrice = double.tryParse(query['priceMin'] ?? '');
+    final maxPrice = double.tryParse(query['priceMax'] ?? '');
+    final normalizedMinPrice = (minPrice ?? FilterCriteria.defaultPriceMin)
+        .clamp(FilterCriteria.defaultPriceMin, FilterCriteria.defaultPriceMax)
+        .toDouble();
+    final normalizedMaxPrice = (maxPrice ?? FilterCriteria.defaultPriceMax)
+        .clamp(FilterCriteria.defaultPriceMin, FilterCriteria.defaultPriceMax)
+        .toDouble();
+    final hasValidPriceRange = normalizedMinPrice <= normalizedMaxPrice;
+    final criteria = FilterCriteria(
+      searchQuery: query['q'],
+      city: query['city'],
+      styles: (query['styles'] ?? query['style'] ?? '')
+          .split(',')
+          .where((style) => style.trim().isNotEmpty)
+          .toList(),
+      minRating: double.tryParse(query['rating'] ?? ''),
+      priceMin: hasValidPriceRange
+          ? normalizedMinPrice
+          : FilterCriteria.defaultPriceMin,
+      priceMax: hasValidPriceRange
+          ? normalizedMaxPrice
+          : FilterCriteria.defaultPriceMax,
+      experienceBucket: _validExperienceBucket(query['exp']),
+      sort: _validSort(query['sort']),
+    );
+    state = state.copyWith(
+      criteria: criteria,
+      currentPage: int.tryParse(query['page'] ?? '') ?? 1,
+    );
+    _fetchCurrentPage();
+  }
+
+  void retry() => _fetchCurrentPage();
 }
 
-final discoveryControllerProvider = NotifierProvider<DiscoveryController, DiscoveryState>(() {
-  return DiscoveryController();
-});
+String? _validExperienceBucket(String? value) =>
+    const {'lt1', '1-3', '3-5', '5+'}.contains(value) ? value : null;
+
+String _validSort(String? value) =>
+    const {'featured', 'rating', 'price-asc', 'price-desc'}.contains(value)
+    ? value!
+    : 'featured';
+
+final discoveryControllerProvider =
+    NotifierProvider<DiscoveryController, DiscoveryState>(() {
+      return DiscoveryController();
+    });

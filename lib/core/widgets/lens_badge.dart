@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_colors.dart';
 
 enum BadgeType { darkOverlay, darkFilled, ember, blue, purple, green, red }
@@ -23,7 +24,9 @@ class LensBadge extends StatelessWidget {
       case BadgeType.darkOverlay:
         bgColor = Colors.transparent;
         textColor = AppColors.snow;
-        border = Border.all(color: Colors.white.withAlpha(76)); // approx 0.3 opacity
+        border = Border.all(
+          color: Colors.white.withAlpha(76),
+        ); // approx 0.3 opacity
         break;
       case BadgeType.darkFilled:
         bgColor = AppColors.graphite;
@@ -63,7 +66,9 @@ class LensBadge extends StatelessWidget {
         style: TextStyle(
           color: textColor,
           fontSize: 12,
-          fontWeight: type == BadgeType.ember ? FontWeight.w600 : FontWeight.w500,
+          fontWeight: type == BadgeType.ember
+              ? FontWeight.w600
+              : FontWeight.w500,
         ),
       ),
     );

@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/booking_model.dart';
 
 class BookingProgressStepper extends StatelessWidget {
   final Booking booking;
 
-  const BookingProgressStepper({
-    super.key,
-    required this.booking,
-  });
+  const BookingProgressStepper({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
-    if (booking.status == BookingStatus.cancelled) {
+    if ([
+      BookingStatus.cancelled,
+      BookingStatus.rejected,
+      BookingStatus.expired,
+    ].contains(booking.status)) {
       return const SizedBox.shrink();
     }
 
-    // Determine step states (0: Booked, 1: Shot Done, 2: Review Proofs, 3: Sign-off)
     int currentStep = 0;
     String statusTitle = 'Đang chờ xử lý';
     String proofInfo = '';
@@ -31,11 +34,13 @@ class BookingProgressStepper extends StatelessWidget {
         statusTitle = 'Đã cọc • Chờ NAG xác nhận';
         proofInfo = 'Đang chờ phản hồi';
         break;
+      case BookingStatus.accepted:
       case BookingStatus.confirmed:
         currentStep = 1;
         statusTitle = 'Đã xác nhận lịch chụp';
         proofInfo = 'Chuẩn bị buổi chụp';
         break;
+      case BookingStatus.inProgress:
       case BookingStatus.held:
         currentStep = 2;
         statusTitle = 'Chọn ảnh nghiệm thu (65%)';
@@ -43,12 +48,20 @@ class BookingProgressStepper extends StatelessWidget {
             ? '${booking.uploadedProofsCount} ảnh đã tải lên'
             : 'Đang tải ảnh lên';
         break;
+      case BookingStatus.shot:
+        currentStep = 3;
+        statusTitle = 'Đã chụp · Chờ bàn giao ảnh';
+        proofInfo = 'Chờ nhiếp ảnh gia công bố gallery';
+        break;
+      case BookingStatus.completed:
       case BookingStatus.released:
         currentStep = 3;
         statusTitle = 'Đã nghiệm thu & nhận ảnh';
         proofInfo = 'Đã hoàn tất 100%';
         break;
       case BookingStatus.cancelled:
+      case BookingStatus.rejected:
+      case BookingStatus.expired:
         break;
     }
 
@@ -56,8 +69,8 @@ class BookingProgressStepper extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Stepper Status Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -65,29 +78,33 @@ class BookingProgressStepper extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFA83900),
+                    color: AppColors.ember,
                     shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  statusTitle,
-                  style: const TextStyle(
-                    color: Color(0xFFA83900),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
+                Expanded(
+                  child: Text(
+                    statusTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelMd(
+                      fontSize: 11.5,
+                      color: AppColors.ember,
+                    ),
                   ),
                 ),
               ],
             ),
             if (proofInfo.isNotEmpty)
-              Text(
-                proofInfo,
-                style: const TextStyle(
-                  color: Color(0xFF5F5E60),
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 12),
+                child: Text(
+                  proofInfo,
+                  style: AppTypography.bodySm(
+                    fontSize: 11.5,
+                    color: AppColors.steel,
+                  ),
                 ),
               ),
           ],
@@ -99,16 +116,16 @@ class BookingProgressStepper extends StatelessWidget {
           children: List.generate(4, (index) {
             Color segmentColor;
             if (index < currentStep) {
-              segmentColor = const Color(0xFFFF5A00);
+              segmentColor = AppColors.emerald;
             } else if (index == currentStep) {
-              segmentColor = const Color(0xFFFF5A00);
+              segmentColor = AppColors.ember;
             } else {
-              segmentColor = const Color(0xFFE8E8E9);
+              segmentColor = AppColors.mist;
             }
 
             return Expanded(
               child: Container(
-                height: 6,
+                height: 4,
                 margin: EdgeInsets.only(right: index < 3 ? 6.0 : 0),
                 decoration: BoxDecoration(
                   color: segmentColor,
@@ -124,38 +141,68 @@ class BookingProgressStepper extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildStepLabel('Đã đặt', isActive: currentStep >= 0, isCurrent: currentStep == 0),
-            _buildStepLabel('Đã chụp', isActive: currentStep >= 1, isCurrent: currentStep == 1),
-            _buildStepLabel('Duyệt ảnh', isActive: currentStep >= 2, isCurrent: currentStep == 2),
-            _buildStepLabel('Nghiệm thu', isActive: currentStep >= 3, isCurrent: currentStep == 3),
+            Expanded(
+              child: _buildStepLabel(
+                'Đã đặt',
+                isActive: currentStep >= 0,
+                isCurrent: currentStep == 0,
+              ),
+            ),
+            Expanded(
+              child: _buildStepLabel(
+                'Đã chụp',
+                isActive: currentStep >= 1,
+                isCurrent: currentStep == 1,
+              ),
+            ),
+            Expanded(
+              child: _buildStepLabel(
+                'Duyệt ảnh',
+                isActive: currentStep >= 2,
+                isCurrent: currentStep == 2,
+              ),
+            ),
+            Expanded(
+              child: _buildStepLabel(
+                'Nghiệm thu',
+                isActive: currentStep >= 3,
+                isCurrent: currentStep == 3,
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildStepLabel(String text, {required bool isActive, required bool isCurrent}) {
+  Widget _buildStepLabel(
+    String text, {
+    required bool isActive,
+    required bool isCurrent,
+  }) {
     Color textColor;
     FontWeight fontWeight;
 
     if (isCurrent) {
-      textColor = const Color(0xFFA83900);
-      fontWeight = FontWeight.w800;
+      textColor = AppColors.ember;
+      fontWeight = FontWeight.w700;
     } else if (isActive) {
-      textColor = const Color(0xFF1A1C1D);
+      textColor = AppColors.obsidian;
       fontWeight = FontWeight.w600;
     } else {
-      textColor = const Color(0xFF5F5E60);
+      textColor = AppColors.steel;
       fontWeight = FontWeight.w400;
     }
 
     return Text(
       text,
-      style: TextStyle(
-        color: textColor,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: AppTypography.labelSm(
         fontSize: 11,
-        fontWeight: fontWeight,
-      ),
+        color: textColor,
+      ).copyWith(fontWeight: fontWeight),
     );
   }
 }

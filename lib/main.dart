@@ -3,28 +3,80 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:lens_app/core/router/app_router.dart';
 import 'package:lens_app/core/theme/app_theme.dart';
+import 'package:lens_app/providers/data_providers.dart';
+
+import 'core/network/auth_session_store.dart';
+
+const _resetAuthSessionOnStartup = bool.fromEnvironment(
+  'LENS_RESET_AUTH_SESSION',
+);
+
+final _rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi_VN', null);
-  
+  final sessionStore = AuthSessionStore();
+  if (_resetAuthSessionOnStartup) {
+    await sessionStore.clear();
+  } else {
+    await sessionStore.restore();
+    final restoredUser = sessionStore.session?.user;
+    if (restoredUser != null && restoredUser.role != 'client') {
+      await sessionStore.clear();
+    }
+  }
+
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      overrides: [authSessionStoreProvider.overrideWithValue(sessionStore)],
+      child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    _refreshProfile();
+  }
+
+  Future<void> _refreshProfile() async {
+    if (ref.read(authUserProvider) == null) return;
+    try {
+      await ref.read(authUserProvider.notifier).refreshProfile();
+    } catch (error) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _rootScaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Không thể tải thông tin tài khoản: $error',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final goRouter = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
       title: 'Lens App',
       theme: AppTheme.lightTheme,
+      scaffoldMessengerKey: _rootScaffoldMessengerKey,
       routerConfig: goRouter,
     );
   }

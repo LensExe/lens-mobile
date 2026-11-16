@@ -1,33 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lens_app/features/splash/splash_screen.dart';
+import 'package:lens_app/providers/data_providers.dart';
 import 'package:lens_app/features/landing/ui_gallery_screen.dart';
-import 'package:lens_app/features/auth/login_screen.dart';
-import 'package:lens_app/features/customer/customer_home_screen.dart';
+import 'package:lens_app/features/auth/screens/login_screen.dart';
+import 'package:lens_app/features/auth/screens/signup_screen.dart';
+import 'package:lens_app/features/auth/screens/forgot_password_screen.dart';
+import 'package:lens_app/features/auth/screens/email_verification_screen.dart';
+import 'package:lens_app/features/customer/overview/screens/customer_home_screen.dart';
 import 'package:lens_app/features/customer/discovery/screens/photographers_discovery_screen.dart';
-import 'package:lens_app/features/customer/photographer_detail_screen.dart';
-import 'package:lens_app/features/customer/booking_screen.dart';
-import 'package:lens_app/features/shared/bookings_list_screen.dart';
-import 'package:lens_app/features/customer/bookings/booking_detail_screen.dart';
-import 'package:lens_app/features/customer/bookings/delivery_gallery_screen.dart';
-import 'package:lens_app/features/customer/messages/customer_conversations_screen.dart';
-import 'package:lens_app/features/customer/messages/customer_chat_detail_screen.dart';
+import 'package:lens_app/features/customer/photographer_detail/screens/photographer_detail_screen.dart';
+import 'package:lens_app/features/customer/booking_flow/screens/booking_wizard_screen.dart';
+import 'package:lens_app/features/customer/bookings/screens/bookings_list_screen.dart';
+import 'package:lens_app/features/customer/bookings/screens/booking_detail_screen.dart';
+import 'package:lens_app/features/customer/bookings/screens/delivery_gallery_screen.dart';
+import 'package:lens_app/features/customer/messages/screens/customer_conversations_screen.dart';
+import 'package:lens_app/features/customer/messages/screens/customer_chat_detail_screen.dart';
+import 'package:lens_app/features/customer/payments/screens/deposit_screen.dart';
+import 'package:lens_app/features/customer/payments/screens/payment_screen.dart';
+import 'package:lens_app/features/customer/payments/screens/payment_return_screen.dart';
+import 'package:lens_app/features/customer/reviews/screens/reviews_screen.dart';
+import 'package:lens_app/features/customer/settings/screens/settings_screen.dart';
+import 'package:lens_app/features/notifications/screens/notification_center_screen.dart';
 
 import 'customer_shell.dart';
-import 'package:lens_app/features/shared/more_tab_screen.dart';
+
+import 'package:lens_app/features/customer/settings/screens/more_tab_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final refresh = ValueNotifier<int>(0);
+  ref.listen(authUserProvider, (previous, next) => refresh.value++);
+  ref.onDispose(refresh.dispose);
+  final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/splash',
+    refreshListenable: refresh,
+    initialLocation: '/',
+    redirect: (context, state) {
+      final path = state.uri.path;
+      final user = ref.read(authUserProvider);
+      if (user?.role == 'client' && (path == '/login' || path == '/signup')) {
+        final redirect = state.uri.queryParameters['redirect'];
+        if (redirect != null && redirect.startsWith('/customer_home/')) {
+          return redirect;
+        }
+        return '/customer_home/overview';
+      }
+      final publicRoute =
+          path == '/' ||
+          path == '/login' ||
+          path == '/signup' ||
+          path == '/forgot-password' ||
+          path == '/gallery' ||
+          path == '/customer_home/discovery' ||
+          RegExp(r'^/customer_home/photographer/[^/]+$').hasMatch(path);
+      if (publicRoute) return null;
+      if (user == null) {
+        return Uri(
+          path: '/login',
+          queryParameters: {'redirect': state.uri.toString()},
+        ).toString();
+      }
+      if (user.role != 'client') return '/customer_home/discovery';
+      return null;
+    },
     routes: [
       GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashScreen(),
+        path: '/',
+        redirect: (context, state) =>
+            ref.read(authUserProvider)?.role == 'client'
+            ? '/customer_home/overview'
+            : '/customer_home/discovery',
       ),
       GoRoute(
         path: '/gallery',
@@ -35,19 +80,97 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) =>
+            LoginScreen(redirect: state.uri.queryParameters['redirect']),
+      ),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) =>
+            SignupScreen(redirect: state.uri.queryParameters['redirect']),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => ForgotPasswordScreen(
+          initialEmail: state.uri.queryParameters['email'],
+        ),
+      ),
+      GoRoute(
+        path: '/customer_home',
+        redirect: (context, state) => '/customer_home/overview',
       ),
       GoRoute(
         path: '/customer_home/messages/:id',
-        builder: (context, state) => CustomerChatDetailScreen(conversationId: state.pathParameters['id']!),
+        builder: (context, state) => CustomerChatDetailScreen(
+          conversationId: state.pathParameters['id']!,
+          isPhotographerId: true,
+        ),
+      ),
+      GoRoute(
+        path: '/customer_home/conversation/:id',
+        builder: (context, state) => CustomerChatDetailScreen(
+          conversationId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/customer_home/bookings/:id',
-        builder: (context, state) => BookingDetailScreen(bookingId: state.pathParameters['id']!),
+        builder: (context, state) =>
+            BookingDetailScreen(bookingId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/customer_home/bookings/:id/gallery',
-        builder: (context, state) => DeliveryGalleryScreen(bookingId: state.pathParameters['id']!),
+        builder: (context, state) =>
+            DeliveryGalleryScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/customer_home/bookings/:id/deposit',
+        builder: (context, state) =>
+            DepositScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/customer_home/bookings/:id/pay',
+        builder: (context, state) =>
+            PaymentScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/return',
+        builder: (context, state) => PaymentReturnScreen(
+          bookingId: state.uri.queryParameters['bookingId'] ?? '',
+          paymentPurpose: state.uri.queryParameters['paymentPurpose'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: '/customer_home/reviews',
+        builder: (context, state) => const ReviewsScreen(),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/profile',
+        builder: (context, state) =>
+            const SettingsScreen(section: SettingsSection.profile),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/account',
+        builder: (context, state) =>
+            const SettingsScreen(section: SettingsSection.account),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/email-verification',
+        builder: (context, state) => const EmailVerificationScreen(),
+      ),
+      GoRoute(
+        path: '/customer_home/settings/notifications',
+        builder: (context, state) =>
+            const SettingsScreen(section: SettingsSection.notifications),
+      ),
+      GoRoute(
+        path: '/customer_home/notifications',
+        builder: (context, state) => const NotificationCenterScreen(),
+      ),
+      GoRoute(
+        path: '/customer_home/photographer/:id/book',
+        builder: (context, state) => BookingWizardScreen(
+          photographerId: state.pathParameters['id']!,
+          initialPackageId: state.uri.queryParameters['package'],
+        ),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -63,11 +186,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/customer_home/photographer/:id',
-            builder: (context, state) => PhotographerDetailScreen(id: state.pathParameters['id']!),
-          ),
-          GoRoute(
-            path: '/customer_home/photographer/:id/book',
-            builder: (context, state) => BookingScreen(id: state.pathParameters['id']!),
+            builder: (context, state) =>
+                PhotographerDetailScreen(id: state.pathParameters['id']!),
           ),
           GoRoute(
             path: '/customer_home/bookings',
@@ -85,4 +205,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(router.dispose);
+  return router;
 });

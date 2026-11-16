@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../models/booking_model.dart';
 import 'booking_progress_stepper.dart';
 
@@ -22,20 +24,16 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppTokens.pageHorizontal,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.snow,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: const [AppTokens.surfaceShadow],
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(
@@ -48,43 +46,48 @@ class BookingCard extends StatelessWidget {
               // 1. Top Header Bar
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(color: Color(0xFFF3F3F4)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: const BoxDecoration(
+                  color: AppColors.fog,
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.pebble, width: 0.8),
+                  ),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          '#${booking.displayCode}',
-                          style: const TextStyle(
-                            color: Color(0xFF1A1C1D),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '#${booking.displayCode}',
+                            style: AppTypography.numeric(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.obsidian,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF5F5E60),
-                            shape: BoxShape.circle,
+                          Text(
+                            booking.createdTimeAgo ?? 'Vừa xong',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.labelSm(
+                              fontSize: 12,
+                              color: AppColors.steel,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          booking.createdTimeAgo ?? 'Vừa xong',
-                          style: const TextStyle(
-                            color: Color(0xFF5F5E60),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    _buildStatusPill(booking.status),
+                    const SizedBox(width: 6),
+                    _buildStatusPill(
+                      booking.flowStatus,
+                      paymentDue: booking.paymentDue,
+                    ),
                   ],
                 ),
               ),
@@ -102,27 +105,47 @@ class BookingCard extends StatelessWidget {
                         Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: const Color(0xFFEEEEEF),
-                              backgroundImage: booking.photographerAvatar != null
-                                  ? CachedNetworkImageProvider(booking.photographerAvatar!)
-                                  : null,
-                              child: booking.photographerAvatar == null
-                                  ? const Icon(LucideIcons.camera, color: Color(0xFF5F5E60), size: 22)
-                                  : null,
-                            ),
-                            Positioned(
-                              right: -1,
-                              bottom: -1,
-                              child: Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF5A00),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.pebble),
+                                color: AppColors.fog,
+                              ),
+                              child: ClipOval(
+                                child:
+                                    booking.photographerAvatar != null &&
+                                        booking.photographerAvatar!.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: booking.photographerAvatar!,
+                                        fit: BoxFit.cover,
+                                        placeholder: (_, _) => const Center(
+                                          child: Icon(
+                                            LucideIcons.camera,
+                                            color: AppColors.steel,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        errorWidget: (_, _, _) => Center(
+                                          child: Text(
+                                            booking.photographerName.isNotEmpty
+                                                ? booking.photographerName
+                                                      .substring(0, 1)
+                                                : '?',
+                                            style: AppTypography.titleMd(),
+                                          ),
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          booking.photographerName.isNotEmpty
+                                              ? booking.photographerName
+                                                    .substring(0, 1)
+                                              : '?',
+                                          style: AppTypography.titleMd(),
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
@@ -133,80 +156,66 @@ class BookingCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      booking.photographerName,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1A1C1D),
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.2,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                              Text(
+                                booking.photographerName,
+                                style: AppTypography.titleMd(
+                                  fontSize: 15,
+                                  color: AppColors.obsidian,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (booking.rating != null &&
+                                  booking.reviewCount != null) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.star,
+                                      color: AppColors.ember,
+                                      size: 13,
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE8E8E9),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      'PRO',
-                                      style: TextStyle(
-                                        color: Color(0xFF5B4137),
-                                        fontSize: 10,
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      '${booking.rating}',
+                                      style: AppTypography.numeric(
+                                        fontSize: 12.5,
                                         fontWeight: FontWeight.w700,
+                                        color: AppColors.obsidian,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  const Icon(Icons.star, color: Color(0xFFFF5A00), size: 14),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '${booking.rating}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF1A1C1D),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '(${booking.reviewCount} đánh giá)',
+                                      style: AppTypography.bodySm(
+                                        fontSize: 11.5,
+                                        color: AppColors.steel,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '(${booking.reviewCount} đánh giá)',
-                                    style: const TextStyle(
-                                      color: Color(0xFF5F5E60),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),
                         // Message Button
-                        GestureDetector(
+                        InkWell(
                           onTap: onMessage,
+                          borderRadius: BorderRadius.circular(9999),
                           child: Container(
                             width: 38,
                             height: 38,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF3F3F4),
+                            decoration: BoxDecoration(
+                              color: AppColors.fog,
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.pebble.withValues(alpha: 0.6),
+                              ),
                             ),
                             child: const Icon(
                               LucideIcons.messageCircle,
-                              color: Color(0xFF1A1C1D),
-                              size: 18,
+                              color: AppColors.obsidian,
+                              size: 17,
                             ),
                           ),
                         ),
@@ -217,11 +226,7 @@ class BookingCard extends StatelessWidget {
                     // 3. Session Details Box
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F3F4),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      padding: EdgeInsets.zero,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -231,11 +236,9 @@ class BookingCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   booking.style,
-                                  style: const TextStyle(
-                                    color: Color(0xFF1A1C1D),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.2,
+                                  style: AppTypography.titleMd(
+                                    fontSize: 14,
+                                    color: AppColors.obsidian,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -243,18 +246,29 @@ class BookingCard extends StatelessWidget {
                               ),
                               if (booking.packageSnapshot != null) ...[
                                 const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFDBCF),
-                                    borderRadius: BorderRadius.circular(9999),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 130,
                                   ),
-                                  child: Text(
-                                    booking.packageSnapshot!.name,
-                                    style: const TextStyle(
-                                      color: Color(0xFF380D00),
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.ember.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(9999),
+                                    ),
+                                    child: Text(
+                                      booking.packageSnapshot!.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.labelSm(
+                                        fontSize: 11,
+                                        color: AppColors.ember,
+                                      ).copyWith(fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ),
@@ -265,15 +279,18 @@ class BookingCard extends StatelessWidget {
                           // Time Row
                           Row(
                             children: [
-                              const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF5F5E60)),
+                              const Icon(
+                                LucideIcons.calendar,
+                                size: 13,
+                                color: AppColors.steel,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   '${booking.date}${booking.timeSlot != null ? ' • ${booking.timeSlot}' : ''}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF5F5E60),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
+                                  style: AppTypography.bodySm(
+                                    fontSize: 12.5,
+                                    color: AppColors.steel,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -285,15 +302,18 @@ class BookingCard extends StatelessWidget {
                           // Location Row
                           Row(
                             children: [
-                              const Icon(LucideIcons.mapPin, size: 14, color: Color(0xFF5F5E60)),
+                              const Icon(
+                                LucideIcons.mapPin,
+                                size: 13,
+                                color: AppColors.steel,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   booking.location,
-                                  style: const TextStyle(
-                                    color: Color(0xFF5F5E60),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
+                                  style: AppTypography.bodySm(
+                                    fontSize: 12.5,
+                                    color: AppColors.steel,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -312,91 +332,117 @@ class BookingCard extends StatelessWidget {
                       const SizedBox(height: 14),
 
                     // 5. Total Package & Escrow Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Tổng gói chụp',
-                              style: TextStyle(
-                                color: Color(0xFF5F5E60),
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
+                              style: AppTypography.labelSm(
+                                fontSize: 11,
+                                color: AppColors.steel,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              currencyFormat.format(booking.price),
-                              style: const TextStyle(
-                                color: Color(0xFF1A1C1D),
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.4,
+                              AppTypography.formatCurrency(booking.price),
+                              style: AppTypography.priceDisplay(
+                                fontSize: 18,
+                                color: AppColors.obsidian,
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
                         _buildEscrowBadge(booking),
                       ],
                     ),
                     const SizedBox(height: 14),
 
                     // 6. Action Button
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: onPrimaryAction,
+                    Builder(
+                      builder: (context) {
+                        final primaryLabel = _getPrimaryActionLabel(booking);
+                        final isOnlyDetails = primaryLabel == 'Xem chi tiết';
+
+                        if (isOnlyDetails) {
+                          return InkWell(
+                            onTap: onTap,
+                            borderRadius: BorderRadius.circular(9999),
                             child: Container(
                               height: 46,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF5A00),
+                                color: AppColors.ember,
                                 borderRadius: BorderRadius.circular(9999),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFF5A00).withValues(alpha: 0.35),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _getPrimaryActionLabel(booking),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
+                                'Xem chi tiết',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.labelMd(
+                                  fontSize: 13.5,
+                                  color: AppColors.snow,
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: onTap,
-                          child: Container(
-                            height: 46,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3F3F4),
-                              borderRadius: BorderRadius.circular(9999),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Chi tiết',
-                              style: TextStyle(
-                                color: Color(0xFF1A1C1D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: onPrimaryAction,
+                                borderRadius: BorderRadius.circular(9999),
+                                child: Container(
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.ember,
+                                    borderRadius: BorderRadius.circular(9999),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    primaryLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.labelMd(
+                                      fontSize: 13.5,
+                                      color: AppColors.snow,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ],
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: onTap,
+                              borderRadius: BorderRadius.circular(9999),
+                              child: Container(
+                                height: 46,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.fog,
+                                  borderRadius: BorderRadius.circular(9999),
+                                  border: Border.all(color: AppColors.pebble),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Chi tiết',
+                                  style: AppTypography.labelMd(
+                                    fontSize: 13,
+                                    color: AppColors.obsidian,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -408,76 +454,90 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusPill(BookingStatus status) {
+  Widget _buildStatusPill(BookingStatus status, {bool paymentDue = false}) {
     Color dotColor;
     Color textColor;
     String label;
 
     switch (status) {
       case BookingStatus.awaiting_deposit:
-        dotColor = const Color(0xFFF59E0B);
-        textColor = const Color(0xFFB45309);
-        label = 'Chờ đặt cọc 30%';
+        dotColor = AppColors.ember;
+        textColor = AppColors.ember;
+        label = 'Chờ cọc 30%';
         break;
       case BookingStatus.pending:
-        dotColor = const Color(0xFFF59E0B);
-        textColor = const Color(0xFFB45309);
+        dotColor = AppColors.lagoon;
+        textColor = AppColors.lagoon;
         label = 'Chờ xác nhận';
         break;
+      case BookingStatus.accepted:
       case BookingStatus.confirmed:
-        dotColor = const Color(0xFF3B82F6);
-        textColor = const Color(0xFF1D4ED8);
+        dotColor = AppColors.lagoon;
+        textColor = AppColors.lagoon;
         label = 'Đã xác nhận';
         break;
+      case BookingStatus.inProgress:
       case BookingStatus.held:
-        dotColor = const Color(0xFFFF5A00);
-        textColor = const Color(0xFFA83900);
-        label = 'Đang xử lý & duyệt ảnh';
+        dotColor = AppColors.ember;
+        textColor = AppColors.ember;
+        label = 'Sàn đang giữ tiền';
         break;
+      case BookingStatus.shot:
+        dotColor = AppColors.lagoon;
+        textColor = AppColors.lagoon;
+        label = 'Chờ nhận ảnh';
+        break;
+      case BookingStatus.completed:
       case BookingStatus.released:
-        dotColor = const Color(0xFF10B981);
-        textColor = const Color(0xFF047857);
+        dotColor = AppColors.emerald;
+        textColor = AppColors.emerald;
         label = 'Đã hoàn thành';
         break;
+      case BookingStatus.rejected:
+        dotColor = AppColors.crimson;
+        textColor = AppColors.crimson;
+        label = 'Bị từ chối';
+        break;
+      case BookingStatus.expired:
+        dotColor = AppColors.steel;
+        textColor = AppColors.steel;
+        label = 'Hết hạn';
+        break;
       case BookingStatus.cancelled:
-        dotColor = const Color(0xFFEF4444);
-        textColor = const Color(0xFFB91C1C);
+        dotColor = AppColors.crimson;
+        textColor = AppColors.crimson;
         label = 'Đã hủy';
         break;
     }
 
+    if (paymentDue) {
+      dotColor = AppColors.ember;
+      textColor = AppColors.ember;
+      label = 'Chờ thanh toán';
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.snow,
         borderRadius: BorderRadius.circular(9999),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        border: Border.all(color: AppColors.pebble.withValues(alpha: 0.8)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
+            style: AppTypography.labelSm(
+              fontSize: 11,
               color: textColor,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-            ),
+            ).copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -486,37 +546,72 @@ class BookingCard extends StatelessWidget {
 
   Widget _buildEscrowBadge(Booking booking) {
     String text;
-    Color dotColor = const Color(0xFFFF5A00);
+    Color dotColor = AppColors.ember;
 
-    switch (booking.status) {
+    switch (booking.flowStatus) {
       case BookingStatus.held:
-        text = '100% Escrow giữ tiền';
+        text = switch (booking.backendStatus) {
+          'in_progress' => 'Buổi chụp đang thực hiện',
+          'shot' => 'Đã thanh toán đủ · Chờ giao ảnh',
+          _ => '100% Escrow giữ tiền',
+        };
         break;
       case BookingStatus.confirmed:
         text = 'Đã cọc 30% • Giữ tiền';
         break;
       case BookingStatus.awaiting_deposit:
         text = 'Chưa nạp Escrow';
-        dotColor = const Color(0xFF9CA3AF);
+        dotColor = AppColors.steel;
         break;
       case BookingStatus.released:
-        text = 'Đã giải ngân cho thợ';
-        dotColor = const Color(0xFF10B981);
+        text = 'Đã giải ngân';
+        dotColor = AppColors.emerald;
         break;
       case BookingStatus.cancelled:
-        text = 'Đã hoàn tiền (nếu có)';
-        dotColor = const Color(0xFF9CA3AF);
+        text = 'Đã hoàn tiền';
+        dotColor = AppColors.steel;
         break;
       case BookingStatus.pending:
-        text = 'Đã giữ cọc 30%';
+        text = 'Đã cọc • Chờ xác nhận';
+        dotColor = AppColors.lagoon;
         break;
+      case BookingStatus.accepted:
+        text = 'Đã được nhiếp ảnh gia chấp nhận';
+        dotColor = AppColors.lagoon;
+        break;
+      case BookingStatus.inProgress:
+        text = 'Buổi chụp đang thực hiện';
+        dotColor = AppColors.lagoon;
+        break;
+      case BookingStatus.shot:
+        text = 'Đã chụp · Chờ bàn giao ảnh';
+        dotColor = AppColors.lagoon;
+        break;
+      case BookingStatus.completed:
+        text = 'Đã hoàn tất';
+        dotColor = AppColors.emerald;
+        break;
+      case BookingStatus.rejected:
+        text = 'Yêu cầu bị từ chối';
+        dotColor = AppColors.steel;
+        break;
+      case BookingStatus.expired:
+        text = 'Yêu cầu đã hết hạn';
+        dotColor = AppColors.steel;
+        break;
+    }
+
+    if (booking.paymentDue) {
+      text = 'Chờ thanh toán phần còn lại';
+      dotColor = AppColors.ember;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEF),
+        color: AppColors.fog,
         borderRadius: BorderRadius.circular(9999),
+        border: Border.all(color: AppColors.pebble.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -524,19 +619,12 @@ class BookingCard extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              color: Color(0xFF5F5E60),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.labelSm(fontSize: 11, color: AppColors.steel),
           ),
         ],
       ),
@@ -544,19 +632,40 @@ class BookingCard extends StatelessWidget {
   }
 
   String _getPrimaryActionLabel(Booking booking) {
-    switch (booking.status) {
-      case BookingStatus.held:
-        return booking.uploadedProofsCount > 0
-            ? 'Duyệt ảnh (${booking.uploadedProofsCount})'
-            : 'Theo dõi tiến độ';
+    if (booking.needsRemainingPayment) return 'Thanh toán còn lại';
+
+    switch (booking.flowStatus) {
       case BookingStatus.awaiting_deposit:
         return 'Đặt cọc 30%';
       case BookingStatus.pending:
-        return 'Xem chi tiết lịch hẹn';
+        return 'Xem chi tiết';
       case BookingStatus.confirmed:
-        return 'Thanh toán nốt 70%';
+        return 'Thanh toán còn lại';
+      case BookingStatus.held:
+        if (booking.galleryPublishedAt != null ||
+            booking.deliveryPhotoUrls.isNotEmpty) {
+          return booking.uploadedProofsCount > 0
+              ? 'Duyệt ảnh (${booking.uploadedProofsCount})'
+              : 'Xem bộ ảnh';
+        }
+        return 'Theo dõi tiến độ';
       case BookingStatus.released:
-        return 'Xem ảnh đã nhận';
+        return 'Xem bộ ảnh';
+      case BookingStatus.accepted:
+        return 'Thanh toán còn lại';
+      case BookingStatus.inProgress:
+        return 'Theo dõi buổi chụp';
+      case BookingStatus.shot:
+        return 'Xem ảnh bàn giao';
+      case BookingStatus.completed:
+        if (booking.galleryPublishedAt != null ||
+            booking.deliveryPhotoUrls.isNotEmpty) {
+          return 'Xem bộ ảnh';
+        }
+        return 'Xem chi tiết';
+      case BookingStatus.rejected:
+      case BookingStatus.expired:
+        return 'Xem chi tiết';
       case BookingStatus.cancelled:
         return 'Đặt lịch lại';
     }

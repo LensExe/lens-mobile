@@ -1,3 +1,6 @@
+
+export '../../features/auth/models/user_model.dart';
+
 class Photographer {
   final String id;
   final String name;
@@ -76,19 +79,6 @@ class Booking {
   });
 }
 
-class User {
-  final String id;
-  final String name;
-  final String email;
-  final String role; // 'client' or 'photographer'
-
-  User({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.role,
-  });
-}
 
 class Conversation {
   final String id;
@@ -99,6 +89,8 @@ class Conversation {
   final String lastMessage;
   final int unreadCount;
   final DateTime updatedAt;
+  final bool isOnline;
+  final bool aiAssistantEnabled;
 
   Conversation({
     required this.id,
@@ -109,7 +101,30 @@ class Conversation {
     required this.lastMessage,
     required this.unreadCount,
     required this.updatedAt,
+    this.isOnline = false,
+    this.aiAssistantEnabled = false,
   });
+
+  Conversation copyWith({
+    String? lastMessage,
+    int? unreadCount,
+    DateTime? updatedAt,
+    bool? isOnline,
+    bool? aiAssistantEnabled,
+  }) {
+    return Conversation(
+      id: id,
+      bookingId: bookingId,
+      otherPartyId: otherPartyId,
+      otherPartyName: otherPartyName,
+      otherPartyAvatar: otherPartyAvatar,
+      lastMessage: lastMessage ?? this.lastMessage,
+      unreadCount: unreadCount ?? this.unreadCount,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isOnline: isOnline ?? this.isOnline,
+      aiAssistantEnabled: aiAssistantEnabled ?? this.aiAssistantEnabled,
+    );
+  }
 }
 
 class Message {

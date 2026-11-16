@@ -1,364 +1,375 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:intl/intl.dart';
-import '../../../../../core/theme/app_colors.dart';
+
+import 'package:lens_app/core/theme/app_colors.dart';
+import 'package:lens_app/core/theme/app_tokens.dart';
+import 'package:lens_app/core/theme/app_typography.dart';
+import 'package:lens_app/core/widgets/primary_button.dart';
 import '../models/filter_criteria.dart';
-import '../models/photographer_model.dart';
-import '../models/photo_style_options.dart';
 
-class FilterBottomSheet extends ConsumerStatefulWidget {
-  final FilterCriteria initialCriteria;
-  final Function(FilterCriteria) onApply;
-
+/// Customer discovery filters. Some criteria are applied locally because the
+/// photographer list endpoint does not expose dedicated query parameters.
+class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({
     super.key,
     required this.initialCriteria,
     required this.onApply,
   });
 
+  final FilterCriteria initialCriteria;
+  final ValueChanged<FilterCriteria> onApply;
+
   @override
-  ConsumerState<FilterBottomSheet> createState() => _FilterBottomSheetState();
+  State<FilterBottomSheet> createState() => _FilterBottomSheetState();
 }
 
-class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
-  late FilterCriteria _criteria;
-  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-
-  final List<String> _cities = ['Tất cả', 'Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Đà Lạt', 'Cần Thơ', 'Hải Phòng'];
-  
-  // Rating logic
-  // 'Tất cả' -> null, '4.5★ trở lên' -> 4.5, '4.8★ trở lên' -> 4.8
-  final List<double?> _ratingValues = [null, 4.5, 4.8];
-  final List<String> _ratingLabels = ['Tất cả', '4.5★ trở lên', '4.8★ trở lên'];
-
-  final Map<Experience?, String> _experienceLabels = {
-    null: 'Tất cả',
-    Experience.under1Year: 'Dưới 1 năm',
-    Experience.from1To3Years: '1 - 3 năm',
-    Experience.from3To5Years: '3 - 5 năm',
-    Experience.over5Years: 'Trên 5 năm',
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _criteria = widget.initialCriteria.copyWith();
-  }
-
-  void _reset() {
-    setState(() {
-      _criteria = FilterCriteria();
-    });
-  }
+class _FilterBottomSheetState extends State<FilterBottomSheet> {
+  static const _styleOptions = [
+    'Chân dung',
+    'Cưới',
+    'Sự kiện',
+    'Thời trang',
+    'Sản phẩm',
+    'Gia đình',
+    'Du lịch',
+    'Ẩm thực',
+    'Kiến trúc',
+    'Đường phố',
+  ];
+  static const _cities = [
+    'Hà Nội',
+    'TP. Hồ Chí Minh',
+    'Đà Nẵng',
+    'Đà Lạt',
+    'Cần Thơ',
+    'Hải Phòng',
+  ];
+  late final Set<String> _selectedStyles = {...widget.initialCriteria.styles};
+  late String? _city = widget.initialCriteria.city;
+  late double? _minRating = widget.initialCriteria.minRating;
+  late RangeValues _priceRange = RangeValues(
+    widget.initialCriteria.priceMin,
+    widget.initialCriteria.priceMax,
+  );
+  late String? _experienceBucket = widget.initialCriteria.experienceBucket;
+  late String _sort = widget.initialCriteria.sort;
 
   void _apply() {
-    widget.onApply(_criteria);
-    Navigator.pop(context);
+    widget.onApply(
+      FilterCriteria(
+        city: _city,
+        minRating: _minRating,
+        searchQuery: widget.initialCriteria.searchQuery,
+        styles: _selectedStyles.toList(),
+        priceMin: _priceRange.start,
+        priceMax: _priceRange.end,
+        experienceBucket: _experienceBucket,
+        sort: _sort,
+      ),
+    );
+    Navigator.of(context).pop();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => DraggableScrollableSheet(
+    initialChildSize: 0.75,
+    minChildSize: 0.50,
+    maxChildSize: 0.95,
+    expand: false,
+    builder: (context, controller) => Container(
       decoration: const BoxDecoration(
-        color: AppColors.snow,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTokens.largeCardRadius),
+        ),
       ),
-      child: SafeArea(
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.9,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
+            child: Row(
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Bộ lọc tìm kiếm', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.obsidian)),
-                      IconButton(icon: const Icon(LucideIcons.x), onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1, color: AppColors.pebble),
-                
-                // Content
                 Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      // City
-                      _buildSectionTitle('Thành phố'),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _cities.map((city) {
-                          final isSelected = (_criteria.city ?? 'Tất cả') == city;
-                          return _buildChip(
-                            label: city,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setState(() {
-                                _criteria = _criteria.copyWith(
-                                  city: city == 'Tất cả' ? null : city,
-                                  clearCity: city == 'Tất cả',
-                                );
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      // Phong cách chụp
-                      _buildSectionTitle('Phong cách chụp'),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: PhotoStyleOptions.all.map((style) {
-                          final isSelected = _criteria.styles.contains(style);
-                          return _buildChip(
-                            label: style,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setState(() {
-                                final currentStyles = List<String>.from(_criteria.styles);
-                                if (isSelected) {
-                                  currentStyles.remove(style);
-                                } else {
-                                  currentStyles.add(style);
-                                }
-                                _criteria = _criteria.copyWith(styles: currentStyles);
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 32),
-                      
-                      // Price
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildSectionTitle('Mức giá / buổi'),
-                          Text(
-                            _formatPriceRange(_criteria.minPrice ?? 50000, _criteria.maxPrice ?? 400000),
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.ember, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      RangeSlider(
-                        values: RangeValues(_criteria.minPrice ?? 50000, _criteria.maxPrice ?? 400000),
-                        min: 50000,
-                        max: 400000,
-                        divisions: (400000 - 50000) ~/ 25000,
-                        activeColor: AppColors.ember,
-                        inactiveColor: AppColors.pebble,
-                        onChanged: (RangeValues values) {
-                          setState(() {
-                            _criteria = _criteria.copyWith(
-                              minPrice: values.start,
-                              maxPrice: values.end,
-                            );
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                      
-                      // Date
-                      _buildSectionTitle('Ngày rảnh'),
-                      GestureDetector(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: _criteria.availableDate ?? DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: const ColorScheme.light(
-                                    primary: AppColors.ember,
-                                    onPrimary: Colors.white,
-                                    onSurface: AppColors.obsidian,
-                                  ),
-                                ),
-                                child: child!,
-                              );
-                            },
-                          );
-                          if (date != null) {
-                            setState(() => _criteria = _criteria.copyWith(availableDate: date));
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.snow,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.pebble),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(LucideIcons.calendar, color: AppColors.ember, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _criteria.availableDate == null ? 'Chọn ngày rảnh...' : DateFormat('dd/MM/yyyy').format(_criteria.availableDate!),
-                                  style: TextStyle(
-                                    color: _criteria.availableDate == null ? AppColors.steel : AppColors.obsidian,
-                                    fontWeight: _criteria.availableDate == null ? FontWeight.normal : FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              if (_criteria.availableDate != null)
-                                GestureDetector(
-                                  onTap: () => setState(() => _criteria = _criteria.copyWith(clearDate: true)),
-                                  child: const Icon(LucideIcons.xCircle, color: AppColors.steel, size: 20),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      
-                      // Rating
-                      _buildSectionTitle('Đánh giá tối thiểu'),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: List.generate(_ratingValues.length, (index) {
-                          final val = _ratingValues[index];
-                          final label = _ratingLabels[index];
-                          final isSelected = _criteria.minRating == val;
-                          return _buildChip(
-                            label: label,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setState(() {
-                                _criteria = _criteria.copyWith(
-                                  minRating: val,
-                                  clearRating: val == null,
-                                );
-                              });
-                            },
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 32),
-                      
-                      // Experience
-                      _buildSectionTitle('Kinh nghiệm'),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _experienceLabels.entries.map((entry) {
-                          final isSelected = _criteria.experience == entry.key;
-                          return _buildChip(
-                            label: entry.value,
-                            isSelected: isSelected,
-                            onTap: () {
-                              setState(() {
-                                _criteria = _criteria.copyWith(
-                                  experience: entry.key,
-                                  clearExperience: entry.key == null,
-                                );
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 40),
-                    ],
+                  child: Text(
+                    'Bộ lọc tìm kiếm',
+                    style: AppTypography.headlineSm(fontSize: 18),
                   ),
                 ),
-                
-                // Bottom Buttons
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.snow,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), offset: const Offset(0, -4), blurRadius: 10),
-                    ],
+                if (_hasActiveFilters)
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _selectedStyles.clear();
+                      _city = null;
+                      _minRating = null;
+                      _priceRange = const RangeValues(
+                        FilterCriteria.defaultPriceMin,
+                        FilterCriteria.defaultPriceMax,
+                      );
+                      _experienceBucket = null;
+                      _sort = 'featured';
+                    }),
+                    child: const Text('Xoá lọc'),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: AppColors.pebble),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                          ),
-                          onPressed: _reset,
-                          child: const Text('Thiết lập lại', style: TextStyle(color: AppColors.obsidian, fontWeight: FontWeight.bold, fontSize: 15)),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.ember,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                            elevation: 0,
-                          ),
-                          onPressed: _apply,
-                          child: const Text('Áp dụng bộ lọc', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                        ),
-                      ),
-                    ],
-                  ),
+                IconButton(
+                  tooltip: 'Đóng',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(LucideIcons.x, size: 18),
                 ),
               ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.obsidian, fontSize: 15)),
-    );
-  }
-
-  Widget _buildChip({required String label, required bool isSelected, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.ember.withValues(alpha: 0.1) : AppColors.snow,
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(color: isSelected ? AppColors.ember : AppColors.pebble),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? AppColors.ember : AppColors.obsidian,
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            ),
           ),
-        ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView(
+              controller: controller,
+              padding: const EdgeInsets.all(20),
+              children: [
+                Text(
+                  'Sắp xếp theo',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final option in _sortOptions)
+                      _chip(
+                        option.$2,
+                        _sort == option.$1,
+                        () => setState(() => _sort = option.$1),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Phong cách chụp',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip('Tất cả', _selectedStyles.isEmpty, () {
+                      setState(_selectedStyles.clear);
+                    }),
+                    for (final style in _styleOptions)
+                      _multiChip(
+                        style,
+                        _selectedStyles.contains(style),
+                        () => setState(() {
+                          if (!_selectedStyles.add(style)) {
+                            _selectedStyles.remove(style);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text('Khu vực', style: AppTypography.titleMd(fontSize: 15)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip(
+                      'Tất cả',
+                      _city == null,
+                      () => setState(() => _city = null),
+                    ),
+                    for (final city in _cities)
+                      _chip(
+                        city,
+                        _city == city,
+                        () => setState(() => _city = city),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Đánh giá tối thiểu',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    _chip(
+                      'Tất cả',
+                      _minRating == null,
+                      () => setState(() => _minRating = null),
+                    ),
+                    _chip(
+                      '4.5★ trở lên',
+                      _minRating == 4.5,
+                      () => setState(() => _minRating = 4.5),
+                    ),
+                    _chip(
+                      '4.8★ trở lên',
+                      _minRating == 4.8,
+                      () => setState(() => _minRating = 4.8),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Mức giá / buổi',
+                  style: AppTypography.titleMd(fontSize: 15),
+                ),
+                const SizedBox(height: 5),
+                RangeSlider(
+                  min: FilterCriteria.defaultPriceMin,
+                  max: FilterCriteria.defaultPriceMax,
+                  divisions: 118,
+                  values: _priceRange,
+                  labels: RangeLabels(
+                    _formatPrice(_priceRange.start),
+                    _priceRange.end >= FilterCriteria.defaultPriceMax
+                        ? '${_formatPrice(FilterCriteria.defaultPriceMax)}+'
+                        : _formatPrice(_priceRange.end),
+                  ),
+                  onChanged: (value) => setState(() => _priceRange = value),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatPrice(_priceRange.start),
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                    Text(
+                      _priceRange.end >= FilterCriteria.defaultPriceMax
+                          ? '${_formatPrice(FilterCriteria.defaultPriceMax)}+'
+                          : _formatPrice(_priceRange.end),
+                      style: AppTypography.bodySm(color: AppColors.steel),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text('Kinh nghiệm', style: AppTypography.titleMd(fontSize: 15)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip('Tất cả', _experienceBucket == null, () {
+                      setState(() => _experienceBucket = null);
+                    }),
+                    for (final option in _experienceOptions)
+                      _chip(
+                        option.$2,
+                        _experienceBucket == option.$1,
+                        () => setState(
+                          () => _experienceBucket =
+                              _experienceBucket == option.$1 ? null : option.$1,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Kết quả được lọc theo phong cách, khu vực, ngân sách, đánh giá và kinh nghiệm.',
+                  style: AppTypography.bodySm(color: AppColors.steel),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.canvas,
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.pebble.withValues(alpha: 0.6),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.obsidian.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: PrimaryButton(
+                  text: 'Áp dụng',
+                  height: AppTokens.primaryButtonHeight,
+                  onPressed: _apply,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 
-  String _formatPriceRange(double min, double max) {
-    if (max >= 400000) {
-      return '${currencyFormat.format(min)} - 400.000+ ₫';
-    }
-    return '${currencyFormat.format(min)} - ${currencyFormat.format(max)}';
-  }
+  Widget _chip(String label, bool selected, VoidCallback onTap) => ChoiceChip(
+    label: Text(label),
+    selected: selected,
+    onSelected: (_) => onTap(),
+    selectedColor: AppColors.obsidian,
+    labelStyle: TextStyle(
+      color: selected ? AppColors.snow : AppColors.obsidian,
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+    ),
+    side: BorderSide(color: selected ? AppColors.obsidian : AppColors.pebble),
+    backgroundColor: AppColors.snow,
+  );
+
+  Widget _multiChip(String label, bool selected, VoidCallback onTap) =>
+      FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+        selectedColor: AppColors.obsidian,
+        labelStyle: TextStyle(
+          color: selected ? AppColors.snow : AppColors.obsidian,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        side: BorderSide(
+          color: selected ? AppColors.obsidian : AppColors.pebble,
+        ),
+        backgroundColor: AppColors.snow,
+        checkmarkColor: AppColors.snow,
+      );
+
+  bool get _hasActiveFilters =>
+      _selectedStyles.isNotEmpty ||
+      _city != null ||
+      _minRating != null ||
+      _experienceBucket != null ||
+      _priceRange.start > FilterCriteria.defaultPriceMin ||
+      _priceRange.end < FilterCriteria.defaultPriceMax ||
+      _sort != 'featured';
+}
+
+const _sortOptions = [
+  ('featured', 'Nổi bật'),
+  ('rating', 'Đánh giá cao'),
+  ('price-asc', 'Giá: thấp → cao'),
+  ('price-desc', 'Giá: cao → thấp'),
+];
+
+const _experienceOptions = [
+  ('lt1', 'Dưới 1 năm'),
+  ('1-3', '1 – 3 năm'),
+  ('3-5', '3 – 5 năm'),
+  ('5+', 'Trên 5 năm'),
+];
+
+String _formatPrice(double value) {
+  final digits = value.round().toString();
+  final grouped = digits.replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (match) => '.',
+  );
+  return '$grouped ₫';
 }
